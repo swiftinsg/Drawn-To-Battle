@@ -148,7 +148,6 @@ final class GameSave: ObservableObject {
     @Published var testUnlockAll: Bool = false {
         didSet { persist() }
     }
-
     var hasUsername: Bool { !username.isEmpty }
 
     private static let key = "DrawnToBattle.save.v1"
@@ -182,7 +181,8 @@ final class GameSave: ObservableObject {
     @discardableResult
     func registerPull(_ blueprint: MoveBlueprint) -> Bool /* isNew */ {
         if ownedBlueprints.contains(blueprint.id) {
-            stardust += Gacha.duplicateRefund
+            // Collection's complete — extra pulls now pay coins.
+            coins += Gacha.duplicateRefund
             return false
         }
         ownedBlueprints.insert(blueprint.id)

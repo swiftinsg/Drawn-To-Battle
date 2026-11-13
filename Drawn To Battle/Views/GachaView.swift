@@ -70,6 +70,9 @@ struct GachaView: View {
                             .allowsHitTesting(false)
                     }
 
+                    // Every pull is a NEW blueprint until the collection is
+                    // complete; after that, duplicates refund coins.
+                    let canPull = game.stardust >= Gacha.pullCost && !rolling
                     Button {
                         pull()
                     } label: {
@@ -83,36 +86,23 @@ struct GachaView: View {
                         }
                         .frame(maxWidth: 260)
                         .padding(.vertical, 14)
-                        .background(Capsule().fill(game.stardust >= Gacha.pullCost && !rolling ? Color(hex: 0xF5C451) : Color.white.opacity(0.15)))
-                        .foregroundStyle(game.stardust >= Gacha.pullCost ? .black : .white.opacity(0.5))
+                        .background(Capsule().fill(canPull ? Color(hex: 0xF5C451) : Color.white.opacity(0.15)))
+                        .foregroundStyle(canPull ? .black : .white.opacity(0.5))
                     }
                     .buttonStyle(.plain)
-                    .disabled(game.stardust < Gacha.pullCost || rolling)
+                    .disabled(!canPull)
 
-                    // Coin → pen exchange (battles pay coins).
-                    Button {
-                        guard game.coins >= Gacha.exchangeCoins else { return }
-                        game.coins -= Gacha.exchangeCoins
-                        game.addStardust(Gacha.exchangePens)
-                    } label: {
-                        HStack(spacing: 6) {
-                            Image(systemName: "circlebadge.fill")
-                                .font(.system(size: 11, weight: .bold))
-                            Text("\(Gacha.exchangeCoins) → \(Gacha.exchangePens)")
-                                .font(.system(size: 12, weight: .black, design: .rounded))
-                            Image("DrawnToBattleGachaToken")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 13)
-                        }
-                        .padding(.horizontal, 14)
-                        .padding(.vertical, 8)
-                        .background(Capsule().fill(game.coins >= Gacha.exchangeCoins && !rolling ? Color.white.opacity(0.1) : Color.white.opacity(0.04)))
-                        .foregroundStyle(game.coins >= Gacha.exchangeCoins ? Color(hex: 0xF5C451) : .white.opacity(0.3))
+                    let total = BlueprintCatalog.all.count
+                    let ownedCount = game.ownedBlueprints.count
+                    if ownedCount < total {
+                        Text("COLLECTION \(ownedCount)/\(total) — EVERY PULL IS NEW")
+                            .font(.system(size: 10, weight: .heavy, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.4))
+                    } else {
+                        Text("COLLECTION COMPLETE — DUPLICATES PAY COINS")
+                            .font(.system(size: 10, weight: .heavy, design: .rounded))
+                            .foregroundStyle(Color(hex: 0xF5C451).opacity(0.7))
                     }
-                    .buttonStyle(.plain)
-                    .disabled(game.coins < Gacha.exchangeCoins || rolling)
-                    .accessibilityLabel("Exchange coins for pens")
 
                     Button {
                         withAnimation { showRates.toggle() }
@@ -145,11 +135,9 @@ struct GachaView: View {
                             }
                         }
                         HStack(spacing: 4) {
-                            Text("Duplicates refund \(Gacha.duplicateRefund)")
-                            Image("DrawnToBattleGachaToken")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 11)
+                            Image(systemName: "circlebadge.fill")
+                                .font(.system(size: 9, weight: .bold))
+                            Text("Duplicates refund \(Gacha.duplicateRefund) coins — only once the collection is complete")
                         }
                         .font(.system(size: 10, weight: .medium))
                         .foregroundStyle(.white.opacity(0.4))
@@ -180,7 +168,7 @@ struct GachaView: View {
         beamOpacity = 0
         // Suspense, then a rarity-colored beam, then the card.
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            let bp = Gacha.roll()
+            let bp = Gacha.roll(owned: game.ownedBlueprints)
             beamColor = bp.rarity.color
             withAnimation(.easeIn(duration: 0.16)) { beamOpacity = 0.9 }
             if bp.rarity.stars >= 4 { Haptics.success() } else { Haptics.light() }
@@ -208,7 +196,7 @@ private struct GachaResultCard: View {
             Color.black.opacity(0.75).ignoresSafeArea()
 
             VStack(spacing: 14) {
-                Text(isNew ? "NEW!" : "DUPLICATE +\(Gacha.duplicateRefund) ✦")
+                Text(isNew ? "NEW!" : "DUPLICATE +\(Gacha.duplicateRefund) COINS")
                     .font(.system(size: 15, weight: .black, design: .rounded))
                     .foregroundStyle(isNew ? Color(hex: 0xF5C451) : .white.opacity(0.6))
 

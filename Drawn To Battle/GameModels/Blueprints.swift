@@ -205,7 +205,20 @@ enum Gacha {
         return activeRarities.first ?? .base
     }
 
-    static func roll() -> MoveBlueprint {
+    /// One copy of each blueprint: while the collection is incomplete, every
+    /// pull is guaranteed to be something you don't own (weighted by rarity).
+    /// Once you own them all, the gacha opens up — duplicates refund coins.
+    static func roll(owned: Set<String>) -> MoveBlueprint {
+        let unowned = BlueprintCatalog.all.filter { !owned.contains($0.id) }
+        if !unowned.isEmpty {
+            let total = unowned.reduce(0) { $0 + $1.rarity.weight }
+            var pick = Double.random(in: 0..<total)
+            for bp in unowned {
+                pick -= bp.rarity.weight
+                if pick <= 0 { return bp }
+            }
+            return unowned[unowned.count - 1]
+        }
         let rarity = rollRarity()
         let pool = BlueprintCatalog.blueprints(in: rarity)
         return pool.randomElement() ?? BlueprintCatalog.all[0]

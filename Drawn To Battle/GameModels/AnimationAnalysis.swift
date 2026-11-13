@@ -92,7 +92,7 @@ enum AnimationAnalysis {
         let variance = mean((handSpeeds + footSpeeds).map { pow($0 - meanSpeed, 2) })
         r.acceleration = clamp01(variance / (pow(meanSpeed, 2) + 0.001) / 1.4)
 
-        // Fluidity: alignment of consecutive motion of the dominant limb.
+   
         let dominantDirs = maxHand >= maxFoot ? handDirs : footDirs
         if dominantDirs.count >= 2 {
             var cosSum = 0.0
@@ -102,7 +102,7 @@ enum AnimationAnalysis {
             r.fluidity = cosSum / Double(dominantDirs.count - 1)
         }
 
-        // Alignment within strike window (top 30% speed pairs).
+     
         let threshold = maxLimb * 0.7
         let window = stride(from: 0, to: pairs, by: 1).filter { max(handSpeeds[$0], footSpeeds[$0]) >= threshold }
         if window.count >= 2 {
