@@ -90,6 +90,18 @@ struct BossDefinition: Identifiable, Hashable {
     static func boss(id: String) -> BossDefinition? {
         all.first { $0.id == id }
     }
+
+    // MARK: Victory payouts
+
+    /// Coins paid for beating this boss (full first-clear / repeat reward).
+    func coinReward(firstClear: Bool) -> Int {
+        firstClear ? rewardFirstClear : rewardRepeat
+    }
+
+    /// Pens paid alongside the coins: half of the coin reward, rounded up.
+    func penReward(firstClear: Bool) -> Int {
+        Int(ceil(Double(coinReward(firstClear: firstClear)) / 2))
+    }
 }
 
 // MARK: - Loadout
@@ -125,11 +137,15 @@ final class GameSave: ObservableObject {
         didSet { persist() }
     }
     /// Coins — earned from battles. (Pens/stardust above is the gacha currency.)
-    @Published var coins: Int = 0 {
+    @Published var coins: Int = 100{
         didSet { persist() }
     }
     /// The fighter's name, chosen on first launch.
     @Published var username: String = "" {
+        didSet { persist() }
+    }
+    /// Testing: every boss is open regardless of defeat records.
+    @Published var testUnlockAll: Bool = false {
         didSet { persist() }
     }
 
@@ -147,6 +163,7 @@ final class GameSave: ObservableObject {
             blueprintEdits = saved.blueprintEdits ?? [:]
             coins = saved.coins ?? 0
             username = saved.username ?? ""
+            testUnlockAll = saved.testUnlockAll ?? false
         }
     }
 
@@ -208,7 +225,8 @@ final class GameSave: ObservableObject {
     func registerVictory(boss: BossDefinition) {
         defeatedBosses.insert(boss.id)
         let first = !defeatedBosses.contains(boss.id + "_rewarded")
-        coins += first ? boss.rewardFirstClear : boss.rewardRepeat
+        coins += boss.coinReward(firstClear: first)
+        stardust += boss.penReward(firstClear: first)
         if first { defeatedBosses.insert(boss.id + "_rewarded") }
     }
 
@@ -223,6 +241,7 @@ final class GameSave: ObservableObject {
     }
 
     func isUnlocked(_ boss: BossDefinition) -> Bool {
+        if testUnlockAll { return true }
         guard let prereq = boss.unlockAfter else { return true }
         return defeatedBosses.contains(prereq)
     }
@@ -237,6 +256,7 @@ final class GameSave: ObservableObject {
         var blueprintEdits: [String: AnimationProject]?
         var coins: Int?
         var username: String?
+        var testUnlockAll: Bool?
     }
 
     private func persist() {
@@ -247,7 +267,8 @@ final class GameSave: ObservableObject {
             defeatedBosses: defeatedBosses,
             blueprintEdits: blueprintEdits,
             coins: coins,
-            username: username
+            username: username,
+            testUnlockAll: testUnlockAll
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: Self.key)

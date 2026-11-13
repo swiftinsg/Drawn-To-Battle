@@ -66,6 +66,8 @@ struct ContentView: View {
             SolarSystemView(game: game)
         case "username":
             UsernameView(game: game) { }
+        case "settings":
+            SettingsView(game: game)
         case "battle-earth":
             BattleView(boss: BossDefinition.boss(id: "earth")!, game: game) { }
         // Debug routes to eyeball the other bosses' props/poses.

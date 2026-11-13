@@ -21,7 +21,6 @@ enum CombatTechnique: String, Codable, CaseIterable, Hashable {
     }
 }
 
-// MARK: - Rarity
 
 enum Rarity: String, Codable, CaseIterable, Hashable {
     case base, common, rare, epic, mythic, legendary, elite, transcendent, omniscient
@@ -40,7 +39,7 @@ enum Rarity: String, Codable, CaseIterable, Hashable {
         }
     }
 
-    /// Damage multiplier granted by a blueprint of this rarity.
+
     var damageMultiplier: Double {
         switch self {
         case .base: return 1.0
@@ -55,7 +54,7 @@ enum Rarity: String, Codable, CaseIterable, Hashable {
         }
     }
 
-    /// Gacha weight (out of 100).
+
     var weight: Double {
         switch self {
         case .base: return 30

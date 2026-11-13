@@ -700,7 +700,8 @@ private struct BattleResultOverlay: View {
                                 .foregroundStyle(i < stars ? Color(hex: 0xF5C451) : Color.white.opacity(0.2))
                         }
                     }
-                    Text("+\(game.defeatedBosses.contains(boss.id + "_rewarded") ? boss.rewardRepeat : boss.rewardFirstClear) COINS")
+                    let firstClear = !game.defeatedBosses.contains(boss.id + "_rewarded")
+                    Text("+\(boss.coinReward(firstClear: firstClear)) COINS • +\(boss.penReward(firstClear: firstClear)) PENS")
                         .font(.system(size: 16, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color(hex: 0xF5C451))
                 } else {

@@ -1,21 +1,7 @@
 import SwiftUI
 import CoreGraphics
 
-// MARK: - Bone selection
-// The stickman rig follows a simple hierarchy (concepts adapted from stickman
-// editors such as StyK Animate, reimplemented natively in Swift):
-//
-//                 head
-//                  |
-//                torso (root at hip)
-//             /    |    \
-//        lUpperArm torso rUpperArm
-//            |         |
-//        lForearm  rForearm
-//             \    |    /
-//        lThigh   rThigh
-//            |         |
-//        lShin     rShin
+
 
 enum Bone: String, CaseIterable, Codable, Hashable {
     case head
@@ -56,8 +42,8 @@ enum Bone: String, CaseIterable, Codable, Hashable {
     /// Angles in radians are measured clockwise from "down" (0 = pointing straight down).
     var defaultAngle: CGFloat {
         switch self {
-        case .torso: return .pi          // torso goes up from the hip
-        case .head: return 0             // head sits above the neck
+        case .torso: return .pi          
+        case .head: return 0
         case .leftUpperArm: return 0.35
         case .leftForearm: return 0.2
         case .rightUpperArm: return -0.35

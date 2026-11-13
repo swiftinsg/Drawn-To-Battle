@@ -13,6 +13,7 @@ struct SettingsView: View {
 
     @State private var showResetConfirm = false
     @State private var resetDone = false
+    @State private var maxedDone = false
 
     var body: some View {
         ZStack {
@@ -95,7 +96,52 @@ struct SettingsView: View {
                                 .scaledToFit()
                                 .frame(height: 14)),
                                         title: "PENS",
-                                        blurb: "Spent on blueprint gacha pulls.")
+                                        blurb: "Half of every boss reward; spent on gacha pulls.")
+                        }
+                    }
+
+                    // Testing aids.
+                    section("TESTING") {
+                        VStack(alignment: .leading, spacing: 10) {
+                            Toggle(isOn: Binding(
+                                get: { game.testUnlockAll },
+                                set: { game.testUnlockAll = $0 }
+                            )) {
+                                settingLabel("UNLOCK ALL BOSSES")
+                            }
+                            .tint(Color(hex: 0xF5C451))
+
+                            Button {
+                                game.coins = 99_999
+                                game.stardust = 99_999
+                                maxedDone = true
+                            } label: {
+                                HStack {
+                                    Image(systemName: "scalemass.fill")
+                                        .font(.system(size: 12, weight: .bold))
+                                    Text("MAX CURRENCIES (99,999)")
+                                        .font(.system(size: 13, weight: .black, design: .rounded))
+                                    Spacer()
+                                }
+                                .foregroundStyle(Color(hex: 0xF5C451))
+                                .padding(.horizontal, 12)
+                                .padding(.vertical, 12)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .fill(Color(hex: 0xF5C451).opacity(0.1))
+                                )
+                                .overlay(
+                                    RoundedRectangle(cornerRadius: 12)
+                                        .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1)
+                                )
+                            }
+                            .buttonStyle(.plain)
+
+                            if maxedDone {
+                                Text("Coins and pens set to 99,999.")
+                                    .font(.system(size: 11, weight: .semibold))
+                                    .foregroundStyle(.white.opacity(0.45))
+                            }
                         }
                     }
 
