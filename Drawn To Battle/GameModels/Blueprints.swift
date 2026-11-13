@@ -24,59 +24,70 @@ enum CombatTechnique: String, Codable, CaseIterable, Hashable {
 // MARK: - Rarity
 
 enum Rarity: String, Codable, CaseIterable, Hashable {
-    case common, uncommon, rare, epic, legendary, mythic, omniscient
+    case base, common, rare, epic, mythic, legendary, elite, transcendent, omniscient
 
     var stars: Int {
         switch self {
-        case .common: return 1
-        case .uncommon: return 2
+        case .base: return 1
+        case .common: return 2
         case .rare: return 3
         case .epic: return 4
-        case .legendary: return 5
-        case .mythic: return 6
-        case .omniscient: return 7
+        case .mythic: return 5
+        case .legendary: return 6
+        case .elite: return 7
+        case .transcendent: return 8
+        case .omniscient: return 9
         }
     }
 
     /// Damage multiplier granted by a blueprint of this rarity.
     var damageMultiplier: Double {
         switch self {
-        case .common: return 1.0
-        case .uncommon: return 1.12
+        case .base: return 1.0
+        case .common: return 1.1
         case .rare: return 1.25
         case .epic: return 1.45
-        case .legendary: return 1.7
-        case .mythic: return 2.0
-        case .omniscient: return 2.5
+        case .mythic: return 1.7
+        case .legendary: return 2.0
+        case .elite: return 2.4
+        case .transcendent: return 2.8
+        case .omniscient: return 3.3
         }
     }
 
     /// Gacha weight (out of 100).
     var weight: Double {
         switch self {
-        case .common: return 44
-        case .uncommon: return 26
-        case .rare: return 14
-        case .epic: return 8
-        case .legendary: return 5
-        case .mythic: return 2.4
-        case .omniscient: return 0.6
+        case .base: return 30
+        case .common: return 26
+        case .rare: return 18
+        case .epic: return 12
+        case .mythic: return 7
+        case .legendary: return 4.5
+        case .elite: return 1.8
+        case .transcendent: return 0.6
+        case .omniscient: return 0.1
         }
     }
 
     var color: Color {
         switch self {
-        case .common: return Color(hex: 0x9AA3B2)
-        case .uncommon: return Color(hex: 0x5FBF6E)
-        case .rare: return Color(hex: 0x4C8DFF)
+        case .base: return Color(hex: 0xC7CBD4)
+        case .common: return Color(hex: 0x35C759)
+        case .rare: return Color(hex: 0x3B8BFF)
         case .epic: return Color(hex: 0xA86CFF)
-        case .legendary: return Color(hex: 0xF5A623)
-        case .mythic: return Color(hex: 0xFF5E7A)
-        case .omniscient: return Color(hex: 0xF5C451)
+        case .mythic: return Color(hex: 0xF29CB1)
+        case .legendary: return Color(hex: 0xF5C451)
+        case .elite: return Color(hex: 0xFF5E3A)
+        case .transcendent: return Color(hex: 0x9D6BFF)
+        case .omniscient: return Color(hex: 0xFF4FD8)
         }
     }
 
-    var label: String { rawValue.uppercased() }
+    /// Matches the capitalisation used on the design label sheet.
+    var label: String {
+        self == .elite ? "Elite" : rawValue.uppercased()
+    }
 }
 
 // MARK: - Move Blueprint
@@ -98,23 +109,23 @@ struct MoveBlueprint: Identifiable, Hashable {
 
 enum BlueprintCatalog {
     static let all: [MoveBlueprint] = [
-        // --- Common ---
-        MoveBlueprint(id: "jab", name: "Jab", rarity: .common, technique: .punch,
+        // --- Base ---
+        MoveBlueprint(id: "jab", name: "Jab", rarity: .base, technique: .punch,
                       blurb: "A quick straight punch. Nothing fancy, it works."),
-        MoveBlueprint(id: "front_kick", name: "Front Kick", rarity: .common, technique: .kick,
+        MoveBlueprint(id: "front_kick", name: "Front Kick", rarity: .base, technique: .kick,
                       blurb: "Lift, extend, connect."),
-        MoveBlueprint(id: "hammer_drop", name: "Hammer Drop", rarity: .common, technique: .slam,
+        MoveBlueprint(id: "hammer_drop", name: "Hammer Drop", rarity: .base, technique: .slam,
                       blurb: "Both fists up, then the ceiling comes down."),
-        MoveBlueprint(id: "lunge_step", name: "Lunge Step", rarity: .common, technique: .dash,
+        MoveBlueprint(id: "lunge_step", name: "Lunge Step", rarity: .base, technique: .dash,
                       blurb: "Close the gap before they notice you moved."),
-        // --- Uncommon ---
-        MoveBlueprint(id: "cross", name: "Cross Strike", rarity: .uncommon, technique: .punch,
+        // --- Common ---
+        MoveBlueprint(id: "cross", name: "Cross Strike", rarity: .common, technique: .punch,
                       blurb: "A committed straight with the rear arm."),
-        MoveBlueprint(id: "sweep", name: "Low Sweep", rarity: .uncommon, technique: .kick,
+        MoveBlueprint(id: "sweep", name: "Low Sweep", rarity: .common, technique: .kick,
                       blurb: "Take the legs out from under them."),
-        MoveBlueprint(id: "rising_knee", name: "Rising Knee", rarity: .uncommon, technique: .kick,
+        MoveBlueprint(id: "rising_knee", name: "Rising Knee", rarity: .common, technique: .kick,
                       blurb: "Drive upward, meet the chin halfway."),
-        MoveBlueprint(id: "blink_rush", name: "Blink Rush", rarity: .uncommon, technique: .dash,
+        MoveBlueprint(id: "blink_rush", name: "Blink Rush", rarity: .common, technique: .dash,
                       blurb: "A short burst that eats the distance."),
         // --- Rare ---
         MoveBlueprint(id: "comet_hook", name: "Comet Hook", rarity: .rare, technique: .punch,
@@ -134,20 +145,21 @@ enum BlueprintCatalog {
                       blurb: "A falling heel with a verdict attached."),
         MoveBlueprint(id: "phase_lance", name: "Phase Lance", rarity: .epic, technique: .dash,
                       blurb: "Become a line, arrive as a point."),
-        // --- Legendary ---
-        MoveBlueprint(id: "tornado", name: "Tornado Spin", rarity: .legendary, technique: .spin,
-                      blurb: "A full rotation of pure momentum."),
-        MoveBlueprint(id: "orbital_heel", name: "Orbital Heel", rarity: .legendary, technique: .kick,
-                      blurb: "A kick that has left the atmosphere."),
-        MoveBlueprint(id: "smear_comet_tail", name: "SMEAR: Comet Tail", rarity: .legendary, technique: .smear,
-                      blurb: "The arc lingers long after the arm is gone."),
         // --- Mythic ---
-        MoveBlueprint(id: "supernova", name: "Supernova Spin", rarity: .mythic, technique: .spin,
+        MoveBlueprint(id: "tornado", name: "Tornado Spin", rarity: .mythic, technique: .spin,
+                      blurb: "A full rotation of pure momentum."),
+        MoveBlueprint(id: "orbital_heel", name: "Orbital Heel", rarity: .mythic, technique: .kick,
+                      blurb: "A kick that has left the atmosphere."),
+        MoveBlueprint(id: "smear_comet_tail", name: "SMEAR: Comet Tail", rarity: .mythic, technique: .smear,
+                      blurb: "The arc lingers long after the arm is gone."),
+        // --- Legendary ---
+        MoveBlueprint(id: "supernova", name: "Supernova Spin", rarity: .legendary, technique: .spin,
                       blurb: "Spin until the world blurs, then land."),
-        MoveBlueprint(id: "warp", name: "Warp Breaker", rarity: .mythic, technique: .dash,
+        MoveBlueprint(id: "warp", name: "Warp Breaker", rarity: .legendary, technique: .dash,
                       blurb: "Cross the arena in a single step."),
-        MoveBlueprint(id: "asteroid_drop", name: "Asteroid Drop", rarity: .mythic, technique: .slam,
+        MoveBlueprint(id: "asteroid_drop", name: "Asteroid Drop", rarity: .legendary, technique: .slam,
                       blurb: "Call it down from orbit, then mind the crater."),
+        // --- Elite / Transcendent: reserved for future blueprints ---
         // --- Omniscient ---
         MoveBlueprint(id: "smear_ghost", name: "SMEAR: Ghost Fist", rarity: .omniscient, technique: .smear,
                       blurb: "The arm exists in two places at once."),
@@ -170,14 +182,25 @@ enum Gacha {
     static let pullCost = 100
     static let duplicateRefund = 30
 
+    /// Tiers that actually contain blueprints. Elite and Transcendent are
+    /// reserved for future moves, so they can't be rolled yet.
+    static var activeRarities: [Rarity] {
+        Rarity.allCases.filter { !BlueprintCatalog.blueprints(in: $0).isEmpty }
+    }
+
+    /// Total weight across rollable tiers (used for the displayed rates).
+    static var totalActiveWeight: Double {
+        activeRarities.reduce(0.0) { $0 + $1.weight }
+    }
+
     static func rollRarity() -> Rarity {
-        let total = Rarity.allCases.reduce(0.0) { $0 + $1.weight }
+        let total = totalActiveWeight
         var pick = Double.random(in: 0..<total)
-        for rarity in Rarity.allCases {
+        for rarity in activeRarities {
             pick -= rarity.weight
             if pick <= 0 { return rarity }
         }
-        return .common
+        return activeRarities.first ?? .base
     }
 
     static func roll() -> MoveBlueprint {

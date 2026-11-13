@@ -17,13 +17,13 @@ struct CollectionView: View {
                 // Top bar.
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 32)
-                            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.08)))
+                        Image("DrawnToBattleBackButton")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 32, height: 32)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Back")
                     Spacer()
                     Text("COLLECTION")
                         .font(DrawnToBattleTypography.display(20))
@@ -47,10 +47,7 @@ struct CollectionView: View {
                             if !bps.isEmpty {
                                 VStack(alignment: .leading, spacing: 8) {
                                     HStack(spacing: 6) {
-                                        Circle().fill(rarity.color).frame(width: 9, height: 9)
-                                        Text(rarity.label)
-                                            .font(.system(size: 12, weight: .black, design: .rounded))
-                                            .foregroundStyle(rarity.color)
+                                        RaritySticker(rarity: rarity, height: 14)
                                         Spacer()
                                         Text("\(String(format: "%.0f", rarity.weight))%")
                                             .font(.system(size: 10, weight: .semibold, design: .monospaced))

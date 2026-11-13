@@ -21,20 +21,23 @@ struct GachaView: View {
                 // Top bar.
                 HStack {
                     Button { dismiss() } label: {
-                        Image(systemName: "chevron.left")
-                            .font(.system(size: 14, weight: .bold))
-                            .foregroundStyle(.white)
-                            .frame(width: 36, height: 32)
-                            .background(RoundedRectangle(cornerRadius: 9).fill(Color.white.opacity(0.08)))
+                        Image("DrawnToBattleBackButton")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(width: 32, height: 32)
                     }
                     .buttonStyle(.plain)
+                    .accessibilityLabel("Back")
                     Spacer()
                     Text("BLUEPRINT GACHA")
                         .font(DrawnToBattleTypography.display(20))
                         .foregroundStyle(.white)
                     Spacer()
-                    HStack(spacing: 4) {
-                        Text("✦").foregroundStyle(Color(hex: 0xF5C451))
+                    HStack(spacing: 5) {
+                        Image("DrawnToBattleGachaToken")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 20)
                         Text("\(game.stardust)")
                             .font(.system(size: 14, weight: .heavy, design: .rounded))
                             .foregroundStyle(.white)
@@ -70,13 +73,18 @@ struct GachaView: View {
                     Button {
                         pull()
                     } label: {
-                        Text("PULL — 100 ✦")
-                            .font(.system(size: 18, weight: .black, design: .rounded))
-                            .foregroundStyle(.black)
-                            .frame(maxWidth: 260)
-                            .padding(.vertical, 14)
-                            .background(Capsule().fill(game.stardust >= Gacha.pullCost && !rolling ? Color(hex: 0xF5C451) : Color.white.opacity(0.15)))
-                            .foregroundStyle(game.stardust >= Gacha.pullCost ? .black : .white.opacity(0.5))
+                        HStack(spacing: 8) {
+                            Image("DrawnToBattleGachaToken")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 22)
+                            Text("PULL — 100")
+                                .font(.system(size: 18, weight: .black, design: .rounded))
+                        }
+                        .frame(maxWidth: 260)
+                        .padding(.vertical, 14)
+                        .background(Capsule().fill(game.stardust >= Gacha.pullCost && !rolling ? Color(hex: 0xF5C451) : Color.white.opacity(0.15)))
+                        .foregroundStyle(game.stardust >= Gacha.pullCost ? .black : .white.opacity(0.5))
                     }
                     .buttonStyle(.plain)
                     .disabled(game.stardust < Gacha.pullCost || rolling)
@@ -95,22 +103,31 @@ struct GachaView: View {
                 }
 
                 if showRates {
-                    VStack(alignment: .leading, spacing: 4) {
+                    VStack(alignment: .leading, spacing: 6) {
                         ForEach(Rarity.allCases.reversed(), id: \.self) { rarity in
                             HStack {
-                                Circle().fill(rarity.color).frame(width: 8, height: 8)
-                                Text(rarity.label)
-                                    .font(.system(size: 12, weight: .bold, design: .rounded))
-                                    .foregroundStyle(rarity.color)
+                                RaritySticker(rarity: rarity, height: 13)
                                 Spacer()
-                                Text(String(format: "%.1f%%", rarity.weight))
-                                    .font(.system(size: 12, weight: .semibold, design: .monospaced))
-                                    .foregroundStyle(.white.opacity(0.6))
+                                if Gacha.activeRarities.contains(rarity) {
+                                    Text(String(format: "%.1f%%", rarity.weight / Gacha.totalActiveWeight * 100))
+                                        .font(.system(size: 12, weight: .semibold, design: .monospaced))
+                                        .foregroundStyle(.white.opacity(0.6))
+                                } else {
+                                    Text("SOON")
+                                        .font(.system(size: 10, weight: .heavy, design: .rounded))
+                                        .foregroundStyle(.white.opacity(0.35))
+                                }
                             }
                         }
-                        Text("Duplicates refund \(Gacha.duplicateRefund) ✦")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.4))
+                        HStack(spacing: 4) {
+                            Text("Duplicates refund \(Gacha.duplicateRefund)")
+                            Image("DrawnToBattleGachaToken")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 11)
+                        }
+                        .font(.system(size: 10, weight: .medium))
+                        .foregroundStyle(.white.opacity(0.4))
                     }
                     .padding(14)
                     .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.05)))
@@ -180,12 +197,7 @@ private struct GachaResultCard: View {
                         .foregroundStyle(.white)
                         .multilineTextAlignment(.center)
 
-                    Text(blueprint.rarity.label)
-                        .font(.system(size: 12, weight: .black, design: .rounded))
-                        .foregroundStyle(.black)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(blueprint.rarity.color))
+                    RaritySticker(rarity: blueprint.rarity, height: 22)
 
                     HStack(spacing: 8) {
                         Text(blueprint.technique.label)

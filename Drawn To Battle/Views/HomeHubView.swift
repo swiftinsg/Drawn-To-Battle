@@ -34,8 +34,10 @@ struct HomeHubView: View {
                         .frame(height: 44)
                     Spacer()
                     HStack(spacing: 5) {
-                        Text("✦")
-                            .foregroundStyle(Color(hex: 0xF5C451))
+                        Image("DrawnToBattleGachaToken")
+                            .resizable()
+                            .scaledToFit()
+                            .frame(height: 22)
                         Text("\(game.stardust)")
                             .font(.system(size: 16, weight: .heavy, design: .rounded))
                             .foregroundStyle(.white)
