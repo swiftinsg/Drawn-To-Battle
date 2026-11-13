@@ -2,60 +2,72 @@
 //  ContentView.swift
 //  Drawn To Battle
 //
-//  Created by Pratheesh on 11/11/26.
-//
 
 import SwiftUI
-import SwiftData
 
 struct ContentView: View {
-    @Environment(\.modelContext) private var modelContext
-    @Query private var items: [Item]
+    @State private var showHub = false
+    @StateObject private var studioState = StudioState()
+    @StateObject private var game = GameSave()
+
+    // Debug: SIMCTL_CHILD_DTB_ROUTE=<hub|gacha|collection|battle-earth|battle-mars|battle-sun> skips the start screen.
+    private var debugRoute: String? {
+        ProcessInfo.processInfo.environment["DTB_ROUTE"]
+    }
 
     var body: some View {
-        NavigationSplitView {
-            List {
-                ForEach(items) { item in
-                    NavigationLink {
-                        Text("Item at \(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))")
-                    } label: {
-                        Text(item.timestamp, format: Date.FormatStyle(date: .numeric, time: .standard))
+        root
+            .animation(.easeInOut(duration: 0.35), value: showHub)
+            .onAppear {
+                if debugRoute != nil { showHub = true }
+                if debugRoute == "collection-demo" && game.ownedBlueprints.isEmpty {
+                    for id in ["jab", "hammer_drop", "lunge_step", "cross",
+                               "smear_speedline", "copter_spin", "guillotine_kick",
+                               "tornado", "supernova", "smear_ghost"] {
+                        game.ownedBlueprints.insert(id)
                     }
-                }
-                .onDelete(perform: deleteItems)
-            }
-            .toolbar {
-                ToolbarItem(placement: .navigationBarTrailing) {
-                    EditButton()
-                }
-                ToolbarItem {
-                    Button(action: addItem) {
-                        Label("Add Item", systemImage: "plus")
+                    if let bp = BlueprintCatalog.blueprint(id: "smear_speedline") {
+                        game.equip(blueprint: bp)
                     }
                 }
             }
-        } detail: {
-            Text("Select an item")
+    }
+
+    @ViewBuilder
+    private var root: some View {
+        if showHub {
+            hub
+        } else {
+            StartScreenView { showHub = true }
         }
     }
 
-    private func addItem() {
-        withAnimation {
-            let newItem = Item(timestamp: Date())
-            modelContext.insert(newItem)
-        }
-    }
-
-    private func deleteItems(offsets: IndexSet) {
-        withAnimation {
-            for index in offsets {
-                modelContext.delete(items[index])
-            }
+    @ViewBuilder
+    private var hub: some View {
+        switch debugRoute {
+        case "gacha":
+            GachaView(game: game)
+        case "collection":
+            CollectionView(game: game)
+        // Debug/demo: seeds a few owned blueprints to exercise the edit UI.
+        case "collection-demo":
+            CollectionView(game: game)
+        case "battle-earth":
+            BattleView(boss: BossDefinition.boss(id: "earth")!, game: game) { }
+        // Debug routes to eyeball the other bosses' props/poses.
+        case "battle-mars":
+            BattleView(boss: BossDefinition.boss(id: "mars")!, game: game) { }
+        case "battle-sun":
+            BattleView(boss: BossDefinition.boss(id: "sun")!, game: game) { }
+        // Debug route to eyeball the Animation Studio (onion skin, speed toggle).
+        case "studio":
+            AnimationStudioView(studio: studioState, onBack: { })
+        default:
+            HomeHubView(game: game, studio: studioState)
         }
     }
 }
 
 #Preview {
     ContentView()
-        .modelContainer(for: Item.self, inMemory: true)
 }
