@@ -14,16 +14,22 @@ struct AnalysisResult {
     var telegraph: Double = 0
     /// Overall 0–100 power score.
     var power: Double = 0
+    /// How the power score reads in words — shown in the HUD, studio and collection.
+    var powerLabel: String {
+        switch power {
+        case ..<25: return "SLOPPY"
+        case ..<45: return "DECENT"
+        case ..<65: return "CRISP"
+        case ..<85: return "SHARP"
+        default: return "DEVASTATING"
+        }
+    }
     /// Techniques detected in the animation.
     var techniques: Set<CombatTechnique> = []
     /// Frame index where the strike lands (max limb speed).
     var strikeIndex: Int = 0
 }
 
-// MARK: - Analyzer
-
-/// Scores a stickman animation for combat use. Purely derived from the
-/// motion data (joint positions across frames), no manual tagging.
 enum AnimationAnalysis {
     static func analyze(_ project: AnimationProject) -> AnalysisResult {
         var r = AnalysisResult()
@@ -34,12 +40,12 @@ enum AnimationAnalysis {
             return r
         }
 
-        // Resolved joints per frame.
+        
         let joints: [[JointPoint: CGPoint]] = frames.map { StickmanKinematics.resolve($0.pose) }
         let n = frames.count
         let pairs = n - 1
 
-        // Per-pair velocities of the four strike limbs + root travel.
+  
         var handSpeeds: [Double] = []
         var footSpeeds: [Double] = []
         var rootSpeeds: [Double] = []

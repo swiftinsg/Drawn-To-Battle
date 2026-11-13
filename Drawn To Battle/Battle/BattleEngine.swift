@@ -433,7 +433,9 @@ final class BattleEngine: ObservableObject {
             return
         }
 
-        var dmg = 8 + analysis.power / 100 * 22
+        // Animation quality IS the weapon: a sloppy 0-power swing does ~5,
+        // a perfect 100-power swing does ~40 before rarity/combo/stun.
+        var dmg = 5 + analysis.power / 100 * 35
         let techMatch = analysis.techniques.contains(boss.requiredTechnique)
         if !techMatch {
             dmg *= 0.18

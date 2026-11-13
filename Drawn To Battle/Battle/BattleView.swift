@@ -355,6 +355,10 @@ private struct BattleHUD: View {
                 Text(boss.requiredTechnique.label)
                     .font(.system(size: 14, weight: .black, design: .rounded))
                     .foregroundStyle(Color(hex: 0xF5C451))
+                // Your animation's quality drives damage — show the score.
+                Text("POWER \(Int(engine.analysis.power)) • \(engine.analysis.powerLabel)")
+                    .font(.system(size: 9, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.55))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
@@ -704,6 +708,9 @@ private struct BattleResultOverlay: View {
                     Text("+\(boss.coinReward(firstClear: firstClear)) COINS • +\(boss.penReward(firstClear: firstClear)) PENS")
                         .font(.system(size: 16, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color(hex: 0xF5C451))
+                    Text("YOUR ANIMATION — POWER \(Int(engine.analysis.power)) • \(engine.analysis.powerLabel)")
+                        .font(.system(size: 11, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.6))
                 } else {
                     Text("The \(boss.bossName) only fears \(boss.requiredTechnique.label) strikes.\nSharpen your animation and return.")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))

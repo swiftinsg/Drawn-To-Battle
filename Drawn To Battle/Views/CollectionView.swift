@@ -103,7 +103,7 @@ struct CollectionView: View {
                             .font(.system(size: 15, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
                         Spacer()
-                        Text("POWER \(Int(analysis.power))")
+                        Text("POWER \(Int(analysis.power)) • \(analysis.powerLabel)")
                             .font(.system(size: 13, weight: .black, design: .rounded))
                             .foregroundStyle(Color(hex: 0xF5C451))
                     }

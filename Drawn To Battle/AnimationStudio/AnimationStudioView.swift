@@ -54,6 +54,17 @@ struct AnimationStudioView: View {
                     }
                     .buttonStyle(.plain)
 
+                    // Live quality readout — re-scored on every edit, and the
+                    // same score that sets battle damage.
+                    let live = AnimationAnalysis.analyze(studio.project)
+                    Text("POWER \(Int(live.power)) • \(live.powerLabel)")
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
+                        .padding(.horizontal, 8)
+                        .padding(.vertical, 4)
+                        .background(Capsule().fill(Color(hex: 0xF5C451).opacity(0.1)))
+                        .lineLimit(1)
+
                     Spacer()
 
                     if studio.hasUnsavedChanges {
