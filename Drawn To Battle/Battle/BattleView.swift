@@ -700,9 +700,9 @@ private struct BattleResultOverlay: View {
                                 .foregroundStyle(i < stars ? Color(hex: 0xF5C451) : Color.white.opacity(0.2))
                         }
                     }
-                    Text("+\(game.defeatedBosses.contains(boss.id + "_rewarded") ? boss.rewardRepeat : boss.rewardFirstClear) ✦ STARDUST")
+                    Text("+\(game.defeatedBosses.contains(boss.id + "_rewarded") ? boss.rewardRepeat : boss.rewardFirstClear) COINS")
                         .font(.system(size: 16, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.white)
+                        .foregroundStyle(Color(hex: 0xF5C451))
                 } else {
                     Text("The \(boss.bossName) only fears \(boss.requiredTechnique.label) strikes.\nSharpen your animation and return.")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
@@ -738,7 +738,7 @@ private struct BattleResultOverlay: View {
                         if result == .victory { game.registerVictory(boss: boss) }
                         onExit()
                     } label: {
-                        Text("HUB")
+                        Text("BACK")
                             .font(.system(size: 15, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 22)

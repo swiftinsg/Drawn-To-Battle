@@ -6,20 +6,22 @@
 import SwiftUI
 
 struct ContentView: View {
-    @State private var showHub = false
+    private enum Stage { case start, naming, hub }
+
+    @State private var stage: Stage = .start
     @StateObject private var studioState = StudioState()
     @StateObject private var game = GameSave()
 
-    // Debug: SIMCTL_CHILD_DTB_ROUTE=<hub|gacha|collection|battle-earth|battle-mars|battle-sun> skips the start screen.
+    // Debug: SIMCTL_CHILD_DTB_ROUTE=<hub|solar|username|gacha|collection|battle-earth|battle-mars|battle-sun|studio> skips the start screen.
     private var debugRoute: String? {
         ProcessInfo.processInfo.environment["DTB_ROUTE"]
     }
 
     var body: some View {
         root
-            .animation(.easeInOut(duration: 0.35), value: showHub)
+            .animation(.easeInOut(duration: 0.35), value: stage)
             .onAppear {
-                if debugRoute != nil { showHub = true }
+                if debugRoute != nil { stage = .hub }
                 if debugRoute == "collection-demo" && game.ownedBlueprints.isEmpty {
                     for id in ["jab", "hammer_drop", "lunge_step", "cross",
                                "smear_speedline", "copter_spin", "guillotine_kick",
@@ -35,10 +37,18 @@ struct ContentView: View {
 
     @ViewBuilder
     private var root: some View {
-        if showHub {
+        switch stage {
+        case .start:
+            StartScreenView {
+                // First-time fighters name themselves before entering the hub.
+                stage = game.hasUsername ? .hub : .naming
+            }
+        case .naming:
+            UsernameView(game: game) {
+                stage = .hub
+            }
+        case .hub:
             hub
-        } else {
-            StartScreenView { showHub = true }
         }
     }
 
@@ -52,6 +62,10 @@ struct ContentView: View {
         // Debug/demo: seeds a few owned blueprints to exercise the edit UI.
         case "collection-demo":
             CollectionView(game: game)
+        case "solar":
+            SolarSystemView(game: game)
+        case "username":
+            UsernameView(game: game) { }
         case "battle-earth":
             BattleView(boss: BossDefinition.boss(id: "earth")!, game: game) { }
         // Debug routes to eyeball the other bosses' props/poses.

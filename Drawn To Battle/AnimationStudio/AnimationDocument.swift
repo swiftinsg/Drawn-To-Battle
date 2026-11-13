@@ -25,7 +25,10 @@ struct AnimationProject: Codable, Equatable {
     var frames: [AnimationFrame]
     var fps: Int
 
-    static let defaultFPS = 12
+    /// FPS used for brand-new projects; settable in Settings.
+    static var defaultFPS: Int {
+        UserDefaults.standard.object(forKey: "DrawnToBattle.defaultFPS") as? Int ?? 12
+    }
 
     static func blank() -> AnimationProject {
         AnimationProject(name: "Untitled", frames: [AnimationFrame(pose: StickmanPose())], fps: defaultFPS)
@@ -104,6 +107,7 @@ final class StudioState: ObservableObject {
     init(project: AnimationProject = .blank()) {
         self.project = project
         self.selectedIndex = 0
+        self.onionSkin = UserDefaults.standard.bool(forKey: "DrawnToBattle.defaultOnionSkin")
     }
 
     // MARK: Editing

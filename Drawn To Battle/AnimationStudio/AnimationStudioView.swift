@@ -102,8 +102,20 @@ struct AnimationStudioView: View {
                             studio.selectFrame(studio.project.frames.count - 1)
                         }
 
-                        // Frame management.
-                        StudioIconButton(systemImage: "plus") { studio.addFrame() }
+                        // Frame management. The add-frame button carries the
+                        // hand-drawn film strip on a gold chip.
+                        Button {
+                            studio.addFrame()
+                        } label: {
+                            Image("DrawnToBattleFrameButton")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 22, height: 11)
+                                .frame(width: 30, height: 28)
+                                .background(RoundedRectangle(cornerRadius: 9).fill(Color(hex: 0xF5C451)))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Add frame")
                         StudioIconButton(systemImage: "doc.on.doc") {
                             studio.duplicateFrame(at: studio.selectedIndex)
                         }

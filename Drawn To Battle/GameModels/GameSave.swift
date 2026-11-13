@@ -124,6 +124,16 @@ final class GameSave: ObservableObject {
     @Published var blueprintEdits: [String: AnimationProject] = [:] {
         didSet { persist() }
     }
+    /// Coins — earned from battles. (Pens/stardust above is the gacha currency.)
+    @Published var coins: Int = 0 {
+        didSet { persist() }
+    }
+    /// The fighter's name, chosen on first launch.
+    @Published var username: String = "" {
+        didSet { persist() }
+    }
+
+    var hasUsername: Bool { !username.isEmpty }
 
     private static let key = "DrawnToBattle.save.v1"
 
@@ -135,6 +145,8 @@ final class GameSave: ObservableObject {
             equipped = saved.equipped
             defeatedBosses = saved.defeatedBosses
             blueprintEdits = saved.blueprintEdits ?? [:]
+            coins = saved.coins ?? 0
+            username = saved.username ?? ""
         }
     }
 
@@ -196,8 +208,18 @@ final class GameSave: ObservableObject {
     func registerVictory(boss: BossDefinition) {
         defeatedBosses.insert(boss.id)
         let first = !defeatedBosses.contains(boss.id + "_rewarded")
-        stardust += first ? boss.rewardFirstClear : boss.rewardRepeat
+        coins += first ? boss.rewardFirstClear : boss.rewardRepeat
         if first { defeatedBosses.insert(boss.id + "_rewarded") }
+    }
+
+    /// Wipes progress back to a fresh save, keeping the fighter's name.
+    func resetProgress() {
+        stardust = 150
+        ownedBlueprints = []
+        equipped = nil
+        defeatedBosses = []
+        blueprintEdits = [:]
+        coins = 0
     }
 
     func isUnlocked(_ boss: BossDefinition) -> Bool {
@@ -213,6 +235,8 @@ final class GameSave: ObservableObject {
         var equipped: EquippedLoadout?
         var defeatedBosses: Set<String>
         var blueprintEdits: [String: AnimationProject]?
+        var coins: Int?
+        var username: String?
     }
 
     private func persist() {
@@ -221,7 +245,9 @@ final class GameSave: ObservableObject {
             ownedBlueprints: ownedBlueprints,
             equipped: equipped,
             defeatedBosses: defeatedBosses,
-            blueprintEdits: blueprintEdits
+            blueprintEdits: blueprintEdits,
+            coins: coins,
+            username: username
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: Self.key)

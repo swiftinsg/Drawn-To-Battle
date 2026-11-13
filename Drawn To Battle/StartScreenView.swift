@@ -19,21 +19,6 @@ struct StartScreenView: View {
 
                 Spacer()
 
-                Button {
-                    startLoading()
-                } label: {
-                    Image("DrawnToBattlePlayButton")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(width: 150, height: 80)
-                        .opacity(isLoading ? 0.4 : 1)
-                        .scaleEffect(isLoading ? 0.92 : 1)
-                }
-                .buttonStyle(.plain)
-                .disabled(isLoading)
-                .accessibilityLabel("Play")
-                .padding(.bottom, 24)
-
                 LoadingBar(progress: loadingProgress)
                     .frame(maxWidth: 360)
             }
@@ -107,7 +92,7 @@ private struct LogoSlot: View {
     }
 }
 
-private struct StartScreenBackground: View {
+struct StartScreenBackground: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {

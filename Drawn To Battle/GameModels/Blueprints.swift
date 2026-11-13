@@ -181,6 +181,9 @@ enum BlueprintCatalog {
 enum Gacha {
     static let pullCost = 100
     static let duplicateRefund = 30
+    /// Coin → pen exchange (battles pay coins; the gacha runs on pens).
+    static let exchangeCoins = 100
+    static let exchangePens = 20
 
     /// Tiers that actually contain blueprints. Elite and Transcendent are
     /// reserved for future moves, so they can't be rolled yet.

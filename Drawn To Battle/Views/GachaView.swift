@@ -89,6 +89,31 @@ struct GachaView: View {
                     .buttonStyle(.plain)
                     .disabled(game.stardust < Gacha.pullCost || rolling)
 
+                    // Coin → pen exchange (battles pay coins).
+                    Button {
+                        guard game.coins >= Gacha.exchangeCoins else { return }
+                        game.coins -= Gacha.exchangeCoins
+                        game.addStardust(Gacha.exchangePens)
+                    } label: {
+                        HStack(spacing: 6) {
+                            Image(systemName: "circlebadge.fill")
+                                .font(.system(size: 11, weight: .bold))
+                            Text("\(Gacha.exchangeCoins) → \(Gacha.exchangePens)")
+                                .font(.system(size: 12, weight: .black, design: .rounded))
+                            Image("DrawnToBattleGachaToken")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 13)
+                        }
+                        .padding(.horizontal, 14)
+                        .padding(.vertical, 8)
+                        .background(Capsule().fill(game.coins >= Gacha.exchangeCoins && !rolling ? Color.white.opacity(0.1) : Color.white.opacity(0.04)))
+                        .foregroundStyle(game.coins >= Gacha.exchangeCoins ? Color(hex: 0xF5C451) : .white.opacity(0.3))
+                    }
+                    .buttonStyle(.plain)
+                    .disabled(game.coins < Gacha.exchangeCoins || rolling)
+                    .accessibilityLabel("Exchange coins for pens")
+
                     Button {
                         withAnimation { showRates.toggle() }
                     } label: {
