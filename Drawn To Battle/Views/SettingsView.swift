@@ -28,8 +28,9 @@ struct SettingsView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 32, height: 32)
+                                .stickerShadow()
                         }
-                        .buttonStyle(.plain)
+                        .buttonStyle(SquashButtonStyle())
                         .accessibilityLabel("Close settings")
                         Spacer()
                         Text("SETTINGS")

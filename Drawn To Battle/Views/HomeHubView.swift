@@ -49,9 +49,9 @@ struct HomeHubView: View {
                                     .lineLimit(1)
                             }
                         }
-                        .bubbleChrome()
+                        .bubbleChrome(sketchSeed: 11)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SquashButtonStyle())
                     .accessibilityLabel("Profile, \(game.username)")
 
                     Spacer(minLength: 6)
@@ -64,7 +64,7 @@ struct HomeHubView: View {
                             .font(.system(size: 14, weight: .heavy, design: .rounded))
                             .foregroundStyle(.white)
                     }
-                    .bubbleChrome(paddingX: 10)
+                    .bubbleChrome(paddingX: 10, sketchSeed: 23)
                     .accessibilityLabel("Coins balance")
 
                     HStack(spacing: 5) {
@@ -76,7 +76,7 @@ struct HomeHubView: View {
                             .font(.system(size: 14, weight: .heavy, design: .rounded))
                             .foregroundStyle(.white)
                     }
-                    .bubbleChrome(paddingX: 10)
+                    .bubbleChrome(paddingX: 10, sketchSeed: 37)
                     .accessibilityLabel("Pens balance")
 
                     Button {
@@ -86,10 +86,17 @@ struct HomeHubView: View {
                             .font(.system(size: 14, weight: .bold))
                             .foregroundStyle(.white.opacity(0.85))
                             .padding(9)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color.black.opacity(0.55)))
-                            .overlay(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.12), lineWidth: 1))
+                            .background(
+                                SketchyRect(seed: 41)
+                                    .fill(Color.black.opacity(0.55))
+                            )
+                            .overlay(
+                                SketchyRect(seed: 41)
+                                    .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
+                            )
+                            .shadow(color: .black.opacity(0.3), radius: 5, y: 3)
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SquashButtonStyle())
                     .accessibilityLabel("Settings")
                 }
                 .padding(.horizontal, 14)
@@ -126,9 +133,11 @@ struct HomeHubView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 148, height: 79)
-                            .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 16, y: 5)
+                            .stickerShadow()
+                            .shadow(color: Color(hex: 0xF5C451).opacity(0.28), radius: 18, y: 4)
+                            .modifier(StickerBob())
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SquashButtonStyle())
                     .accessibilityLabel("Play — choose a boss")
                 }
                 .padding(.horizontal, 16)
@@ -182,9 +191,14 @@ struct HomeHubView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(
-            RoundedRectangle(cornerRadius: 12)
+            SketchyRect(seed: 53)
                 .fill(Color.white.opacity(0.06))
         )
+        .overlay(
+            SketchyRect(seed: 53)
+                .stroke(Color.white.opacity(0.22), lineWidth: 1.2)
+        )
+        .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
         .frame(maxWidth: 250)
     }
 
@@ -215,19 +229,22 @@ private struct StudioBackgroundRemoval: UIViewControllerRepresentable {
 // MARK: - Bubble chrome (the dark rounded bubbles from the home template)
 
 extension View {
-    /// Dark rounded-bubble styling used across the home screen.
-    func bubbleChrome(paddingX: CGFloat = 12) -> some View {
+    /// Dark hand-cut bubble styling used across the home screen: a wobbly
+    /// marker-drawn border with a little lift, so the chrome feels drawn
+    /// with the sticker art.
+    func bubbleChrome(paddingX: CGFloat = 12, sketchSeed: UInt64 = 7) -> some View {
         self
             .padding(.horizontal, paddingX)
             .padding(.vertical, 9)
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                SketchyRect(seed: sketchSeed)
                     .fill(Color.black.opacity(0.55))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                SketchyRect(seed: sketchSeed)
+                    .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
             )
+            .shadow(color: .black.opacity(0.3), radius: 5, y: 3)
     }
 }
 
@@ -237,6 +254,11 @@ private struct MenuBubble: View {
     let title: String
     let systemImage: String
     let action: () -> Void
+
+    /// Distinct seed per title so every bubble's wobble is unique but stable.
+    private var seed: UInt64 {
+        UInt64(abs(title.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) }) % 997) + 3
+    }
 
     var body: some View {
         Button(action: action) {
@@ -248,8 +270,8 @@ private struct MenuBubble: View {
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
             }
-            .bubbleChrome(paddingX: 16)
+            .bubbleChrome(paddingX: 16, sketchSeed: seed)
         }
-        .buttonStyle(.plain)
+        .buttonStyle(SquashButtonStyle())
     }
 }

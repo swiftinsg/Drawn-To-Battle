@@ -25,8 +25,9 @@ struct GachaView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 32, height: 32)
+                            .stickerShadow()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SquashButtonStyle())
                     .accessibilityLabel("Back")
                     Spacer()
                     Text("BLUEPRINT GACHA")
@@ -89,7 +90,7 @@ struct GachaView: View {
                         .background(Capsule().fill(canPull ? Color(hex: 0xF5C451) : Color.white.opacity(0.15)))
                         .foregroundStyle(canPull ? .black : .white.opacity(0.5))
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SquashButtonStyle())
                     .disabled(!canPull)
 
                     let total = BlueprintCatalog.all.count

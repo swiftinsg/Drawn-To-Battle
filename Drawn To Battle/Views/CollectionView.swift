@@ -21,8 +21,9 @@ struct CollectionView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 32, height: 32)
+                            .stickerShadow()
                     }
-                    .buttonStyle(.plain)
+                    .buttonStyle(SquashButtonStyle())
                     .accessibilityLabel("Back")
                     Spacer()
                     Text("COLLECTION")
