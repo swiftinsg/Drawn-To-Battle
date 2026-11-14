@@ -1,14 +1,25 @@
 import SwiftUI
+import UIKit
+import CoreText
 
 enum DrawnToBattleTypography {
     // Rust Sport (Andriy Dykun) — free for personal and commercial use.
-    // Add "RustSport.ttf" to the project and Info.plist's UIAppFonts
-    // entry ("RustSport") to activate; falls back gracefully otherwise.
+    // The TTF ships in the app bundle ("RustSport.ttf") and is registered
+    // at runtime below — no Info.plist needed. Falls back gracefully
+    // if the file is ever missing.
     static let rustFamilyName = "RustSport"
+
+    /// Registers the bundled font once, on first use.
+    private static let registerBundledFont: Void = {
+        guard let url = Bundle.main.url(forResource: "RustSport", withExtension: "ttf") else { return }
+        // true from the handler = ignore "already registered" errors.
+        CTFontManagerRegisterFontURLs([url] as CFArray, .process, true) { _, _ in true }
+    }()
 
     /// True if the Rust Sport font file is embedded in the bundle.
     static var rustFontAvailable: Bool {
-        UIFont(name: rustFamilyName, size: 20) != nil
+        registerBundledFont
+        return UIFont(name: rustFamilyName, size: 20) != nil
     }
 
     static func display(_ size: CGFloat) -> Font {
