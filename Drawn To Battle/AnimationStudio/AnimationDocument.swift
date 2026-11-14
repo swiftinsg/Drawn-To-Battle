@@ -1,13 +1,12 @@
 import SwiftUI
 import Combine
 
-// MARK: - Frame
 
-/// One frame of a stickman animation.
+
 struct AnimationFrame: Codable, Equatable, Identifiable {
     var id: UUID
     var pose: StickmanPose
-    /// Extra frames this frame holds during playback (0 = 1 display tick).
+    
     var hold: Int
 
     init(id: UUID = UUID(), pose: StickmanPose, hold: Int = 0) {
@@ -17,15 +16,13 @@ struct AnimationFrame: Codable, Equatable, Identifiable {
     }
 }
 
-// MARK: - Project document
 
-/// The whole animation project: frames plus playback settings.
 struct AnimationProject: Codable, Equatable {
     var name: String
     var frames: [AnimationFrame]
     var fps: Int
 
-    /// FPS used for brand-new projects; settable in Settings.
+    
     static var defaultFPS: Int {
         UserDefaults.standard.object(forKey: "DrawnToBattle.defaultFPS") as? Int ?? 12
     }
@@ -38,7 +35,7 @@ struct AnimationProject: Codable, Equatable {
 // MARK: - Store (save / load)
 
 enum AnimationProjectStore {
-    /// Documents/Animations directory inside the app sandbox.
+
     static var directory: URL {
         let docs = FileManager.default.urls(for: .documentDirectory, in: .userDomainMask)[0]
         let dir = docs.appendingPathComponent("Animations", isDirectory: true)
@@ -85,19 +82,17 @@ final class StudioState: ObservableObject {
     @Published var selectedIndex: Int {
         didSet { clampSelection() }
     }
-    /// Whether playback is running.
+ 
     @Published var isPlaying = false
-    /// Whether the project has unsaved changes.
+ 
     @Published var hasUnsavedChanges = false
-    /// Onion skinning: draw faded ghosts of the previous frames.
+  
     @Published var onionSkin = false
-    /// Playback speed multiplier (0.5 / 1 / 2).
+
     @Published var playbackSpeed: Double = 1
-    /// Set while editing a blueprint's animation. Saving then stores the
-    /// customization on the blueprint instead of a separate project file.
+  
     @Published var editingBlueprintID: String?
-    /// The game save used to persist blueprint edits. Assigned by the screens
-    /// that present the studio.
+ 
     var game: GameSave?
 
     private var playbackTimer: Timer?
@@ -110,8 +105,7 @@ final class StudioState: ObservableObject {
         self.onionSkin = UserDefaults.standard.bool(forKey: "DrawnToBattle.defaultOnionSkin")
     }
 
-    // MARK: Editing
-
+ 
     var currentFrame: AnimationFrame? {
         guard project.frames.indices.contains(selectedIndex) else { return nil }
         return project.frames[selectedIndex]
@@ -125,10 +119,10 @@ final class StudioState: ObservableObject {
         hasUnsavedChanges = true
     }
 
-    // MARK: Frame management
+
 
     func addFrame() {
-        // New frames copy the current pose so animators can tweak incrementally.
+      
         let pose = currentFrame?.pose ?? StickmanPose()
         let insertAt = min(selectedIndex + 1, project.frames.count)
         project.frames.insert(AnimationFrame(pose: pose), at: insertAt)
@@ -185,7 +179,7 @@ final class StudioState: ObservableObject {
         }
     }
 
-    /// Cycles playback speed 1× → 2× → ½×.
+ 
     func cyclePlaybackSpeed() {
         if playbackSpeed == 1 { playbackSpeed = 2 }
         else if playbackSpeed == 2 { playbackSpeed = 0.5 }
@@ -220,13 +214,13 @@ final class StudioState: ObservableObject {
         }
     }
 
-    // MARK: Save / load
+
 
     @discardableResult
     func save() throws -> URL? {
         stop()
         hasUnsavedChanges = false
-        // Editing a blueprint: store the customization on the blueprint itself.
+    
         if let blueprintID = editingBlueprintID, let game {
             game.setBlueprintEdit(blueprintID, project: project)
             return nil
@@ -234,8 +228,6 @@ final class StudioState: ObservableObject {
         return try AnimationProjectStore.save(project)
     }
 
-    /// Loads a blueprint for editing: the player's previous edit if they have
-    /// one, otherwise the blueprint's base animation.
     func editBlueprint(_ blueprint: MoveBlueprint, edited: AnimationProject?) {
         stop()
         project = edited ?? blueprint.baseAnimation
