@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - Home hub (template layout)
 //
-// Profile top-left • coins/pens/settings top-right • collection on the left •
-// gacha + studio bottom-left • play bottom-right → solar system.
+// Profile top-left • coins/pens/settings top-right • gacha/studio/collection
+// stacked down the left • play bottom-right → solar system.
 
 struct HomeHubView: View {
     @ObservedObject var game: GameSave
@@ -21,15 +21,7 @@ struct HomeHubView: View {
         ZStack {
             Color(hex: 0x0C0D12).ignoresSafeArea()
 
-            // Background glow.
-            GeometryReader { geo in
-                Circle()
-                    .fill(Color(hex: 0xF5C451).opacity(0.08))
-                    .frame(width: geo.size.width * 0.9)
-                    .blur(radius: 80)
-                    .offset(x: geo.size.width * 0.35, y: -geo.size.height * 0.4)
-            }
-            .allowsHitTesting(false)
+            HubBackdrop()
 
             VStack(spacing: 0) {
                 // Top row: profile • coins, pens, settings.
@@ -111,13 +103,20 @@ struct HomeHubView: View {
                 .padding(.horizontal, 14)
                 .padding(.top, 10)
 
-                // Left column: collection + loadout.
-                VStack(alignment: .leading, spacing: 12) {
+                // Left column: the three main menus in standard order.
+                VStack(alignment: .leading, spacing: 10) {
+                    MenuBubble(title: "GACHA", systemImage: "sparkles") {
+                        showGacha = true
+                    }
+                    MenuBubble(title: "STUDIO", systemImage: "film") {
+                        showStudio = true
+                    }
                     MenuBubble(title: "COLLECTION", systemImage: "square.grid.2x2") {
                         showCollection = true
                     }
 
                     loadoutChip
+                        .padding(.top, 2)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(.horizontal, 14)
@@ -125,14 +124,8 @@ struct HomeHubView: View {
 
                 Spacer()
 
-                // Bottom row: gacha • studio • play.
+                // Bottom row: play → solar system.
                 HStack(alignment: .bottom, spacing: 12) {
-                    MenuBubble(title: "GACHA", systemImage: "sparkles") {
-                        showGacha = true
-                    }
-                    MenuBubble(title: "STUDIO", systemImage: "film") {
-                        showStudio = true
-                    }
                     Spacer()
                     Button {
                         showSolar = true
@@ -225,6 +218,122 @@ struct HomeHubView: View {
 
     private var equippedAnalysis: AnalysisResult {
         AnimationAnalysis.analyze(game.equipped?.project ?? PoseTemplate.animation(for: .punch, name: "x"))
+    }
+}
+
+// MARK: - Hub backdrop
+
+/// Faint star field, orbit, planets and a stickman silhouette so the hub
+/// doesn't read as a flat black screen.
+private struct HubBackdrop: View {
+    var body: some View {
+        GeometryReader { _ in
+            Canvas { context, size in
+                let gold = Color(hex: 0xF5C451)
+
+                // Warm corner glow, drawn behind everything else.
+                context.fill(
+                    Path(ellipseIn: CGRect(
+                        x: size.width * 0.42,
+                        y: -size.height * 0.34,
+                        width: size.width * 0.95,
+                        height: size.height * 0.95
+                    )),
+                    with: .color(gold.opacity(0.07))
+                )
+
+                // Star field.
+                var rng = SeededRandom(seed: 119)
+                for _ in 0..<44 {
+                    let x = CGFloat(rng.next()) * size.width
+                    let y = CGFloat(rng.next()) * size.height
+                    let radius = CGFloat(0.7 + rng.next() * 1.3)
+                    let opacity = 0.08 + rng.next() * 0.2
+                    context.fill(
+                        Path(ellipseIn: CGRect(
+                            x: x - radius, y: y - radius,
+                            width: radius * 2, height: radius * 2
+                        )),
+                        with: .color(.white.opacity(opacity))
+                    )
+                }
+
+                // Orbit.
+                context.stroke(
+                    Path(ellipseIn: CGRect(
+                        x: -size.width * 0.12,
+                        y: size.height * 0.22,
+                        width: size.width * 1.22,
+                        height: size.height * 0.78
+                    )),
+                    with: .color(.white.opacity(0.06)),
+                    style: StrokeStyle(lineWidth: 1, dash: [6, 10])
+                )
+
+                // The three boss planets.
+                let planets: [(CGFloat, CGFloat, CGFloat, UInt32, UInt32)] = [
+                    (0.16, 0.35, 22, 0x3FA65C, 0x4C8DFF),
+                    (0.53, 0.23, 14, 0xF5C451, 0xFF8A3C),
+                    (0.82, 0.60, 28, 0x4FC3F7, 0xB3E5FC),
+                ]
+                for planet in planets {
+                    let x = planet.0 * size.width
+                    let y = planet.1 * size.height
+                    let d = planet.2
+                    let body = Color(hex: planet.3)
+                    let accent = Color(hex: planet.4)
+
+                    context.fill(
+                        Path(ellipseIn: CGRect(x: x - d * 1.7, y: y - d * 1.7,
+                                               width: d * 3.4, height: d * 3.4)),
+                        with: .color(accent.opacity(0.08))
+                    )
+                    context.fill(
+                        Path(ellipseIn: CGRect(x: x - d / 2, y: y - d / 2,
+                                               width: d, height: d)),
+                        with: .color(body.opacity(0.55))
+                    )
+                    context.stroke(
+                        Path(ellipseIn: CGRect(x: x - d / 2 - 3, y: y - d / 2 - 3,
+                                               width: d + 6, height: d + 6)),
+                        with: .color(accent.opacity(0.35)),
+                        style: StrokeStyle(lineWidth: 1.5)
+                    )
+                }
+
+                // Faint fighter silhouette.
+                let cx = size.width * 0.64
+                let cy = size.height * 0.60
+                let ink = Color.white.opacity(0.07)
+
+                var torso = Path()
+                torso.move(to: CGPoint(x: cx, y: cy - 44))
+                torso.addLine(to: CGPoint(x: cx, y: cy + 16))
+
+                var arms = Path()
+                arms.move(to: CGPoint(x: cx, y: cy - 28))
+                arms.addLine(to: CGPoint(x: cx - 30, y: cy - 14))
+                arms.move(to: CGPoint(x: cx, y: cy - 28))
+                arms.addLine(to: CGPoint(x: cx + 30, y: cy - 40))
+
+                var legs = Path()
+                legs.move(to: CGPoint(x: cx, y: cy + 16))
+                legs.addLine(to: CGPoint(x: cx - 24, y: cy + 58))
+                legs.move(to: CGPoint(x: cx, y: cy + 16))
+                legs.addLine(to: CGPoint(x: cx + 22, y: cy + 58))
+
+                let stroke = StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round)
+                context.stroke(torso, with: .color(ink), style: stroke)
+                context.stroke(arms, with: .color(ink), style: stroke)
+                context.stroke(legs, with: .color(ink), style: stroke)
+                context.fill(
+                    Path(ellipseIn: CGRect(x: cx - 15, y: cy - 74, width: 30, height: 30)),
+                    with: .color(ink)
+                )
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 }
 

@@ -50,10 +50,16 @@ struct SettingsView: View {
                                     .foregroundStyle(Color(hex: 0xF5C451))
                                     .fixedSize()
                             }
-                            Toggle(isOn: $defaultOnionSkin) {
-                                settingLabel("ONION SKIN")
+                            VStack(alignment: .leading, spacing: 4) {
+                                Toggle(isOn: $defaultOnionSkin) {
+                                    settingLabel("GHOST FRAMES")
+                                }
+                                .tint(Color(hex: 0xF5C451))
+
+                                Text("Shows the previous frame faintly while you draw.")
+                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.white.opacity(0.4))
                             }
-                            .tint(Color(hex: 0xF5C451))
                         }
                     }
 
@@ -110,7 +116,7 @@ struct SettingsView: View {
         }
         .preferredColorScheme(.dark)
         .confirmationDialog(
-            "Reset all progress? You'll keep your name and photo, but lose your moves, coins, pens and boss records.",
+            "Reset all progress? You'll keep your name and photo, but lose your moves, coins, pens, XP and boss records.",
             isPresented: $showResetConfirm,
             titleVisibility: .visible
         ) {

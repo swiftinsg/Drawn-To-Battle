@@ -178,8 +178,10 @@ struct GachaView: View {
     ) -> some View {
         Button(action: action) {
             HStack(spacing: 6) {
-                GachaMascotView()
-                    .frame(width: 20, height: 20)
+                Image("DrawnToBattleGachaToken")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(height: 20)
                 Text(title)
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .lineLimit(1)
@@ -391,7 +393,7 @@ private struct GachaResultCard: View {
     }
 }
 
-// MARK: - Gacha mascot (drawn in code, no pen token needed)
+// MARK: - Simplified gacha mascot
 
 private struct GachaMascotView: View {
     var body: some View {
@@ -403,64 +405,42 @@ private struct GachaMascotView: View {
 
             let gold = Color(hex: 0xF5C451)
             let ink = Color(hex: 0x11131A)
-            let blue = Color(hex: 0x4FC3F7)
 
-            // Soft spotlight.
-            context.fill(
-                Path(ellipseIn: CGRect(x: 12, y: 10, width: 56, height: 60)),
-                with: .color(gold.opacity(0.16))
-            )
-
-            // Capsule machine body.
-            let capsule = Path(roundedRect: CGRect(x: 20, y: 30, width: 40, height: 42), cornerRadius: 20)
+            // Simple capsule machine.
+            let capsule = Path(roundedRect: CGRect(x: 23, y: 36, width: 34, height: 36), cornerRadius: 17)
             context.fill(capsule, with: .color(Color(hex: 0x15171F)))
-            context.stroke(capsule, with: .color(gold.opacity(0.8)),
-                           style: StrokeStyle(lineWidth: 2))
+            context.stroke(capsule, with: .color(gold.opacity(0.9)),
+                           style: StrokeStyle(lineWidth: 2.5))
 
-            let glass = Path(ellipseIn: CGRect(x: 24, y: 16, width: 32, height: 28))
-            context.fill(glass, with: .color(blue.opacity(0.4)))
-            context.stroke(glass, with: .color(blue.opacity(0.7)),
-                           style: StrokeStyle(lineWidth: 1.5))
-
-            // Stickman bursting out, fists up.
-            var torso = Path()
-            torso.move(to: CGPoint(x: 40, y: 28))
-            torso.addLine(to: CGPoint(x: 40, y: 48))
-            context.stroke(torso, with: .color(ink),
-                           style: StrokeStyle(lineWidth: 4.5, lineCap: .round, lineJoin: .round))
-
-            var leftArm = Path()
-            leftArm.move(to: CGPoint(x: 40, y: 33))
-            leftArm.addLine(to: CGPoint(x: 29, y: 28))
-            leftArm.addLine(to: CGPoint(x: 23, y: 20))
-            context.stroke(leftArm, with: .color(ink),
-                           style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-
-            var rightArm = Path()
-            rightArm.move(to: CGPoint(x: 40, y: 33))
-            rightArm.addLine(to: CGPoint(x: 51, y: 27))
-            rightArm.addLine(to: CGPoint(x: 57, y: 18))
-            context.stroke(rightArm, with: .color(ink),
-                           style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
-
-            context.fill(Path(ellipseIn: CGRect(x: 19, y: 16, width: 8, height: 8)), with: .color(gold))
-            context.fill(Path(ellipseIn: CGRect(x: 53, y: 14, width: 8, height: 8)), with: .color(gold))
-
-            context.fill(Path(ellipseIn: CGRect(x: 34, y: 8, width: 12, height: 12)), with: .color(ink))
+            // Stickman: head, body, two raised arms.
+            context.fill(
+                Path(ellipseIn: CGRect(x: 34, y: 8, width: 12, height: 12)),
+                with: .color(ink)
+            )
             context.fill(Path(ellipseIn: CGRect(x: 38, y: 12, width: 1.8, height: 1.8)), with: .color(.white))
             context.fill(Path(ellipseIn: CGRect(x: 42, y: 12, width: 1.8, height: 1.8)), with: .color(.white))
 
-            let plate = Path(roundedRect: CGRect(x: 16, y: 67, width: 48, height: 6), cornerRadius: 3)
-            context.fill(plate, with: .color(gold))
+            let line = StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
 
-            // Two little doodle sparkles.
-            var sparkle = Path()
-            sparkle.move(to: CGPoint(x: 12, y: 30))
-            sparkle.addLine(to: CGPoint(x: 12, y: 36))
-            sparkle.move(to: CGPoint(x: 9, y: 33))
-            sparkle.addLine(to: CGPoint(x: 15, y: 33))
-            context.stroke(sparkle, with: .color(gold),
-                           style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+            var torso = Path()
+            torso.move(to: CGPoint(x: 40, y: 22))
+            torso.addLine(to: CGPoint(x: 40, y: 50))
+            context.stroke(torso, with: .color(ink), style: line)
+
+            var arms = Path()
+            arms.move(to: CGPoint(x: 40, y: 30))
+            arms.addLine(to: CGPoint(x: 28, y: 25))
+            arms.addLine(to: CGPoint(x: 23, y: 18))
+            arms.move(to: CGPoint(x: 40, y: 30))
+            arms.addLine(to: CGPoint(x: 52, y: 25))
+            arms.addLine(to: CGPoint(x: 57, y: 18))
+            context.stroke(arms, with: .color(ink), style: line)
+
+            context.fill(Path(ellipseIn: CGRect(x: 19, y: 14, width: 8, height: 8)), with: .color(gold))
+            context.fill(Path(ellipseIn: CGRect(x: 53, y: 14, width: 8, height: 8)), with: .color(gold))
+
+            let plate = Path(roundedRect: CGRect(x: 18, y: 68, width: 44, height: 6), cornerRadius: 3)
+            context.fill(plate, with: .color(gold))
         }
         .allowsHitTesting(false)
         .accessibilityHidden(true)
@@ -581,7 +561,7 @@ private struct DropRatesView: View {
 
                 ScrollView(showsIndicators: true) {
                     VStack(spacing: 8) {
-                        ForEach(Rarity.allCases.reversed(), id: \.self) { rarity in
+                        ForEach(Rarity.allCases.filter { $0 != .base }.reversed(), id: \.self) { rarity in
                             HStack(spacing: 10) {
                                 RaritySticker(rarity: rarity, height: 20)
                                 Spacer()
@@ -604,7 +584,7 @@ private struct DropRatesView: View {
                             Image(systemName: "circlebadge.fill")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(Color(hex: 0xF5C451))
-                            Text("Complete your collection to earn coins from duplicate draws.")
+                            Text("Base moves are starters. Duplicates pay coins.")
                                 .font(.system(size: 11, weight: .medium, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.45))
                         }

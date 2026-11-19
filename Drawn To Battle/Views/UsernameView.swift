@@ -11,6 +11,9 @@ struct UsernameView: View {
     @FocusState private var fieldFocused: Bool
 
     private var trimmed: String { name.trimmingCharacters(in: .whitespacesAndNewlines) }
+    private var canConfirm: Bool {
+        trimmed.count >= GameSave.minNameLength && trimmed.count <= GameSave.maxNameLength
+    }
 
     var body: some View {
         GeometryReader { geo in
@@ -31,6 +34,12 @@ struct UsernameView: View {
                             .foregroundStyle(.white.opacity(0.5))
                             .padding(.top, 8)
 
+                        Text("Use at least \(GameSave.minNameLength) characters.")
+                            .font(.system(size: 10, weight: .black, design: .rounded))
+                            .tracking(1)
+                            .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+                            .padding(.top, 4)
+
                         TextField("FIGHTER NAME", text: $name)
                             .font(.system(size: 22, weight: .black, design: .rounded))
                             .multilineTextAlignment(.center)
@@ -41,7 +50,9 @@ struct UsernameView: View {
                             .submitLabel(.done)
                             .onSubmit(confirm)
                             .onChange(of: name) { _, newValue in
-                                if newValue.count > 14 { name = String(newValue.prefix(14)) }
+                                if newValue.count > GameSave.maxNameLength {
+                                    name = String(newValue.prefix(GameSave.maxNameLength))
+                                }
                             }
                             .padding(.vertical, 18)
                             .background(
@@ -64,11 +75,11 @@ struct UsernameView: View {
                                 .frame(maxWidth: 240)
                                 .padding(.vertical, 14)
                                 .background(
-                                    Capsule().fill(trimmed.isEmpty ? Color.white.opacity(0.15) : Color(hex: 0xF5C451))
+                                    Capsule().fill(canConfirm ? Color(hex: 0xF5C451) : Color.white.opacity(0.15))
                                 )
                         }
                         .buttonStyle(.plain)
-                        .disabled(trimmed.isEmpty)
+                        .disabled(!canConfirm)
                         .padding(.top, 22)
 
                         Spacer(minLength: 0)
@@ -86,7 +97,7 @@ struct UsernameView: View {
     }
 
     private func confirm() {
-        guard !trimmed.isEmpty else { return }
+        guard canConfirm else { return }
         fieldFocused = false
         game.username = trimmed
         onDone()

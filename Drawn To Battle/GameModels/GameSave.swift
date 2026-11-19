@@ -105,6 +105,11 @@ struct BossDefinition: Identifiable, Hashable {
     func penReward(firstClear: Bool) -> Int {
         Int(ceil(Double(coinReward(firstClear: firstClear)) / 2))
     }
+
+    /// XP follows the same first-clear/repeat split as coins.
+    func xpReward(firstClear: Bool) -> Int {
+        coinReward(firstClear: firstClear)
+    }
 }
 
 // MARK: - Loadout
@@ -139,6 +144,10 @@ final class GameSave: ObservableObject {
     ]
 
     @Published var stardust: Int = GameSave.startingStardust {
+        didSet { persist() }
+    }
+    /// Total XP earned. Level is derived from this so it can't drift out of sync.
+    @Published var experience: Int = 0 {
         didSet { persist() }
     }
     @Published var ownedBlueprints: Set<String> = GameSave.starterBlueprintIDs {
@@ -176,11 +185,18 @@ final class GameSave: ObservableObject {
 
     /// Coins charged by the settings screen for changing the fighter's name.
     static let nameChangeCost = 1000
+    static let minNameLength = 3
+    static let maxNameLength = 14
+
+    /// XP awarded for finding a new move or rerolling an owned one.
+    private static let xpPerNewBlueprint = 25
+    private static let xpPerDuplicate = 10
 
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.key),
            let saved = try? JSONDecoder().decode(SaveData.self, from: data) {
             stardust = saved.stardust
+            experience = saved.experience ?? 0
             // Older saves may not have the starter set. Grant it without
             // taking away anything the player already pulled.
             let needsStarterMoves = !Self.starterBlueprintIDs.isSubset(of: saved.ownedBlueprints)
@@ -194,6 +210,33 @@ final class GameSave: ObservableObject {
             gachaHistory = saved.gachaHistory ?? []
             if needsStarterMoves { persist() }
         }
+    }
+
+    // MARK: Leveling
+
+    var level: Int { Self.level(for: experience) }
+
+    /// XP needed to enter a given level, measured from level 1.
+    static func cumulativeXP(for level: Int) -> Int {
+        let steps = max(0, level - 1)
+        return 25 * steps * (steps + 3)
+    }
+
+    static func level(for totalXP: Int) -> Int {
+        var current = 1
+        while cumulativeXP(for: current + 1) <= totalXP { current += 1 }
+        return current
+    }
+
+    /// XP progress inside the current level.
+    var levelProgress: (current: Int, needed: Int) {
+        let base = Self.cumulativeXP(for: level)
+        let next = Self.cumulativeXP(for: level + 1)
+        return (experience - base, next - base)
+    }
+
+    func addExperience(_ amount: Int) {
+        experience += max(0, amount)
     }
 
     // MARK: Mutations
@@ -213,7 +256,8 @@ final class GameSave: ObservableObject {
     @discardableResult
     func changeUsername(to rawName: String) -> Bool {
         let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
-        guard !trimmed.isEmpty, trimmed.count <= 14,
+        guard trimmed.count >= Self.minNameLength,
+              trimmed.count <= Self.maxNameLength,
               trimmed != username, coins >= Self.nameChangeCost else { return false }
         coins -= Self.nameChangeCost
         username = trimmed
@@ -241,11 +285,13 @@ final class GameSave: ObservableObject {
     @discardableResult
     func registerPull(_ blueprint: MoveBlueprint) -> Bool /* isNew */ {
         if ownedBlueprints.contains(blueprint.id) {
-            // Collection's complete — extra pulls now pay coins.
+            // Collection's complete — extra pulls now pay coins and XP.
             coins += Gacha.duplicateRefund
+            addExperience(Self.xpPerDuplicate)
             return false
         }
         ownedBlueprints.insert(blueprint.id)
+        addExperience(Self.xpPerNewBlueprint)
         return true
     }
 
@@ -299,12 +345,14 @@ final class GameSave: ObservableObject {
         let first = !defeatedBosses.contains(boss.id + "_rewarded")
         coins += boss.coinReward(firstClear: first)
         stardust += boss.penReward(firstClear: first)
+        addExperience(boss.xpReward(firstClear: first))
         if first { defeatedBosses.insert(boss.id + "_rewarded") }
     }
 
     /// Wipes progress back to a fresh save, keeping the fighter's identity.
     func resetProgress() {
         stardust = Self.startingStardust
+        experience = 0
         ownedBlueprints = Self.starterBlueprintIDs
         equipped = nil
         defeatedBosses = []
@@ -322,6 +370,7 @@ final class GameSave: ObservableObject {
 
     private struct SaveData: Codable {
         var stardust: Int
+        var experience: Int?
         var ownedBlueprints: Set<String>
         var equipped: EquippedLoadout?
         var defeatedBosses: Set<String>
@@ -335,6 +384,7 @@ final class GameSave: ObservableObject {
     private func persist() {
         let data = SaveData(
             stardust: stardust,
+            experience: experience,
             ownedBlueprints: ownedBlueprints,
             equipped: equipped,
             defeatedBosses: defeatedBosses,

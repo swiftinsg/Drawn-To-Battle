@@ -154,6 +154,7 @@ struct AnimationStudioView: View {
                                 )
                         }
                         .buttonStyle(.plain)
+                        .accessibilityLabel(studio.onionSkin ? "Hide ghost frames" : "Show ghost frames")
 
                         // Playback speed toggle.
                         Button {

@@ -18,6 +18,7 @@ struct ProfileView: View {
     var body: some View {
         ZStack {
             StartScreenBackground()
+            ProfileSolarDecor()
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 16) {
@@ -42,6 +43,10 @@ struct ProfileView: View {
             Button("CHANGE NAME") {
                 if game.changeUsername(to: draftName) {
                     renameMessage = "Name changed! −\(GameSave.nameChangeCost.formatted()) coins."
+                } else if trimmedDraftName.count < GameSave.minNameLength {
+                    renameMessage = "Use at least \(GameSave.minNameLength) characters!"
+                } else if trimmedDraftName == game.username {
+                    renameMessage = "That's already your name."
                 } else {
                     renameMessage = "Not enough coins!"
                 }
@@ -84,7 +89,12 @@ struct ProfileView: View {
     }
 
     private var avatarAndLevel: some View {
-        VStack(spacing: 8) {
+        let progress = game.levelProgress
+        let fraction = progress.needed > 0
+            ? min(1, max(0, Double(progress.current) / Double(progress.needed)))
+            : 0
+
+        return VStack(spacing: 8) {
             ZStack {
                 Circle()
                     .fill(Color(hex: 0xF5C451).opacity(0.12))
@@ -110,13 +120,30 @@ struct ProfileView: View {
                     }
             }
 
-            Text("LV. \(fighterLevel)")
+            Text("LV. \(game.level)")
                 .font(.system(size: 10, weight: .black, design: .rounded))
                 .tracking(2)
                 .foregroundStyle(.black)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
                 .background(Capsule().fill(Color(hex: 0xF5C451)))
+
+            VStack(spacing: 3) {
+                GeometryReader { geo in
+                    ZStack(alignment: .leading) {
+                        Capsule().fill(Color.white.opacity(0.12))
+                        Capsule()
+                            .fill(Color(hex: 0xF5C451))
+                            .frame(width: geo.size.width * fraction)
+                    }
+                }
+                .frame(width: 150, height: 5)
+
+                Text("XP \(progress.current)/\(progress.needed)")
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                    .tracking(1)
+                    .foregroundStyle(.white.opacity(0.55))
+            }
         }
         .padding(.top, 2)
     }
@@ -184,7 +211,9 @@ struct ProfileView: View {
                 .textInputAutocapitalization(.characters)
                 .submitLabel(.done)
                 .onChange(of: draftName) { _, newValue in
-                    if newValue.count > 14 { draftName = String(newValue.prefix(14)) }
+                    if newValue.count > GameSave.maxNameLength {
+                        draftName = String(newValue.prefix(GameSave.maxNameLength))
+                    }
                     renameMessage = nil
                 }
                 .padding(.horizontal, 14)
@@ -222,7 +251,12 @@ struct ProfileView: View {
             .buttonStyle(.plain)
             .disabled(!canRename)
 
-            if game.coins < GameSave.nameChangeCost {
+            if trimmedDraftName.count < GameSave.minNameLength {
+                Text("USE AT LEAST \(GameSave.minNameLength) CHARACTERS")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .tracking(1)
+                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+            } else if game.coins < GameSave.nameChangeCost {
                 Text("\(coinsNeeded.formatted()) MORE COINS TO GO")
                     .font(.system(size: 10, weight: .black, design: .rounded))
                     .tracking(1)
@@ -274,8 +308,6 @@ struct ProfileView: View {
         BossDefinition.all.filter { game.defeatedBosses.contains($0.id) }.count
     }
 
-    private var fighterLevel: Int { 1 + clearedCount }
-
     private var trimmedDraftName: String {
         draftName.trimmingCharacters(in: .whitespacesAndNewlines)
     }
@@ -285,9 +317,85 @@ struct ProfileView: View {
     }
 
     private var canRename: Bool {
-        !trimmedDraftName.isEmpty
-            && trimmedDraftName.count <= 14
+        trimmedDraftName.count >= GameSave.minNameLength
+            && trimmedDraftName.count <= GameSave.maxNameLength
             && trimmedDraftName != game.username
             && game.coins >= GameSave.nameChangeCost
+    }
+}
+
+// MARK: - Background solar system
+
+/// Three planets sitting along the faint orbit already drawn by
+/// StartScreenBackground, so the profile reads as a mini solar system.
+private struct ProfileSolarDecor: View {
+    var body: some View {
+        GeometryReader { geo in
+            Canvas { context, size in
+                let center = CGPoint(x: size.width / 2, y: size.height * 0.29)
+                let radiusX = size.width * 0.41
+                let radiusY = size.height * 0.14
+
+                let orbit = Path(ellipseIn: CGRect(
+                    x: center.x - radiusX,
+                    y: center.y - radiusY,
+                    width: radiusX * 2,
+                    height: radiusY * 2
+                ))
+                context.stroke(
+                    orbit,
+                    with: .color(.white.opacity(0.07)),
+                    style: StrokeStyle(lineWidth: 1, dash: [4, 8])
+                )
+
+                // Earth, Sun, Uranus — same palette as the boss planets.
+                let planets: [(CGFloat, CGFloat, CGFloat, UInt32, UInt32)] = [
+                    (-0.78, 0.16, 13, 0x3FA65C, 0x4C8DFF),
+                    (0.0, -1.0, 17, 0xF5C451, 0xFF8A3C),
+                    (0.78, 0.16, 12, 0x4FC3F7, 0xB3E5FC),
+                ]
+
+                for planet in planets {
+                    let pos = CGPoint(
+                        x: center.x + planet.0 * radiusX,
+                        y: center.y + planet.1 * radiusY
+                    )
+                    let diameter = planet.2
+                    let body = Color(hex: planet.3)
+                    let accent = Color(hex: planet.4)
+
+                    context.fill(
+                        Path(ellipseIn: CGRect(
+                            x: pos.x - diameter * 1.5,
+                            y: pos.y - diameter * 1.5,
+                            width: diameter * 3,
+                            height: diameter * 3
+                        )),
+                        with: .color(accent.opacity(0.12))
+                    )
+                    context.fill(
+                        Path(ellipseIn: CGRect(
+                            x: pos.x - diameter / 2,
+                            y: pos.y - diameter / 2,
+                            width: diameter,
+                            height: diameter
+                        )),
+                        with: .color(body)
+                    )
+                    context.stroke(
+                        Path(ellipseIn: CGRect(
+                            x: pos.x - diameter / 2 - 3,
+                            y: pos.y - diameter / 2 - 3,
+                            width: diameter + 6,
+                            height: diameter + 6
+                        )),
+                        with: .color(accent.opacity(0.6)),
+                        style: StrokeStyle(lineWidth: 1.5)
+                    )
+                }
+            }
+        }
+        .ignoresSafeArea()
+        .allowsHitTesting(false)
     }
 }
