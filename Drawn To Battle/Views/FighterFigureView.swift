@@ -154,10 +154,10 @@ struct FighterFigureView: View {
 
             for index in 0..<3 {
                 var feather = Path()
-                let y = cy - (108 + index * 18) * scale
+                let y = cy - CGFloat((108 + index * 18)) * scale
                 feather.move(to: CGPoint(x: cx + side * 26 * scale, y: y))
                 feather.addLine(
-                    to: CGPoint(x: cx + side * (88 - index * 8) * scale,
+                    to: CGPoint(x: cx + side * CGFloat(88 - index * 8) * scale,
                                 y: y - 26 * scale)
                 )
                 context.stroke(feather, with: .color(ice.opacity(0.65)),
