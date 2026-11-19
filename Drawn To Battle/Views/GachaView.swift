@@ -6,6 +6,11 @@ private struct GachaDrawResult: Identifiable {
     let isNew: Bool
 }
 
+private enum GachaTab: Hashable {
+    case moves
+    case costumes
+}
+
 // MARK: - Gacha screen
 
 struct GachaView: View {
@@ -18,6 +23,7 @@ struct GachaView: View {
     @State private var showHistory = false
     @State private var beamColor: Color = .clear
     @State private var beamOpacity: Double = 0
+    @State private var tab: GachaTab = .moves
 
     var body: some View {
         ZStack {
@@ -35,15 +41,27 @@ struct GachaView: View {
             VStack(spacing: 0) {
                 topBar
 
+                Picker("Category", selection: $tab) {
+                    Text("MOVES").tag(GachaTab.moves)
+                    Text("COSTUMES").tag(GachaTab.costumes)
+                }
+                .pickerStyle(.segmented)
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
-                        tagline
-                        machine
-                        collectionProgress
-                        secondaryButtons
+                        if tab == .moves {
+                            tagline
+                            machine
+                            collectionProgress
+                            secondaryButtons
+                        } else {
+                            CostumeVaultView(game: game)
+                        }
                     }
                     .padding(.horizontal, 16)
-                    .padding(.top, 4)
+                    .padding(.top, 12)
                     .padding(.bottom, 14)
                 }
             }
@@ -67,6 +85,7 @@ struct GachaView: View {
         .sheet(isPresented: $showHistory) {
             GachaHistoryView(game: game)
         }
+        .onChange(of: tab) { _, _ in results = [] }
         .preferredColorScheme(.dark)
     }
 
@@ -87,7 +106,7 @@ struct GachaView: View {
 
             Spacer()
 
-            Text("BLUEPRINT DRAW")
+            Text(tab == .moves ? "BLUEPRINT DRAW" : "COSTUME VAULT")
                 .font(DrawnToBattleTypography.display(20))
                 .foregroundStyle(.white)
 
@@ -143,7 +162,7 @@ struct GachaView: View {
                         .tint(Color(hex: 0xF5C451))
                         .scaleEffect(1.4)
                 } else {
-                    GachaMascotView()
+                    GachaMachineIcon()
                         .frame(width: 132, height: 132)
                 }
 
@@ -390,68 +409,6 @@ private struct GachaResultCard: View {
                 .frame(maxWidth: .infinity)
             }
         }
-    }
-}
-
-// MARK: - Gacha machine icon
-
-private struct GachaMascotView: View {
-    var body: some View {
-        Canvas { context, size in
-            let scale = min(size.width / 80, size.height / 80)
-            guard scale > 0 else { return }
-            context.translateBy(x: (size.width - 80 * scale) / 2, y: (size.height - 80 * scale) / 2)
-            context.scaleBy(x: scale, y: scale)
-
-            let gold = Color(hex: 0xF5C451)
-            let ink = Color(hex: 0x11131A)
-            let blue = Color(hex: 0x4FC3F7)
-
-            // Machine body.
-            let body = Path(roundedRect: CGRect(x: 16, y: 26, width: 48, height: 46), cornerRadius: 12)
-            context.fill(body, with: .color(Color(hex: 0x15171F)))
-            context.stroke(body, with: .color(gold.opacity(0.9)),
-                           style: StrokeStyle(lineWidth: 2.5))
-
-            // Glass dome with capsules.
-            let dome = Path(ellipseIn: CGRect(x: 24, y: 8, width: 32, height: 32))
-            context.fill(dome, with: .color(blue.opacity(0.3)))
-            context.stroke(dome, with: .color(blue.opacity(0.9)),
-                           style: StrokeStyle(lineWidth: 2))
-
-            let capsules: [(CGFloat, CGFloat, CGFloat, Color)] = [
-                (33, 21, 6, gold),
-                (46, 20, 5, Color(hex: 0xA86CFF)),
-                (40, 29, 5, Color(hex: 0xE86A6A)),
-            ]
-            for capsule in capsules {
-                let x = capsule.0 - capsule.2
-                let y = capsule.1 - capsule.2
-                let d = capsule.2 * 2
-                context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: d, height: d)),
-                             with: .color(capsule.3))
-                context.fill(Path(ellipseIn: CGRect(x: x + d * 0.22, y: y + d * 0.18,
-                                                     width: d * 0.22, height: d * 0.22)),
-                             with: .color(.white.opacity(0.8)))
-            }
-
-            // Knob and chute.
-            context.fill(Path(ellipseIn: CGRect(x: 35, y: 43, width: 10, height: 10)), with: .color(gold))
-            context.stroke(Path(ellipseIn: CGRect(x: 35, y: 43, width: 10, height: 10)),
-                           with: .color(ink.opacity(0.5)), style: StrokeStyle(lineWidth: 1.5))
-
-            let slot = Path(roundedRect: CGRect(x: 29, y: 57, width: 22, height: 9), cornerRadius: 4)
-            context.fill(slot, with: .color(ink))
-            context.stroke(slot, with: .color(gold.opacity(0.9)),
-                           style: StrokeStyle(lineWidth: 1.5))
-
-            // Capsule waiting in the chute and the base plate.
-            context.fill(Path(ellipseIn: CGRect(x: 35, y: 57, width: 10, height: 10)), with: .color(gold))
-            let plate = Path(roundedRect: CGRect(x: 14, y: 68, width: 52, height: 6), cornerRadius: 3)
-            context.fill(plate, with: .color(gold))
-        }
-        .allowsHitTesting(false)
-        .accessibilityHidden(true)
     }
 }
 

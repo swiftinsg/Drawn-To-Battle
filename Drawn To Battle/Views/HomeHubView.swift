@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - Home hub (template layout)
 //
-// Profile top-left • coins/pens/settings top-right • gacha/studio/collection
-// stacked down the left • play bottom-right → solar system.
+// Profile top-left • coins/pens/settings top-right • centered fighter with
+// world accessories • daily/studio/collection left • gacha + play along the bottom.
 
 struct HomeHubView: View {
     @ObservedObject var game: GameSave
@@ -15,6 +15,7 @@ struct HomeHubView: View {
     @State private var showSolar = false
     @State private var showSettings = false
     @State private var showProfile = false
+    @State private var showDaily = false
     @State private var activeCurrency: Currency?
 
     var body: some View {
@@ -22,6 +23,10 @@ struct HomeHubView: View {
             Color(hex: 0x0C0D12).ignoresSafeArea()
 
             HubBackdrop()
+
+            // The fighter is the focal point, like a Brawl Stars lobby.
+            FighterFigureView(accessory: game.equippedAccessory)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             VStack(spacing: 0) {
                 // Top row: profile • coins, pens, settings.
@@ -103,11 +108,9 @@ struct HomeHubView: View {
                 .padding(.horizontal, 14)
                 .padding(.top, 10)
 
-                // Left column: the three main menus in standard order.
+                // Left column: daily reward and the remaining menus.
                 VStack(alignment: .leading, spacing: 10) {
-                    MenuBubble(title: "GACHA", systemImage: "sparkles") {
-                        showGacha = true
-                    }
+                    dailyBubble
                     MenuBubble(title: "STUDIO", systemImage: "film") {
                         showStudio = true
                     }
@@ -124,8 +127,9 @@ struct HomeHubView: View {
 
                 Spacer()
 
-                // Bottom row: play → solar system.
+                // Bottom row: gacha and play share the same footprint.
                 HStack(alignment: .bottom, spacing: 12) {
+                    gachaTile
                     Spacer()
                     Button {
                         showSolar = true
@@ -169,6 +173,64 @@ struct HomeHubView: View {
             SettingsView(game: game)
                 .presentationBackground(Color(hex: 0x0C0D12))
         }
+        .sheet(isPresented: $showDaily) {
+            DailyRewardView(game: game)
+                .presentationBackground(Color(hex: 0x0C0D12))
+        }
+    }
+
+    private var dailyBubble: some View {
+        Button { showDaily = true } label: {
+            HStack(spacing: 8) {
+                Image(systemName: "flame.fill")
+                    .font(.system(size: 15, weight: .bold))
+                    .foregroundStyle(game.claimedDailyToday
+                                     ? .white.opacity(0.4) : Color(hex: 0xFF8A3C))
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("DAILY STREAK")
+                        .font(.system(size: 8, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.45))
+                    Text(game.claimedDailyToday
+                         ? "DAY \(max(1, game.dailyStreak)) • DONE"
+                         : "DAY \(game.dailyStreak + 1) • CLAIM")
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                }
+                if !game.claimedDailyToday {
+                    Circle()
+                        .fill(Color(hex: 0xF5C451))
+                        .frame(width: 6, height: 6)
+                }
+            }
+            .bubbleChrome(paddingX: 14)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel(game.claimedDailyToday
+                            ? "Daily reward claimed" : "Claim daily reward")
+    }
+
+    private var gachaTile: some View {
+        Button { showGacha = true } label: {
+            VStack(spacing: 2) {
+                GachaMachineIcon()
+                    .frame(width: 44, height: 44)
+                Text("GACHA")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+            }
+            .frame(width: 148, height: 79)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color(hex: 0x15171F).opacity(0.92))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Color(hex: 0xF5C451).opacity(0.65), lineWidth: 2)
+            )
+            .shadow(color: Color(hex: 0xF5C451).opacity(0.25), radius: 14, y: 5)
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("Gacha — move and costume draws")
     }
 
     private var loadoutChip: some View {
@@ -223,7 +285,7 @@ struct HomeHubView: View {
 
 // MARK: - Hub backdrop
 
-/// Faint star field, orbit, planets and a stickman silhouette so the hub
+/// Faint star field, orbit and planets behind the centered fighter so the hub
 /// doesn't read as a flat black screen.
 private struct HubBackdrop: View {
     var body: some View {
@@ -270,11 +332,11 @@ private struct HubBackdrop: View {
                     style: StrokeStyle(lineWidth: 1, dash: [6, 10])
                 )
 
-                // The three boss planets.
+                // The three boss planets, kept clear of the side controls.
                 let planets: [(CGFloat, CGFloat, CGFloat, UInt32, UInt32)] = [
-                    (0.30, 0.72, 22, 0x3FA65C, 0x4C8DFF),
-                    (0.53, 0.23, 14, 0xF5C451, 0xFF8A3C),
-                    (0.82, 0.60, 28, 0x4FC3F7, 0xB3E5FC),
+                    (0.87, 0.38, 24, 0x3FA65C, 0x4C8DFF),
+                    (0.70, 0.16, 16, 0xF5C451, 0xFF8A3C),
+                    (0.91, 0.68, 28, 0x4FC3F7, 0xB3E5FC),
                 ]
                 for planet in planets {
                     let x = planet.0 * size.width
@@ -300,36 +362,6 @@ private struct HubBackdrop: View {
                         style: StrokeStyle(lineWidth: 1.5)
                     )
                 }
-
-                // Fighter silhouette — visible, but still behind the controls.
-                let cx = size.width * 0.64
-                let cy = size.height * 0.58
-                let ink = Color.white.opacity(0.18)
-
-                var torso = Path()
-                torso.move(to: CGPoint(x: cx, y: cy - 50))
-                torso.addLine(to: CGPoint(x: cx, y: cy + 20))
-
-                var arms = Path()
-                arms.move(to: CGPoint(x: cx, y: cy - 32))
-                arms.addLine(to: CGPoint(x: cx - 36, y: cy - 18))
-                arms.move(to: CGPoint(x: cx, y: cy - 32))
-                arms.addLine(to: CGPoint(x: cx + 36, y: cy - 46))
-
-                var legs = Path()
-                legs.move(to: CGPoint(x: cx, y: cy + 20))
-                legs.addLine(to: CGPoint(x: cx - 28, y: cy + 66))
-                legs.move(to: CGPoint(x: cx, y: cy + 20))
-                legs.addLine(to: CGPoint(x: cx + 26, y: cy + 66))
-
-                let stroke = StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round)
-                context.stroke(torso, with: .color(ink), style: stroke)
-                context.stroke(arms, with: .color(ink), style: stroke)
-                context.stroke(legs, with: .color(ink), style: stroke)
-                context.fill(
-                    Path(ellipseIn: CGRect(x: cx - 18, y: cy - 84, width: 36, height: 36)),
-                    with: .color(ink)
-                )
             }
         }
         .ignoresSafeArea()

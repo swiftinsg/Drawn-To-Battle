@@ -179,6 +179,18 @@ final class GameSave: ObservableObject {
     @Published var gachaHistory: [GachaPullRecord] = [] {
         didSet { persist() }
     }
+    /// World gear currently shown on the home-screen fighter.
+    @Published var equippedAccessory: Accessory? {
+        didSet { persist() }
+    }
+    /// Consecutive days the daily reward has been claimed.
+    @Published var dailyStreak: Int = 0 {
+        didSet { persist() }
+    }
+    /// Local calendar day (yyyy-MM-dd) of the last daily claim.
+    @Published var lastDailyClaimDate: String? {
+        didSet { persist() }
+    }
     var hasUsername: Bool { !username.isEmpty }
 
     private static let key = "DrawnToBattle.save.v1"
@@ -191,6 +203,28 @@ final class GameSave: ObservableObject {
     /// XP awarded for finding a new move or rerolling an owned one.
     private static let xpPerNewBlueprint = 25
     private static let xpPerDuplicate = 10
+
+    /// Small rewards for logging in each day. Longer streaks pay a bit more.
+    static let dailyRewards: [DailyReward] = [
+        DailyReward(coins: 40, pens: 10, xp: 10),
+        DailyReward(coins: 60, pens: 10, xp: 15),
+        DailyReward(coins: 80, pens: 20, xp: 20),
+        DailyReward(coins: 100, pens: 20, xp: 25),
+        DailyReward(coins: 120, pens: 30, xp: 30),
+        DailyReward(coins: 150, pens: 30, xp: 40),
+        DailyReward(coins: 300, pens: 60, xp: 60),
+    ]
+
+    private static let dayFormatter: DateFormatter = {
+        let formatter = DateFormatter()
+        formatter.dateFormat = "yyyy-MM-dd"
+        formatter.calendar = Calendar.current
+        return formatter
+    }()
+
+    static func dayKey(for date: Date = Date()) -> String {
+        dayFormatter.string(from: date)
+    }
 
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.key),
@@ -208,6 +242,9 @@ final class GameSave: ObservableObject {
             username = saved.username ?? ""
             profileImageData = saved.profileImageData
             gachaHistory = saved.gachaHistory ?? []
+            equippedAccessory = saved.equippedAccessory.flatMap { Accessory(rawValue: $0) }
+            dailyStreak = saved.dailyStreak ?? 0
+            lastDailyClaimDate = saved.lastDailyClaimDate
             if needsStarterMoves { persist() }
         }
     }
@@ -237,6 +274,59 @@ final class GameSave: ObservableObject {
 
     func addExperience(_ amount: Int) {
         experience += max(0, amount)
+    }
+
+    // MARK: Costumes
+
+    func isAccessoryUnlocked(_ accessory: Accessory) -> Bool {
+        defeatedBosses.contains(accessory.bossID)
+    }
+
+    var unlockedAccessories: [Accessory] {
+        Accessory.allCases.filter { isAccessoryUnlocked($0) }
+    }
+
+    func equip(accessory: Accessory) {
+        guard isAccessoryUnlocked(accessory) else { return }
+        equippedAccessory = accessory
+    }
+
+    func clearAccessory() {
+        equippedAccessory = nil
+    }
+
+    // MARK: Daily streak
+
+    var claimedDailyToday: Bool { lastDailyClaimDate == Self.dayKey() }
+
+    /// Reward for the next claim. The table repeats after a full week.
+    var nextDailyReward: DailyReward {
+        guard !Self.dailyRewards.isEmpty else {
+            return DailyReward(coins: 0, pens: 0, xp: 0)
+        }
+        return Self.dailyRewards[dailyStreak % Self.dailyRewards.count]
+    }
+
+    /// Position in the current 7-day reward cycle (0 = day one).
+    var dailyCycleDay: Int { dailyStreak % max(1, Self.dailyRewards.count) }
+
+    @discardableResult
+    func claimDaily() -> DailyReward? {
+        guard !claimedDailyToday else { return nil }
+
+        let reward = nextDailyReward
+        let yesterday = Calendar.current.date(byAdding: .day, value: -1, to: Date()) ?? Date()
+        if lastDailyClaimDate == Self.dayKey(for: yesterday) {
+            dailyStreak += 1
+        } else {
+            dailyStreak = 1
+        }
+        lastDailyClaimDate = Self.dayKey()
+
+        coins += reward.coins
+        stardust += reward.pens
+        addExperience(reward.xp)
+        return reward
     }
 
     // MARK: Mutations
@@ -359,6 +449,9 @@ final class GameSave: ObservableObject {
         blueprintEdits = [:]
         coins = 100
         gachaHistory = []
+        equippedAccessory = nil
+        dailyStreak = 0
+        lastDailyClaimDate = nil
     }
 
     func isUnlocked(_ boss: BossDefinition) -> Bool {
@@ -379,6 +472,9 @@ final class GameSave: ObservableObject {
         var username: String?
         var profileImageData: Data?
         var gachaHistory: [GachaPullRecord]?
+        var equippedAccessory: String?
+        var dailyStreak: Int?
+        var lastDailyClaimDate: String?
     }
 
     private func persist() {
@@ -392,7 +488,10 @@ final class GameSave: ObservableObject {
             coins: coins,
             username: username,
             profileImageData: profileImageData,
-            gachaHistory: gachaHistory
+            gachaHistory: gachaHistory,
+            equippedAccessory: equippedAccessory?.rawValue,
+            dailyStreak: dailyStreak,
+            lastDailyClaimDate: lastDailyClaimDate
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: Self.key)
