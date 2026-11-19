@@ -49,26 +49,28 @@ struct BossDefinition: Identifiable, Hashable {
     static let all: [BossDefinition] = [
         BossDefinition(
             id: "earth", planetName: "EARTH", bossName: "TERRA COLOSSUS",
-            title: "The Sleeping Mountain", hp: 90,
+            title: "The Sleeping Mountain", hp: 130,
             requiredTechnique: .smear,
-            rewardFirstClear: 120, rewardRepeat: 40,
+            rewardFirstClear: 160, rewardRepeat: 55,
             bodyColor: 0x3FA65C, accentColor: 0x4C8DFF,
             attacks: [
-                BossAttackDef(name: "BOULDER TOSS", kind: .projectileLob, damage: 12, telegraph: 1.0),
-                BossAttackDef(name: "QUAKE WAVE", kind: .groundShock, damage: 14, telegraph: 1.1),
+                BossAttackDef(name: "BOULDER TOSS", kind: .projectileLob, damage: 16, telegraph: 0.85),
+                BossAttackDef(name: "QUAKE WAVE", kind: .groundShock, damage: 18, telegraph: 0.9),
+                BossAttackDef(name: "ROCK SLIDE", kind: .projectileLob, damage: 14, telegraph: 0.95),
             ],
             unlockAfter: nil
         ),
         BossDefinition(
             id: "mars", planetName: "MARS", bossName: "CRIMSON WARLOCK",
-            title: "The Red Duelist", hp: 130,
+            title: "The Red Duelist", hp: 190,
             requiredTechnique: .kick,
-            rewardFirstClear: 180, rewardRepeat: 55,
+            rewardFirstClear: 250, rewardRepeat: 75,
             bodyColor: 0xE86A3A, accentColor: 0xFFB37A,
             attacks: [
-                BossAttackDef(name: "WAR RAM", kind: .charge, damage: 18, telegraph: 0.9),
-                BossAttackDef(name: "EMBER UPPERCUT", kind: .melee, damage: 15, telegraph: 0.8),
-                BossAttackDef(name: "SPEAR SHARDS", kind: .fan, damage: 12, telegraph: 1.0),
+                BossAttackDef(name: "WAR RAM", kind: .charge, damage: 22, telegraph: 0.75),
+                BossAttackDef(name: "EMBER UPPERCUT", kind: .melee, damage: 19, telegraph: 0.7),
+                BossAttackDef(name: "SPEAR SHARDS", kind: .fan, damage: 16, telegraph: 0.85),
+                BossAttackDef(name: "MARTIAN SANDSTORM", kind: .groundShock, damage: 16, telegraph: 0.9),
             ],
             unlockAfter: "earth"
         ),
