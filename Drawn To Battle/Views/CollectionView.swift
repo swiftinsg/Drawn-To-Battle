@@ -21,9 +21,8 @@ struct CollectionView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 32, height: 32)
-                            .stickerShadow()
                     }
-                    .buttonStyle(SquashButtonStyle())
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Back")
                     Spacer()
                     Text("COLLECTION")
@@ -96,7 +95,7 @@ struct CollectionView: View {
             if let equipped = game.equipped {
                 let analysis = AnimationAnalysis.analyze(equipped.project)
                 VStack(alignment: .leading, spacing: 6) {
-                    Text("CURRENT LOADOUT")
+                    Text("EQUIPPED MOVE")
                         .font(.system(size: 9, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white.opacity(0.45))
                     HStack {
@@ -118,7 +117,7 @@ struct CollectionView: View {
                                 .background(Capsule().fill(Color.white.opacity(0.1)))
                         }
                         if analysis.techniques.isEmpty {
-                            Text("No technique detected")
+                            Text("NO TECHNIQUE YET")
                                 .font(.system(size: 10, weight: .medium))
                                 .foregroundStyle(.white.opacity(0.4))
                         }
@@ -128,7 +127,7 @@ struct CollectionView: View {
                 .padding(12)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.06)))
             } else {
-                Text("No attack equipped — pull a blueprint or equip a Studio animation")
+                Text("No move equipped — draw a blueprint or equip a Studio animation")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.45))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -141,11 +140,11 @@ struct CollectionView: View {
     private var studioSection: some View {
         let projects = AnimationProjectStore.listProjects()
         return VStack(alignment: .leading, spacing: 8) {
-            Text("MY ANIMATIONS")
+            Text("MY MOVES")
                 .font(.system(size: 12, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.7))
             if projects.isEmpty {
-                Text("Create an animation in the Studio, save it, then equip it here.")
+                Text("Make a move in the Studio, save it, then equip it here.")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white.opacity(0.4))
             }

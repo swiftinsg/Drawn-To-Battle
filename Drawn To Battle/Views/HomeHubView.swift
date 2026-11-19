@@ -2,8 +2,8 @@ import SwiftUI
 
 // MARK: - Home hub (template layout)
 //
-// Profile top-left • coins/pens/settings top-right • gacha on the left •
-// collection bottom-left • studio bottom-center • play bottom-right → solar system.
+// Profile top-left • coins/pens/settings top-right • collection on the left •
+// gacha + studio bottom-left • play bottom-right → solar system.
 
 struct HomeHubView: View {
     @ObservedObject var game: GameSave
@@ -43,15 +43,15 @@ struct HomeHubView: View {
                                 Text("FIGHTER")
                                     .font(.system(size: 8, weight: .heavy, design: .rounded))
                                     .foregroundStyle(.white.opacity(0.45))
-                                Text(game.username.isEmpty ? "UNNAMED" : game.username)
+                                Text(game.username.isEmpty ? "NO NAME" : game.username)
                                     .font(.system(size: 13, weight: .black, design: .rounded))
                                     .foregroundStyle(.white)
                                     .lineLimit(1)
                             }
                         }
-                        .bubbleChrome(sketchSeed: 11)
+                        .bubbleChrome()
                     }
-                    .buttonStyle(SquashButtonStyle())
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Profile, \(game.username)")
 
                     Spacer(minLength: 6)
@@ -69,8 +69,8 @@ struct HomeHubView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .bubbleChrome(paddingX: 10, sketchSeed: 23)
-                    .accessibilityLabel("Coins balance, tap for description")
+                    .bubbleChrome(paddingX: 10)
+                    .accessibilityLabel("Coins, tap for details")
 
                     Button {
                         activeCurrency = .pens
@@ -86,8 +86,8 @@ struct HomeHubView: View {
                         }
                     }
                     .buttonStyle(.plain)
-                    .bubbleChrome(paddingX: 10, sketchSeed: 37)
-                    .accessibilityLabel("Pens balance, tap for description")
+                    .bubbleChrome(paddingX: 10)
+                    .accessibilityLabel("Pens, tap for details")
 
                     Button {
                         showSettings = true
@@ -97,25 +97,24 @@ struct HomeHubView: View {
                             .foregroundStyle(.white.opacity(0.85))
                             .padding(9)
                             .background(
-                                SketchyRect(seed: 41)
+                                RoundedRectangle(cornerRadius: 12)
                                     .fill(Color.black.opacity(0.55))
                             )
                             .overlay(
-                                SketchyRect(seed: 41)
-                                    .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
                             )
-                            .shadow(color: .black.opacity(0.3), radius: 5, y: 3)
                     }
-                    .buttonStyle(SquashButtonStyle())
+                    .buttonStyle(.plain)
                     .accessibilityLabel("Settings")
                 }
                 .padding(.horizontal, 14)
                 .padding(.top, 10)
 
-                // Left column: gacha + loadout.
+                // Left column: collection + loadout.
                 VStack(alignment: .leading, spacing: 12) {
-                    MenuBubble(title: "GACHA", systemImage: "sparkles") {
-                        showGacha = true
+                    MenuBubble(title: "COLLECTION", systemImage: "square.grid.2x2") {
+                        showCollection = true
                     }
 
                     loadoutChip
@@ -126,12 +125,11 @@ struct HomeHubView: View {
 
                 Spacer()
 
-                // Bottom row: collection • studio • play.
+                // Bottom row: gacha • studio • play.
                 HStack(alignment: .bottom, spacing: 12) {
-                    MenuBubble(title: "COLLECTION", systemImage: "square.grid.2x2") {
-                        showCollection = true
+                    MenuBubble(title: "GACHA", systemImage: "sparkles") {
+                        showGacha = true
                     }
-                    Spacer()
                     MenuBubble(title: "STUDIO", systemImage: "film") {
                         showStudio = true
                     }
@@ -143,12 +141,10 @@ struct HomeHubView: View {
                             .resizable()
                             .scaledToFit()
                             .frame(width: 148, height: 79)
-                            .stickerShadow()
-                            .shadow(color: Color(hex: 0xF5C451).opacity(0.28), radius: 18, y: 4)
-                            .modifier(StickerBob())
+                            .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 16, y: 5)
                     }
-                    .buttonStyle(SquashButtonStyle())
-                    .accessibilityLabel("Play — choose a boss")
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Battle — choose a boss")
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 14)
@@ -189,7 +185,7 @@ struct HomeHubView: View {
                 .foregroundStyle(Color(hex: 0xF5C451))
             if let equipped = game.equipped {
                 VStack(alignment: .leading, spacing: 1) {
-                    Text("EQUIPPED ATTACK")
+                    Text("EQUIPPED MOVE")
                         .font(.system(size: 8, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white.opacity(0.45))
                     Text(loadoutLabel(equipped))
@@ -198,7 +194,7 @@ struct HomeHubView: View {
                         .lineLimit(1)
                 }
             } else {
-                Text("No attack equipped — open COLLECTION")
+                Text("No move equipped — open COLLECTION")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.5))
             }
@@ -210,14 +206,9 @@ struct HomeHubView: View {
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
         .background(
-            SketchyRect(seed: 53)
+            RoundedRectangle(cornerRadius: 12)
                 .fill(Color.white.opacity(0.06))
         )
-        .overlay(
-            SketchyRect(seed: 53)
-                .stroke(Color.white.opacity(0.22), lineWidth: 1.2)
-        )
-        .shadow(color: .black.opacity(0.25), radius: 4, y: 2)
         .frame(maxWidth: 250)
     }
 
@@ -248,22 +239,19 @@ private struct StudioBackgroundRemoval: UIViewControllerRepresentable {
 // MARK: - Bubble chrome (the dark rounded bubbles from the home template)
 
 extension View {
-    /// Dark hand-cut bubble styling used across the home screen: a wobbly
-    /// marker-drawn border with a little lift, so the chrome feels drawn
-    /// with the sticker art.
-    func bubbleChrome(paddingX: CGFloat = 12, sketchSeed: UInt64 = 7) -> some View {
+    /// Dark rounded-bubble styling used across the home screen.
+    func bubbleChrome(paddingX: CGFloat = 12) -> some View {
         self
             .padding(.horizontal, paddingX)
             .padding(.vertical, 9)
             .background(
-                SketchyRect(seed: sketchSeed)
+                RoundedRectangle(cornerRadius: 14)
                     .fill(Color.black.opacity(0.55))
             )
             .overlay(
-                SketchyRect(seed: sketchSeed)
-                    .stroke(Color.white.opacity(0.3), lineWidth: 1.5)
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
             )
-            .shadow(color: .black.opacity(0.3), radius: 5, y: 3)
     }
 }
 
@@ -273,11 +261,6 @@ private struct MenuBubble: View {
     let title: String
     let systemImage: String
     let action: () -> Void
-
-    /// Distinct seed per title so every bubble's wobble is unique but stable.
-    private var seed: UInt64 {
-        UInt64(abs(title.unicodeScalars.reduce(0) { ($0 &* 31) &+ Int($1.value) }) % 997) + 3
-    }
 
     var body: some View {
         Button(action: action) {
@@ -289,9 +272,9 @@ private struct MenuBubble: View {
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
             }
-            .bubbleChrome(paddingX: 16, sketchSeed: seed)
+            .bubbleChrome(paddingX: 16)
         }
-        .buttonStyle(SquashButtonStyle())
+        .buttonStyle(.plain)
     }
 }
 
@@ -313,9 +296,9 @@ private enum Currency: String, Identifiable {
     var description: String {
         switch self {
         case .coins:
-            return "Earned by defeating bosses. Spend them on things like renaming your fighter."
+            return "Earned from battles. Spend them on things like changing your fighter's name."
         case .pens:
-            return "Earned alongside coins from battles. Spend them on gacha pulls."
+            return "Earned from battles. Spend them on gacha draws."
         }
     }
 }
@@ -354,7 +337,7 @@ private struct CurrencyInfoCard: View {
                 Button {
                     dismiss()
                 } label: {
-                    Text("GOT IT")
+                    Text("OK")
                         .font(.system(size: 12, weight: .black, design: .rounded))
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity)

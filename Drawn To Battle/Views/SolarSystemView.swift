@@ -108,9 +108,9 @@ struct SolarSystemView: View {
         if let prereqID = next.unlockAfter,
            !game.defeatedBosses.contains(prereqID),
            let prereq = BossDefinition.boss(id: prereqID) {
-            return "Beat \(prereq.planetName) to unlock \(next.planetName)"
+            return "DEFEAT \(prereq.planetName) TO UNLOCK \(next.planetName)"
         }
-        return "\(next.planetName) awaits"
+        return "\(next.planetName) AWAITS"
     }
 }
 

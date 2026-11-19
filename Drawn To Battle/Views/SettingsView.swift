@@ -27,9 +27,8 @@ struct SettingsView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 32, height: 32)
-                                .stickerShadow()
                         }
-                        .buttonStyle(SquashButtonStyle())
+                        .buttonStyle(.plain)
                         .accessibilityLabel("Close settings")
                         Spacer()
                         Text("SETTINGS")
@@ -44,7 +43,7 @@ struct SettingsView: View {
                     section("ANIMATION STUDIO") {
                         VStack(spacing: 14) {
                             HStack {
-                                settingLabel("DEFAULT FPS\nFOR NEW PROJECTS")
+                                settingLabel("DEFAULT FPS")
                                 Spacer()
                                 Stepper("\(defaultFPS)", value: $defaultFPS, in: 1...30)
                                     .font(.system(size: 14, weight: .black, design: .rounded))
@@ -52,7 +51,7 @@ struct SettingsView: View {
                                     .fixedSize()
                             }
                             Toggle(isOn: $defaultOnionSkin) {
-                                settingLabel("ONION SKIN\nBY DEFAULT")
+                                settingLabel("ONION SKIN")
                             }
                             .tint(Color(hex: 0xF5C451))
                         }
@@ -86,7 +85,7 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
 
                             if resetDone {
-                                Text("Progress reset. Your fighter keeps their name and photo.")
+                                Text("Progress reset! Your name and photo stay.")
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(.white.opacity(0.45))
                             }
@@ -111,7 +110,7 @@ struct SettingsView: View {
         }
         .preferredColorScheme(.dark)
         .confirmationDialog(
-            "Reset all progress? Your fighter keeps their name and photo, but blueprints, coins, pens and boss records are wiped.",
+            "Reset all progress? You'll keep your name and photo, but lose your moves, coins, pens and boss records.",
             isPresented: $showResetConfirm,
             titleVisibility: .visible
         ) {

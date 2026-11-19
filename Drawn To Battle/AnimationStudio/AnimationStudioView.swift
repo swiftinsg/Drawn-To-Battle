@@ -124,9 +124,8 @@ struct AnimationStudioView: View {
                                 .frame(width: 22, height: 11)
                                 .frame(width: 30, height: 28)
                                 .background(RoundedRectangle(cornerRadius: 9).fill(Color(hex: 0xF5C451)))
-                                .stickerShadow()
                         }
-                        .buttonStyle(SquashButtonStyle())
+                        .buttonStyle(.plain)
                         .accessibilityLabel("Add frame")
                         StudioIconButton(systemImage: "doc.on.doc") {
                             studio.duplicateFrame(at: studio.selectedIndex)

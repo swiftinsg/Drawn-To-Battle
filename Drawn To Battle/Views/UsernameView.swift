@@ -26,7 +26,7 @@ struct UsernameView: View {
                             .font(DrawnToBattleTypography.display(26))
                             .foregroundStyle(.white)
 
-                        Text("This is the name the galaxy will remember.")
+                        Text("This name will be remembered across the galaxy.")
                             .font(.system(size: 12, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.5))
                             .padding(.top, 8)

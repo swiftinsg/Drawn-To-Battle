@@ -633,7 +633,7 @@ private struct BattleTipsOverlay: View {
                     text: "Fill the purple STAGGER bar to stun the boss, then unload. Combos add up to +40% damage.")
 
                 Button(action: onClose) {
-                    Text("GOT IT")
+                    Text("LET'S FIGHT")
                         .font(.system(size: 15, weight: .black, design: .rounded))
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity)
@@ -712,7 +712,7 @@ private struct BattleResultOverlay: View {
                         .font(.system(size: 11, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white.opacity(0.6))
                 } else {
-                    Text("The \(boss.bossName) only fears \(boss.requiredTechnique.label) strikes.\nSharpen your animation and return.")
+                    Text("\(boss.bossName) only fears \(boss.requiredTechnique.label) moves.\nSharpen your animation and try again.")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.white.opacity(0.75))
@@ -746,7 +746,7 @@ private struct BattleResultOverlay: View {
                         if result == .victory { game.registerVictory(boss: boss) }
                         onExit()
                     } label: {
-                        Text("BACK")
+                        Text("EXIT")
                             .font(.system(size: 15, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 22)

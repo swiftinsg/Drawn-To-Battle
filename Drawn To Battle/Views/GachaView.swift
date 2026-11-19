@@ -69,14 +69,13 @@ struct GachaView: View {
                     .resizable()
                     .scaledToFit()
                     .frame(width: 32, height: 32)
-                    .stickerShadow()
             }
-            .buttonStyle(SquashButtonStyle())
+            .buttonStyle(.plain)
             .accessibilityLabel("Back")
 
             Spacer()
 
-            Text("BLUEPRINT GACHA")
+            Text("BLUEPRINT DRAW")
                 .font(DrawnToBattleTypography.display(20))
                 .foregroundStyle(.white)
 
@@ -93,7 +92,7 @@ struct GachaView: View {
             }
             .padding(.horizontal, 9)
             .padding(.vertical, 6)
-            .background(SketchyRect(seed: 17).fill(Color.black.opacity(0.5)))
+            .background(RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.5)))
             .accessibilityLabel("Pens balance")
         }
         .padding(.horizontal, 16)
@@ -106,7 +105,7 @@ struct GachaView: View {
                 .font(.system(size: 10, weight: .heavy, design: .rounded))
                 .tracking(2)
                 .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
-            Text("Every pull adds a blueprint to your collection.")
+            Text("Every draw adds a move to your collection.")
                 .font(.system(size: 11, weight: .semibold, design: .rounded))
                 .foregroundStyle(.white.opacity(0.5))
         }
@@ -118,14 +117,13 @@ struct GachaView: View {
 
         return VStack(spacing: 12) {
             ZStack {
-                SketchyRect(seed: 77)
+                RoundedRectangle(cornerRadius: 20)
                     .fill(Color(hex: 0x15171F))
                     .frame(width: 190, height: 170)
                     .overlay(
-                        SketchyRect(seed: 77)
+                        RoundedRectangle(cornerRadius: 20)
                             .stroke(Color(hex: 0xF5C451).opacity(0.5), lineWidth: 2)
                     )
-                    .stickerShadow()
 
                 if rolling {
                     ProgressView()
@@ -136,16 +134,14 @@ struct GachaView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(height: 76)
-                        .stickerShadow()
                 }
 
-                SketchyRect(seed: 77)
+                RoundedRectangle(cornerRadius: 20)
                     .fill(beamColor)
                     .frame(width: 190, height: 170)
                     .opacity(beamOpacity)
                     .allowsHitTesting(false)
             }
-            .modifier(StickerBob(lift: 3))
 
             Button {
                 pull()
@@ -155,24 +151,24 @@ struct GachaView: View {
                         .resizable()
                         .scaledToFit()
                         .frame(height: 22)
-                    Text("PULL — \(Gacha.pullCost)")
+                    Text("DRAW — \(Gacha.pullCost)")
                         .font(.system(size: 17, weight: .black, design: .rounded))
                 }
                 .frame(maxWidth: 260)
                 .padding(.vertical, 13)
                 .background(
-                    SketchyRect(seed: 81)
+                    RoundedRectangle(cornerRadius: 14)
                         .fill(canPull ? Color(hex: 0xF5C451) : Color.white.opacity(0.12))
                 )
                 .overlay(
-                    SketchyRect(seed: 81)
+                    RoundedRectangle(cornerRadius: 14)
                         .stroke(Color(hex: 0xF5C451).opacity(canPull ? 0.9 : 0.2), lineWidth: 2)
                 )
                 .foregroundStyle(canPull ? Color.black : Color.white.opacity(0.5))
             }
-            .buttonStyle(SquashButtonStyle())
+            .buttonStyle(.plain)
             .disabled(!canPull)
-            .accessibilityLabel("Pull a blueprint for \(Gacha.pullCost) pens")
+            .accessibilityLabel("Draw a blueprint for \(Gacha.pullCost) pens")
         }
     }
 
@@ -183,11 +179,11 @@ struct GachaView: View {
 
         return VStack(spacing: 6) {
             HStack {
-                Text("COLLECTION \(owned)/\(total)")
+                Text("COLLECTED \(owned)/\(total)")
                     .font(.system(size: 10, weight: .black, design: .rounded))
                     .foregroundStyle(.white.opacity(0.75))
                 Spacer()
-                Text(owned < total ? "EVERY PULL IS NEW" : "DUPLICATES PAY COINS")
+                Text(owned < total ? "ALL DRAWS ARE NEW" : "DUPLICATES = COINS")
                     .font(.system(size: 9, weight: .heavy, design: .rounded))
                     .foregroundStyle(owned < total ? Color(hex: 0xF5C451).opacity(0.8) : .white.opacity(0.5))
             }
@@ -211,14 +207,14 @@ struct GachaView: View {
             } label: {
                 secondaryChip(systemImage: "chart.bar", title: "DROP RATES")
             }
-            .buttonStyle(SquashButtonStyle())
+            .buttonStyle(.plain)
 
             Button {
                 showHistory = true
             } label: {
                 secondaryChip(systemImage: "clock.arrow.circlepath", title: "HISTORY")
             }
-            .buttonStyle(SquashButtonStyle())
+            .buttonStyle(.plain)
         }
     }
 
@@ -232,10 +228,10 @@ struct GachaView: View {
         .foregroundStyle(.white.opacity(0.75))
         .frame(maxWidth: .infinity)
         .padding(.vertical, 10)
-        .background(SketchyRect(seed: UInt64(title.count + 3)).fill(Color.white.opacity(0.06)))
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.06)))
         .overlay(
-            SketchyRect(seed: UInt64(title.count + 3))
-                .stroke(Color.white.opacity(0.14), lineWidth: 1)
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(Color.white.opacity(0.12), lineWidth: 1)
         )
     }
 
@@ -281,7 +277,7 @@ private struct GachaResultCard: View {
 
             ScrollView(showsIndicators: false) {
                 VStack(spacing: 10) {
-                    Text(isNew ? "NEW BLUEPRINT!" : "DUPLICATE  +\(Gacha.duplicateRefund) COINS")
+                    Text(isNew ? "NEW MOVE!" : "DUPLICATE!  +\(Gacha.duplicateRefund) COINS")
                         .font(.system(size: 14, weight: .black, design: .rounded))
                         .foregroundStyle(isNew ? Color(hex: 0xF5C451) : .white.opacity(0.6))
 
@@ -320,10 +316,10 @@ private struct GachaResultCard: View {
                     .padding(20)
                     .frame(maxWidth: 320)
                     .background(
-                        SketchyRect(seed: 91)
+                        RoundedRectangle(cornerRadius: 18)
                             .fill(Color(hex: 0x14161E))
                             .overlay(
-                                SketchyRect(seed: 91)
+                                RoundedRectangle(cornerRadius: 18)
                                     .stroke(blueprint.rarity.color, lineWidth: 2)
                             )
                             .shadow(color: blueprint.rarity.color.opacity(0.4), radius: 20)
@@ -332,14 +328,14 @@ private struct GachaResultCard: View {
                     Button {
                         onClose()
                     } label: {
-                        Text("NICE")
+                        Text("CONTINUE")
                             .font(.system(size: 14, weight: .black, design: .rounded))
                             .foregroundStyle(.black)
                             .frame(maxWidth: 200)
                             .padding(.vertical, 11)
-                            .background(SketchyRect(seed: 93).fill(Color(hex: 0xF5C451)))
+                            .background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: 0xF5C451)))
                     }
-                    .buttonStyle(SquashButtonStyle())
+                    .buttonStyle(.plain)
                 }
                 .padding(20)
                 .frame(maxWidth: .infinity)
@@ -386,7 +382,7 @@ private struct DropRatesView: View {
                                         .font(.system(size: 13, weight: .bold, design: .monospaced))
                                         .foregroundStyle(.white.opacity(0.75))
                                 } else {
-                                    Text("SOON")
+                                    Text("COMING SOON")
                                         .font(.system(size: 10, weight: .heavy, design: .rounded))
                                         .foregroundStyle(.white.opacity(0.35))
                                 }
@@ -400,7 +396,7 @@ private struct DropRatesView: View {
                             Image(systemName: "circlebadge.fill")
                                 .font(.system(size: 10, weight: .bold))
                                 .foregroundStyle(Color(hex: 0xF5C451))
-                            Text("Duplicates refund \(Gacha.duplicateRefund) coins — only once the collection is complete")
+                            Text("Complete your collection to earn coins from duplicate draws.")
                                 .font(.system(size: 11, weight: .medium, design: .rounded))
                                 .foregroundStyle(.white.opacity(0.45))
                         }
@@ -429,10 +425,10 @@ private struct GachaHistoryView: View {
             VStack(spacing: 0) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("PULL HISTORY")
+                        Text("DRAW HISTORY")
                             .font(DrawnToBattleTypography.display(20))
                             .foregroundStyle(.white)
-                        Text("LAST \(min(game.gachaHistory.count, 20)) PULLS")
+                        Text("LAST \(min(game.gachaHistory.count, 20)) DRAWS")
                             .font(.system(size: 9, weight: .heavy, design: .rounded))
                             .tracking(2)
                             .foregroundStyle(.white.opacity(0.4))
@@ -455,10 +451,10 @@ private struct GachaHistoryView: View {
                         Image(systemName: "clock.arrow.circlepath")
                             .font(.system(size: 34, weight: .light))
                             .foregroundStyle(Color(hex: 0xF5C451).opacity(0.6))
-                        Text("No pulls yet")
+                        Text("NO DRAWS YET")
                             .font(.system(size: 14, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
-                        Text("Your last 20 pulls will appear here.")
+                        Text("Your 20 most recent draws will show up here.")
                             .font(.system(size: 11, weight: .semibold, design: .rounded))
                             .foregroundStyle(.white.opacity(0.45))
                     }
@@ -491,7 +487,7 @@ private struct GachaHistoryView: View {
                         .font(.system(size: 13, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                         .lineLimit(1)
-                    Text(record.isNew ? "NEW" : "DUPLICATE  +\(Gacha.duplicateRefund) COINS")
+                    Text(record.isNew ? "NEW" : "DUPLICATE!  +\(Gacha.duplicateRefund) COINS")
                         .font(.system(size: 9, weight: .heavy, design: .rounded))
                         .foregroundStyle(record.isNew ? Color(hex: 0xF5C451) : .white.opacity(0.45))
                 }
