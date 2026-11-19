@@ -8,22 +8,25 @@ enum AccessoryRender: String, Codable {
     case wings
     case halo
     case star
+    case butterflies
+    case leaves
+    case orbit
 }
 
 /// Gear available from world gachas and level milestones.
 enum Accessory: String, Codable, CaseIterable, Identifiable {
-    // Earth gacha
-    case leafCrown
-    case vineWreath
-    case mossCrest
-    // Uranus gacha
+    // Earth gacha: nature, growth and glowing creatures.
+    case glowButterflies
+    case driftingLeaves
+    case pebbleOrbit
+    // Uranus gacha: ice and water.
     case iceWings
     case frostRing
-    case crystalHalo
-    // Sun gacha
+    case tideOrbit
+    // Sun gacha: angelic light and fire.
     case solarHalo
-    case emberCrown
-    case flareWings
+    case flameCrown
+    case angelWings
     // Level milestones
     case championCrown
     case meteorWings
@@ -34,15 +37,15 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
 
     var name: String {
         switch self {
-        case .leafCrown: return "Leaf Crown"
-        case .vineWreath: return "Vine Wreath"
-        case .mossCrest: return "Moss Crest"
+        case .glowButterflies: return "Glow Butterflies"
+        case .driftingLeaves: return "Drifting Leaves"
+        case .pebbleOrbit: return "Pebble Orbit"
         case .iceWings: return "Ice Wings"
         case .frostRing: return "Frost Ring"
-        case .crystalHalo: return "Crystal Halo"
+        case .tideOrbit: return "Tide Orbit"
         case .solarHalo: return "Solar Halo"
-        case .emberCrown: return "Ember Crown"
-        case .flareWings: return "Flare Wings"
+        case .flameCrown: return "Flame Crown"
+        case .angelWings: return "Angel Wings"
         case .championCrown: return "Champion Crown"
         case .meteorWings: return "Meteor Wings"
         case .galacticHalo: return "Galactic Halo"
@@ -53,9 +56,9 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
     /// Boss whose world gacha contains this accessory.
     var bossID: String? {
         switch self {
-        case .leafCrown, .vineWreath, .mossCrest: return "earth"
-        case .iceWings, .frostRing, .crystalHalo: return "mars"   // Uranus (save id)
-        case .solarHalo, .emberCrown, .flareWings: return "sun"
+        case .glowButterflies, .driftingLeaves, .pebbleOrbit: return "earth"
+        case .iceWings, .frostRing, .tideOrbit: return "mars"   // Uranus (save id)
+        case .solarHalo, .flameCrown, .angelWings: return "sun"
         case .championCrown, .meteorWings, .galacticHalo, .legendStar: return nil
         }
     }
@@ -89,7 +92,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
     /// The accessory granted free when a world is first conquered.
     static func signature(forBoss id: String) -> Accessory? {
         switch id {
-        case "earth": return .leafCrown
+        case "earth": return .glowButterflies
         case "mars": return .iceWings
         case "sun": return .solarHalo
         default: return nil
@@ -101,31 +104,51 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         allCases.filter { $0.bossID == id }
     }
 
+    /// Old accessory ids mapped to their new themed equivalents so existing
+    /// TestFlight saves keep what they earned.
+    static func migratedID(_ id: String) -> String {
+        switch id {
+        case "leafCrown": return "glowButterflies"
+        case "vineWreath": return "driftingLeaves"
+        case "mossCrest": return "pebbleOrbit"
+        case "crystalHalo": return "tideOrbit"
+        case "emberCrown": return "flameCrown"
+        case "flareWings": return "angelWings"
+        default: return id
+        }
+    }
+
     var render: AccessoryRender {
         switch self {
-        case .leafCrown, .vineWreath, .mossCrest, .emberCrown, .championCrown:
+        case .flameCrown, .championCrown:
             return .crown
-        case .iceWings, .flareWings, .meteorWings:
+        case .iceWings, .angelWings, .meteorWings:
             return .wings
-        case .frostRing, .crystalHalo, .solarHalo, .galacticHalo:
+        case .frostRing, .solarHalo, .galacticHalo:
             return .halo
         case .legendStar:
             return .star
+        case .glowButterflies:
+            return .butterflies
+        case .driftingLeaves:
+            return .leaves
+        case .pebbleOrbit, .tideOrbit:
+            return .orbit
         }
     }
 
     /// Tint used for the accessory itself and for collection chips.
     var tintHex: UInt32 {
         switch self {
-        case .leafCrown: return 0x4ED36E
-        case .vineWreath: return 0x2E8B57
-        case .mossCrest: return 0x9ACD32
+        case .glowButterflies: return 0xA8F06A
+        case .driftingLeaves: return 0x4ED36E
+        case .pebbleOrbit: return 0xC49A6C
         case .iceWings: return 0x4FC3F7
         case .frostRing: return 0x81D4FA
-        case .crystalHalo: return 0xB3E5FC
+        case .tideOrbit: return 0x29B6F6
         case .solarHalo: return 0xF5C451
-        case .emberCrown: return 0xFF8A3C
-        case .flareWings: return 0xFF6B4A
+        case .flameCrown: return 0xFF8A3C
+        case .angelWings: return 0xFFE8A8
         case .championCrown: return 0xFFD54F
         case .meteorWings: return 0xE86A6A
         case .galacticHalo: return 0xA86CFF

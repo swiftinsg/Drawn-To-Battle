@@ -18,9 +18,11 @@ enum BossRenderer {
     // MARK: Anchor
 
     static func anchor(for engine: BattleEngine) -> Anchor {
-        let s = scale(for: engine.boss)
+        let s = scale(for: engine)
         return Anchor(
-            origin: CGPoint(x: engine.bossX, y: engine.groundY - hipHeight(engine.boss) + bobOffset(engine)),
+            origin: CGPoint(x: engine.bossX,
+                            y: engine.groundY - hipHeight(engine.boss, scale: s)
+                                + bobOffset(engine)),
             scale: s,
             thickness: thickness(for: engine.boss),
             mirror: engine.bossX > engine.playerPos.x,
@@ -28,25 +30,29 @@ enum BossRenderer {
         )
     }
 
-    private static func scale(for boss: BossDefinition) -> CGFloat {
-        switch boss.id {
-        case "earth": return 1.5
-        case "mars": return 1.24
-        default: return 1.3
+    private static func scale(for engine: BattleEngine) -> CGFloat {
+        let base: CGFloat
+        switch engine.boss.id {
+        case "earth": base = 1.08
+        case "mars": base = 1.0
+        default: base = 1.02
         }
+        // A tall boss used to clip off the top on shorter devices. Cap the
+        // scale against the space between the floor and the top of the arena.
+        let maxScale = max(0.68, (engine.groundY - 12) / 175)
+        return min(base, maxScale)
     }
 
     private static func thickness(for boss: BossDefinition) -> CGFloat {
         switch boss.id {
-        case "earth": return 13
+        case "earth": return 11
         case "mars": return 9
-        default: return 10
+        default: return 9
         }
     }
 
     /// Standing hip height above the floor (legs slightly bent).
-    private static func hipHeight(_ boss: BossDefinition) -> CGFloat {
-        let s = scale(for: boss)
+    private static func hipHeight(_ boss: BossDefinition, scale s: CGFloat) -> CGFloat {
         switch boss.id {
         case "earth": return 64 * s
         case "mars": return 56 * s

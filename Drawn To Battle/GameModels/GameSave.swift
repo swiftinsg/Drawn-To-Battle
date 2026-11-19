@@ -264,12 +264,15 @@ final class GameSave: ObservableObject {
             profileImageData = saved.profileImageData
             gachaHistory = saved.gachaHistory ?? []
             // Older saves already have signature gear for worlds they beat.
+            // Legacy ids are mapped so the themed accessory swap keeps progress.
             var startingAccessories = Set(
                 saved.defeatedBosses.compactMap { Accessory.signature(forBoss: $0)?.rawValue }
             )
-            startingAccessories.formUnion(saved.ownedAccessories ?? [])
+            startingAccessories.formUnion((saved.ownedAccessories ?? []).map(Accessory.migratedID))
             ownedAccessories = startingAccessories
-            equippedAccessory = saved.equippedAccessory.flatMap { Accessory(rawValue: $0) }
+            equippedAccessory = saved.equippedAccessory.flatMap {
+                Accessory(rawValue: Accessory.migratedID($0))
+            }
             claimedLevelMilestones = saved.claimedLevelMilestones ?? []
             dailyStreak = saved.dailyStreak ?? 0
             lastDailyClaimDate = saved.lastDailyClaimDate

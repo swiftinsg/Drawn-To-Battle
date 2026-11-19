@@ -18,11 +18,13 @@ struct FighterFigureView: View {
     }
 
     private func draw(in context: inout GraphicsContext, size: CGSize) {
-        let scale = min(size.width / 220, size.height / 350)
+        // Extra headroom keeps tall headgear, halos and butterflies on screen,
+        // and the whole fighter sits lower so accessories never clip the top.
+        let scale = min(size.width / 220, size.height / 400)
         guard scale > 0 else { return }
 
         let cx = size.width / 2
-        let cy = size.height * 0.50
+        let cy = size.height * 0.56
 
         let gold = Color(hex: 0xF5C451)
         let outlineColor = Color.black.opacity(0.72)
@@ -30,9 +32,21 @@ struct FighterFigureView: View {
 
         let headCenter = CGPoint(x: cx, y: cy - 120 * scale)
         let headRadius = 25 * scale
-        // Shoulders touch the head so there is no floating neck.
-        let shoulder = CGPoint(x: cx, y: headCenter.y + headRadius - 2 * scale)
+        // Small gaps at the joints give the simple, disconnected stick look.
+        let torsoTop = CGPoint(x: cx, y: headCenter.y + headRadius + 4 * scale)
+        let shoulderY = torsoTop.y + 7 * scale
+        let shoulderL = CGPoint(x: cx - 5 * scale, y: shoulderY)
+        let shoulderR = CGPoint(x: cx + 5 * scale, y: shoulderY)
         let hip = CGPoint(x: cx, y: cy + 20 * scale)
+
+        let elbowL = CGPoint(x: cx - 30 * scale, y: cy - 54 * scale)
+        let handL = CGPoint(x: cx - 36 * scale, y: cy - 20 * scale)
+        let elbowR = CGPoint(x: cx + 30 * scale, y: cy - 54 * scale)
+        let handR = CGPoint(x: cx + 36 * scale, y: cy - 20 * scale)
+        let kneeL = CGPoint(x: cx - 28 * scale, y: cy + 78 * scale)
+        let footL = CGPoint(x: cx - 34 * scale, y: cy + 110 * scale)
+        let kneeR = CGPoint(x: cx + 28 * scale, y: cy + 78 * scale)
+        let footR = CGPoint(x: cx + 34 * scale, y: cy + 110 * scale)
 
         // Spawn ring and shadow under the fighter.
         context.fill(
@@ -47,32 +61,37 @@ struct FighterFigureView: View {
             style: StrokeStyle(lineWidth: 2 * scale)
         )
 
-        // Wings sit behind the body.
-        let tint = accessory?.tint ?? Color(hex: 0xF5C451)
-        if accessory?.render == .wings {
+        let tint = accessory?.tint ?? gold
+        let render = accessory?.render
+
+        // Back accessories sit behind the body.
+        if render == .wings {
             drawWings(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
         }
+        if render == .orbit {
+            drawOrbit(in: &context, cx: cx, cy: cy, scale: scale,
+                      tint: tint, water: accessory == .tideOrbit)
+        }
 
+        let gap = 4 * scale
         var torso = Path()
-        torso.move(to: shoulder)
-        torso.addLine(to: hip)
+        addSegment(&torso, from: torsoTop, to: hip, trimStart: gap, trimEnd: gap)
 
         var arms = Path()
-        // Relaxed arms instead of raised fists.
-        arms.move(to: shoulder)
-        arms.addLine(to: CGPoint(x: cx - 30 * scale, y: cy - 54 * scale))
-        arms.addLine(to: CGPoint(x: cx - 36 * scale, y: cy - 20 * scale))
-        arms.move(to: shoulder)
-        arms.addLine(to: CGPoint(x: cx + 30 * scale, y: cy - 54 * scale))
-        arms.addLine(to: CGPoint(x: cx + 36 * scale, y: cy - 20 * scale))
+        addSegment(&arms, from: shoulderL, to: elbowL,
+                   trimStart: gap * 0.7, trimEnd: gap * 0.8)
+        addSegment(&arms, from: elbowL, to: handL,
+                   trimStart: gap * 0.8, trimEnd: 0)
+        addSegment(&arms, from: shoulderR, to: elbowR,
+                   trimStart: gap * 0.7, trimEnd: gap * 0.8)
+        addSegment(&arms, from: elbowR, to: handR,
+                   trimStart: gap * 0.8, trimEnd: 0)
 
         var legs = Path()
-        legs.move(to: hip)
-        legs.addLine(to: CGPoint(x: cx - 28 * scale, y: cy + 78 * scale))
-        legs.addLine(to: CGPoint(x: cx - 34 * scale, y: cy + 110 * scale))
-        legs.move(to: hip)
-        legs.addLine(to: CGPoint(x: cx + 28 * scale, y: cy + 78 * scale))
-        legs.addLine(to: CGPoint(x: cx + 34 * scale, y: cy + 110 * scale))
+        addSegment(&legs, from: hip, to: kneeL, trimStart: gap, trimEnd: gap * 0.8)
+        addSegment(&legs, from: kneeL, to: footL, trimStart: gap * 0.8, trimEnd: 0)
+        addSegment(&legs, from: hip, to: kneeR, trimStart: gap, trimEnd: gap * 0.8)
+        addSegment(&legs, from: kneeR, to: footR, trimStart: gap * 0.8, trimEnd: 0)
 
         let outline = StrokeStyle(lineWidth: 15 * scale, lineCap: .round, lineJoin: .round)
         let inner = StrokeStyle(lineWidth: 9 * scale, lineCap: .round, lineJoin: .round)
@@ -82,7 +101,6 @@ struct FighterFigureView: View {
         }
 
         // Plain head with a dark outline.
-
         let outerR = headRadius + 3 * scale
         context.fill(
             Path(ellipseIn: CGRect(x: headCenter.x - outerR, y: headCenter.y - outerR,
@@ -94,7 +112,9 @@ struct FighterFigureView: View {
                                    width: headRadius * 2, height: headRadius * 2)),
             with: .color(ink)
         )
-        switch accessory?.render {
+
+        // Front accessories.
+        switch render {
         case .some(.crown):
             drawLeafCrown(in: &context, headCenter: headCenter,
                           headRadius: headRadius, scale: scale, tint: tint)
@@ -104,9 +124,28 @@ struct FighterFigureView: View {
         case .some(.star):
             drawStar(in: &context, headCenter: headCenter,
                      headRadius: headRadius, scale: scale, tint: tint)
-        case .some(.wings), nil:
+        case .some(.butterflies):
+            drawButterflies(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+        case .some(.leaves):
+            drawLeaves(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+        case .some(.wings), .some(.orbit), nil:
             break
         }
+    }
+
+    /// Draws a line with tiny trims at each end so joints look separate.
+    private func addSegment(_ path: inout Path, from a: CGPoint, to b: CGPoint,
+                            trimStart: CGFloat, trimEnd: CGFloat) {
+        let dx = b.x - a.x
+        let dy = b.y - a.y
+        let length = hypot(dx, dy)
+        guard length > 0.01 else { return }
+        let ux = dx / length
+        let uy = dy / length
+        let start = CGPoint(x: a.x + ux * trimStart, y: a.y + uy * trimStart)
+        let end = CGPoint(x: b.x - ux * trimEnd, y: b.y - uy * trimEnd)
+        path.move(to: start)
+        path.addLine(to: end)
     }
 
     // MARK: Accessories
@@ -147,6 +186,126 @@ struct FighterFigureView: View {
                 context.stroke(feather, with: .color(ice.opacity(0.65)),
                                style: StrokeStyle(lineWidth: 1.5 * scale))
             }
+        }
+    }
+
+    private func drawOrbit(in context: inout GraphicsContext, cx: CGFloat,
+                           cy: CGFloat, scale: CGFloat, tint: Color, water: Bool) {
+        for index in 0..<5 {
+            let angle = CGFloat(index) / 5 * 2 * .pi - .pi / 2
+            let center = CGPoint(x: cx + cos(angle) * 70 * scale,
+                                 y: cy - 34 * scale + sin(angle) * 78 * scale)
+            let r = (water ? 7 : 6) * scale
+
+            context.fill(
+                Path(ellipseIn: CGRect(x: center.x - r * 2, y: center.y - r * 2,
+                                       width: r * 4, height: r * 4)),
+                with: .color(tint.opacity(0.18))
+            )
+
+            if water {
+                var drop = Path()
+                drop.move(to: CGPoint(x: center.x, y: center.y - r * 1.7))
+                drop.addQuadCurve(
+                    to: CGPoint(x: center.x - r, y: center.y + r * 0.6),
+                    control: CGPoint(x: center.x - r, y: center.y - r * 0.5)
+                )
+                drop.addQuadCurve(
+                    to: CGPoint(x: center.x + r, y: center.y + r * 0.6),
+                    control: CGPoint(x: center.x + r, y: center.y - r * 0.5)
+                )
+                drop.addQuadCurve(
+                    to: CGPoint(x: center.x, y: center.y - r * 1.7),
+                    control: CGPoint(x: center.x, y: center.y + r * 1.4)
+                )
+                context.fill(drop, with: .color(tint.opacity(0.9)))
+            } else {
+                context.fill(
+                    Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r,
+                                           width: r * 2, height: r * 2)),
+                    with: .color(tint.opacity(0.9))
+                )
+            }
+
+            context.fill(
+                Path(ellipseIn: CGRect(x: center.x - r * 0.4, y: center.y - r * 0.5,
+                                       width: r * 0.55, height: r * 0.55)),
+                with: .color(Color.white.opacity(0.75))
+            )
+        }
+    }
+
+    private func drawButterflies(in context: inout GraphicsContext, cx: CGFloat,
+                                 cy: CGFloat, scale: CGFloat, tint: Color) {
+        let spots: [(CGFloat, CGFloat, CGFloat)] = [
+            (-62, -134, 1.05), (58, -120, 0.9), (-50, -72, 0.72), (68, -52, 0.6)
+        ]
+        for (dx, dy, factor) in spots {
+            let center = CGPoint(x: cx + dx * scale, y: cy + dy * scale)
+            let r = 7 * scale * factor
+
+            context.fill(
+                Path(ellipseIn: CGRect(x: center.x - r * 2.2, y: center.y - r * 2.2,
+                                       width: r * 4.4, height: r * 4.4)),
+                with: .color(tint.opacity(0.16))
+            )
+
+            for side in [CGFloat(-1), CGFloat(1)] {
+                var wing = Path()
+                wing.move(to: center)
+                wing.addQuadCurve(
+                    to: CGPoint(x: center.x + side * r * 2, y: center.y - r * 1.7),
+                    control: CGPoint(x: center.x + side * r * 1.6, y: center.y - r * 2.4)
+                )
+                wing.addQuadCurve(
+                    to: center,
+                    control: CGPoint(x: center.x + side * r * 2.1, y: center.y + r * 0.3)
+                )
+                context.fill(wing, with: .color(tint.opacity(0.88)))
+                context.stroke(wing, with: .color(Color.white.opacity(0.8)),
+                               style: StrokeStyle(lineWidth: max(0.6, scale)))
+            }
+
+            context.fill(
+                Path(ellipseIn: CGRect(x: center.x - r * 0.3, y: center.y - r * 1.1,
+                                       width: r * 0.6, height: r * 2.2)),
+                with: .color(Color(hex: 0x2E3B2A))
+            )
+        }
+    }
+
+    private func drawLeaves(in context: inout GraphicsContext, cx: CGFloat,
+                            cy: CGFloat, scale: CGFloat, tint: Color) {
+        let spots: [(CGFloat, CGFloat, CGFloat, CGFloat)] = [
+            (-72, -142, -0.5, 0.95), (66, -130, 0.6, 0.85),
+            (-76, -62, 0.8, 0.72), (74, -40, -0.7, 0.65), (2, -182, 0.15, 0.6)
+        ]
+        for (dx, dy, angle, factor) in spots {
+            let center = CGPoint(x: cx + dx * scale, y: cy + dy * scale)
+            let length = 18 * scale * factor
+            let width = 8 * scale * factor
+            let direction = CGPoint(x: sin(angle), y: -cos(angle))
+            let perpendicular = CGPoint(x: cos(angle), y: sin(angle))
+            let base = CGPoint(x: center.x - direction.x * length / 2,
+                               y: center.y - direction.y * length / 2)
+            let tip = CGPoint(x: center.x + direction.x * length / 2,
+                              y: center.y + direction.y * length / 2)
+
+            var leaf = Path()
+            leaf.move(to: base)
+            leaf.addQuadCurve(
+                to: tip,
+                control: CGPoint(x: center.x + perpendicular.x * width,
+                                 y: center.y + perpendicular.y * width)
+            )
+            leaf.addQuadCurve(
+                to: base,
+                control: CGPoint(x: center.x - perpendicular.x * width,
+                                 y: center.y - perpendicular.y * width)
+            )
+            context.fill(leaf, with: .color(tint.opacity(0.92)))
+            context.stroke(leaf, with: .color(Color.white.opacity(0.7)),
+                           style: StrokeStyle(lineWidth: max(0.6, scale)))
         }
     }
 
