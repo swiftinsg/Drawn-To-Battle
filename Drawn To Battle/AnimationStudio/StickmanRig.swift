@@ -151,14 +151,25 @@ struct PoseViewTransform {
     let offsetX: CGFloat
     let offsetY: CGFloat
 
-    init(canvasSize: CGSize, bottomMargin: CGFloat = 18) {
-        // Fit the figure into the space ABOVE the control panel. Scaling
-        // against the full canvas and then shifting up clipped the head.
-        let usableHeight = max(1, canvasSize.height - bottomMargin)
-        let s = min(canvasSize.width / Self.space.width, usableHeight / Self.space.height)
+    init(
+        canvasSize: CGSize,
+        topMargin: CGFloat = 0,
+        bottomMargin: CGFloat = 18,
+        leftMargin: CGFloat = 12,
+        rightMargin: CGFloat = 0
+    ) {
+        // Fit the figure into the space that is actually visible: below the
+        // top bar, above the control dock, and left of the floating inspector.
+        let left = leftMargin
+        let right = rightMargin + 12
+        let top = topMargin + 10
+        let bottom = bottomMargin + 14
+        let usableWidth = max(1, canvasSize.width - left - right)
+        let usableHeight = max(1, canvasSize.height - top - bottom)
+        let s = min(usableWidth / Self.space.width, usableHeight / Self.space.height)
         scale = s
-        offsetX = (canvasSize.width - Self.space.width * s) / 2
-        offsetY = (usableHeight - Self.space.height * s) / 2
+        offsetX = left + (usableWidth - Self.space.width * s) / 2
+        offsetY = top + (usableHeight - Self.space.height * s) / 2
     }
 
     func toCanvas(_ p: CGPoint) -> CGPoint {

@@ -15,7 +15,7 @@ struct StudioTutorialView: View {
          "This is where you bring your stickman to life. Every bone you rotate and every frame you add becomes your fighter's attack in battle."),
 
         ("PICK A BONE",
-         "Tap \"SELECT BONE\" at the top, then choose a joint (arm, leg, torso or head) to move it."),
+         "Tap a joint on the stickman to select it. You can also open the properties panel to fine tune it."),
 
         ("POSE IT",
          "Drag the selected bone around, or use the angle slider to rotate it precisely. Your changes update the frame live."),

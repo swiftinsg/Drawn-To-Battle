@@ -15,6 +15,10 @@ struct StickmanCanvasView: View {
     var editingHandles: Bool
     /// Height of the bottom overlay panel, so floor + figure sit above it.
     var bottomInset: CGFloat = 0
+    /// Width reserved by a floating inspector on the right.
+    var rightInset: CGFloat = 0
+    /// Height reserved by the top bar.
+    var topInset: CGFloat = 0
     /// Faded ghosts of previous frames (onion skinning), nearest first.
     var ghostPoses: [StickmanPose] = []
 
@@ -22,7 +26,12 @@ struct StickmanCanvasView: View {
 
     var body: some View {
         GeometryReader { geo in
-            let t = PoseViewTransform(canvasSize: geo.size, bottomMargin: bottomInset + 26)
+            let t = PoseViewTransform(
+                canvasSize: geo.size,
+                topMargin: topInset,
+                bottomMargin: bottomInset + 26,
+                rightMargin: rightInset
+            )
             ZStack {
                 // Paper surface: the canvas is a light "sheet of paper" with a
                 // dark sketch border, surrounded by dark studio chrome.
@@ -32,7 +41,7 @@ struct StickmanCanvasView: View {
                     // Floor line for readability.
                     var floor = Path()
                     floor.move(to: CGPoint(x: 20, y: size.height - bottomInset - 14))
-                    floor.addLine(to: CGPoint(x: size.width - 20, y: size.height - bottomInset - 14))
+                    floor.addLine(to: CGPoint(x: size.width - rightInset - 20, y: size.height - bottomInset - 14))
                     context.stroke(
                         floor,
                         with: .color(Color(hex: 0x1A1A1E).opacity(0.28)),

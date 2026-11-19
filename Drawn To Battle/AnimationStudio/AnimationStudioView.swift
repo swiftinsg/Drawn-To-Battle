@@ -9,6 +9,8 @@ struct AnimationStudioView: View {
     @State private var nameEditorShown = false
     /// First-time walkthrough, shown once per fighter.
     @State private var showTutorial = false
+    /// Properties panel, used on compact screens where it cannot float over the canvas.
+    @State private var showInspector = false
 
     var onBack: (() -> Void)?
 
@@ -16,9 +18,10 @@ struct AnimationStudioView: View {
 
     var body: some View {
         GeometryReader { geo in
+            let compact = geo.size.width < 700
             ZStack {
-                // Full-screen paper canvas, inset to keep the figure and floor
-                // above the bottom panel when animating.
+                // Paper canvas fits the area left of the inspector on wide
+                // screens, and uses the full width on compact screens.
                 StickmanCanvasView(
                     pose: studio.currentFrame?.pose ?? StickmanPose(),
                     selectedBone: $selectedBone,
@@ -33,21 +36,26 @@ struct AnimationStudioView: View {
                     },
                     editingHandles: !studio.isPlaying,
                     bottomInset: mode == .animate ? bottomPanelHeight : 0,
+                    rightInset: mode == .animate && !compact ? inspectorWidth + 8 : 0,
+                    topInset: topBarHeight,
                     ghostPoses: onionSkinGhosts
                 )
                 .ignoresSafeArea(edges: .bottom)
 
-                if mode == .animate {
-                    CanvasToolbar(studio: studio, sceneSize: sceneSize(geo))
-                        .offset(y: topBarHeight)
-                    bottomPanel
+                // Studio chrome sits above the canvas: top bar first, then the
+                // compact control dock pinned to the bottom. Keeping this in a
+                // VStack stops the dock from centering over the fighter.
+                VStack(spacing: 0) {
+                    topBar(isCompact: compact)
+                    Spacer(minLength: 0)
+                    if mode == .animate {
+                        bottomPanel
+                    }
                 }
 
-                // Top bar.
-                topBar
-
-                // Right-hand inspector panel (floats over the canvas).
-                if mode == .animate {
+                // Right-hand inspector floats over the canvas on wide screens.
+                // On compact screens it opens as a sheet from the top bar.
+                if mode == .animate && !compact {
                     StudioInspectorPanel(studio: studio, selectedBone: $selectedBone)
                         .frame(width: inspectorWidth, height: zoneHeight(geo))
                         .position(
@@ -67,6 +75,26 @@ struct AnimationStudioView: View {
                 StudioTutorialView(game: game)
             }
         }
+        .sheet(isPresented: $showInspector) {
+            VStack(spacing: 0) {
+                HStack {
+                    Spacer()
+                    Button("DONE") { showInspector = false }
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .foregroundStyle(Color(hex: 0xF5C451))
+                        .buttonStyle(.plain)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 8)
+
+                ScrollView {
+                    StudioInspectorPanel(studio: studio, selectedBone: $selectedBone)
+                        .frame(width: inspectorWidth)
+                        .frame(maxWidth: .infinity)
+                }
+            }
+            .padding(.bottom, 8)
+        }
         .onDisappear {
             studio.stop()
             studio.flushAutosave()
@@ -85,8 +113,8 @@ struct AnimationStudioView: View {
 
     // MARK: Regions
 
-    /// Top bar: BACK, project chip, quality readout, mode tabs, save.
-    private var topBar: some View {
+    /// Top bar: BACK, project chip, quality readout, mode tabs, tools.
+    private func topBar(isCompact: Bool) -> some View {
         HStack(spacing: 8) {
             if let onBack {
                 StudioIconButton(systemImage: "chevron.left") { onBack() }
@@ -106,7 +134,7 @@ struct AnimationStudioView: View {
             }
             .buttonStyle(.plain)
 
-            // Live quality readout — re-scored on every edit, and the
+            // Live quality readout, re-scored on every edit, and the
             // same score that sets battle damage.
             let live = AnimationAnalysis.analyze(studio.project)
             Text("POWER \(Int(live.power)) • \(live.powerLabel)")
@@ -126,45 +154,25 @@ struct AnimationStudioView: View {
             Text(studio.hasUnsavedChanges ? "SAVING" : "AUTO SAVED")
                 .font(.system(size: 8, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.35))
+            if isCompact {
+                StudioIconButton(systemImage: "slider.horizontal.3") { showInspector = true }
+                    .accessibilityLabel("Properties")
+            }
             StudioIconButton(systemImage: "questionmark.circle") { showTutorial = true }
+                .accessibilityLabel("Tutorial")
         }
         .padding(.horizontal, 12)
         .padding(.top, 6)
         .padding(.bottom, 4)
     }
 
-    /// Thin row under the top bar: scene size label + JOINTS toggle.
-    private struct CanvasToolbar: View {
-        @ObservedObject var studio: StudioState
-        let sceneSize: CGSize
-
-        var body: some View {
-            HStack(spacing: 12) {
-                Text("SCENE \(Int(sceneSize.width.rounded())) × \(Int(sceneSize.height.rounded()))")
-                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
-                    .foregroundStyle(.white.opacity(0.45))
-                    .lineLimit(1)
-
-                Spacer()
-
-                Toggle("JOINTS", isOn: Binding(
-                    get: { studio.onionSkin },
-                    set: { studio.onionSkin = $0 }
-                ))
-                .toggleStyle(SwitchToggleStyle(tint: Color(hex: 0xF5C451)))
-                .font(.system(size: 9, weight: .semibold))
-            }
-            .padding(.horizontal, 12)
-        }
-    }
-
-    /// Bottom zone: timeline, playback, pose strip, frame strip.
+    /// Bottom zone: timeline, playback, and frame tools.
     private var bottomPanel: some View {
         VStack(spacing: 8) {
             // Timeline with gold playhead.
             FrameTimelineView(studio: studio)
 
-            // Playback row — the starring zone: big STOP/PLAY and
+            // Playback row, the starring zone: big STOP/PLAY and
             // back/forward buttons, speed toggle.
             HStack(spacing: 10) {
                 StudioIconButton(systemImage: "backward.end.fill") { studio.selectFrame(0) }
@@ -175,7 +183,7 @@ struct AnimationStudioView: View {
                     Image(systemName: studio.isPlaying ? "stop.fill" : "play.fill")
                         .font(.system(size: 20, weight: .black))
                         .foregroundStyle(studio.isPlaying ? .black : .white)
-                        .frame(width: 64, height: 64)
+                        .frame(width: 52, height: 52)
                         .background(
                             Circle().fill(studio.isPlaying
                                 ? Color.white.opacity(0.12)
@@ -203,27 +211,8 @@ struct AnimationStudioView: View {
                 .buttonStyle(.plain)
             }
 
-            // Pose strip: bone picker, angle, thickness, scale, color.
-            PoseStrip(
-                selectedBone: $selectedBone,
-                pose: studio.currentFrame?.pose ?? StickmanPose(),
-                onRotate: handleRotate,
-                onSetAngle: setBoneAngle,
-                onThickness: { value in
-                    studio.updateCurrentPose { pose in pose.thickness = value }
-                },
-                onScale: { value in
-                    studio.updateCurrentPose { pose in pose.scale = value }
-                },
-                onBodyRotation: { radians in
-                    studio.updateCurrentPose { pose in
-                        pose.bodyRotation = self.normalizedAngle(radians)
-                    }
-                },
-                onColor: { value in
-                    studio.updateCurrentPose { pose in pose.colorARGB = value }
-                }
-            )
+            // Pose properties live in the right inspector, so the dock stays
+            // compact and the whole figure remains visible above it.
 
             // Frame strip: add/duplicate/move/delete + clipboard.
             FrameMgmtStrip(studio: studio)
@@ -231,6 +220,7 @@ struct AnimationStudioView: View {
         .padding(.horizontal, 12)
         .padding(.top, 8)
         .padding(.bottom, 6)
+        .frame(height: bottomPanelHeight)
         .background(
             RoundedTopCorners(radius: 18)
                 .fill(Color(hex: 0x14161E).opacity(0.97))
@@ -242,25 +232,15 @@ struct AnimationStudioView: View {
 
     private var inspectorWidth: CGFloat { 240 }
     private var topBarHeight: CGFloat { 54 }
-    private var canvasToolbarHeight: CGFloat { 34 }
-    private var bottomPanelHeight: CGFloat { 202 }
+    /// Compact dock height after moving pose properties to the inspector.
+    private var bottomPanelHeight: CGFloat { 176 }
 
-    /// Space above the canvas zone (top bar + canvas toolbar when animating).
-    private func zoneTop(_ geo: GeometryProxy) -> CGFloat {
-        topBarHeight + (mode == .animate ? canvasToolbarHeight : 0)
-    }
+    /// Space above the canvas zone (the top bar).
+    private func zoneTop(_ geo: GeometryProxy) -> CGFloat { topBarHeight }
 
-    /// Height of the canvas zone (between top bar/toolbar and bottom panel).
+    /// Height of the canvas zone (between the top bar and bottom dock).
     private func zoneHeight(_ geo: GeometryProxy) -> CGFloat {
         max(0, geo.size.height - zoneTop(geo) - (mode == .animate ? bottomPanelHeight : 0))
-    }
-
-    /// Scene size shown in the canvas toolbar label.
-    private func sceneSize(_ geo: GeometryProxy) -> CGSize {
-        CGSize(
-            width: mode == .animate ? geo.size.width - inspectorWidth - 8 : geo.size.width,
-            height: zoneHeight(geo)
-        )
     }
 
     private var speedLabel: String {
@@ -707,8 +687,12 @@ private struct StudioInspectorPanel: View {
                              display: "\(Int(pose.root.x.rounded()))")
                 InspectorRow(label: "Y", binding: rootYBinding, range: 0...520,
                              display: "\(Int(pose.root.y.rounded()))")
-                InspectorRow(label: "ANGLE", binding: angleBinding, range: -3.15...3.15,
-                             display: String(format: "%.0f°", degrees(pose.angles[bone] ?? 0)))
+                InspectorRow(label: "ANGLE", binding: boneAngleDegreesBinding, range: 0...360,
+                             display: String(format: "%.0f°", boneDegrees))
+                InspectorRow(label: "BODY", binding: bodyAngleDegreesBinding, range: 0...360,
+                             display: String(format: "%.0f°", bodyDegrees))
+                InspectorRow(label: "WIDTH", binding: thicknessBinding, range: 2...14,
+                             display: "\(Int(pose.thickness.rounded()))")
                 InspectorRow(label: "SCALE", binding: scaleBinding, range: 0.5...2.0,
                              display: String(format: "%.1f", pose.scale))
             }
@@ -763,10 +747,28 @@ private struct StudioInspectorPanel: View {
         )
     }
 
-    private var angleBinding: Binding<Double> {
+    private var boneDegrees: Double { normalizedDegrees(Double(degrees(pose.angles[bone] ?? 0))) }
+
+    private var bodyDegrees: Double { normalizedDegrees(Double(degrees(pose.bodyRotation))) }
+
+    private var boneAngleDegreesBinding: Binding<Double> {
         Binding(
-            get: { Double(pose.angles[bone] ?? 0) },
-            set: { angle in studio.updateCurrentPose { $0.angles[bone] = CGFloat(angle) } }
+            get: { boneDegrees },
+            set: { value in studio.updateCurrentPose { $0.angles[bone] = radians(value) } }
+        )
+    }
+
+    private var bodyAngleDegreesBinding: Binding<Double> {
+        Binding(
+            get: { bodyDegrees },
+            set: { value in studio.updateCurrentPose { $0.bodyRotation = radians(value) } }
+        )
+    }
+
+    private var thicknessBinding: Binding<Double> {
+        Binding(
+            get: { Double(pose.thickness) },
+            set: { value in studio.updateCurrentPose { $0.thickness = CGFloat(value).clamped(2...14) } }
         )
     }
 
@@ -778,7 +780,16 @@ private struct StudioInspectorPanel: View {
     }
 
     private func degrees(_ radians: CGFloat) -> CGFloat {
-        radians * 57.2958
+        radians * 180 / .pi
+    }
+
+    private func radians(_ degrees: Double) -> CGFloat {
+        CGFloat(degrees) * .pi / 180
+    }
+
+    private func normalizedDegrees(_ value: Double) -> Double {
+        let wrapped = value.truncatingRemainder(dividingBy: 360)
+        return wrapped < 0 ? wrapped + 360 : wrapped
     }
 
     private var hexText: String {
@@ -817,7 +828,7 @@ private struct InspectorRow: View {
             Text(label)
                 .font(.system(size: 11, weight: .semibold, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.6))
-                .frame(width: 30, alignment: .leading)
+                .frame(width: 36, alignment: .leading)
             Slider(value: binding, in: range)
                 .tint(Color(hex: 0xF5C451))
                 .controlSize(.small)
