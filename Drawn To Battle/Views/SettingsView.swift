@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Settings
 
-/// Customization + utilities sheet, opened from the home hub.
+/// Utilities and defaults, opened from the hub's gear button.
 struct SettingsView: View {
     @ObservedObject var game: GameSave
     @Environment(\.dismiss) private var dismiss
@@ -13,7 +13,6 @@ struct SettingsView: View {
 
     @State private var showResetConfirm = false
     @State private var resetDone = false
-    @State private var maxedDone = false
 
     var body: some View {
         ZStack {
@@ -28,9 +27,8 @@ struct SettingsView: View {
                                 .resizable()
                                 .scaledToFit()
                                 .frame(width: 32, height: 32)
-                                .stickerShadow()
                         }
-                        .buttonStyle(SquashButtonStyle())
+                        .buttonStyle(.plain)
                         .accessibilityLabel("Close settings")
                         Spacer()
                         Text("SETTINGS")
@@ -41,107 +39,26 @@ struct SettingsView: View {
                     }
                     .padding(.top, 12)
 
-                    // Fighter identity.
-                    section("FIGHTER") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("NAME")
-                                .font(.system(size: 9, weight: .heavy, design: .rounded))
-                                .foregroundStyle(.white.opacity(0.45))
-                            TextField("FIGHTER NAME", text: nameBinding)
-                                .font(.system(size: 18, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.characters)
-                                .submitLabel(.done)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.white.opacity(0.06))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                                )
-                        }
-                    }
-
                     // Studio defaults.
                     section("ANIMATION STUDIO") {
                         VStack(spacing: 14) {
                             HStack {
-                                settingLabel("DEFAULT FPS\nFOR NEW PROJECTS")
+                                settingLabel("DEFAULT FPS")
                                 Spacer()
                                 Stepper("\(defaultFPS)", value: $defaultFPS, in: 1...30)
                                     .font(.system(size: 14, weight: .black, design: .rounded))
                                     .foregroundStyle(Color(hex: 0xF5C451))
                                     .fixedSize()
                             }
-                            Toggle(isOn: $defaultOnionSkin) {
-                                settingLabel("ONION SKIN\nBY DEFAULT")
-                            }
-                            .tint(Color(hex: 0xF5C451))
-                        }
-                    }
-
-                    // Currency primer.
-                    section("CURRENCIES") {
-                        VStack(spacing: 12) {
-                            currencyRow(icon: AnyView(Image(systemName: "circlebadge.fill")
-                                .font(.system(size: 14, weight: .bold))
-                                .foregroundStyle(Color(hex: 0xF5C451))),
-                                        title: "COINS",
-                                        blurb: "Earned by beating bosses.")
-                            currencyRow(icon: AnyView(Image("DrawnToBattleGachaToken")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(height: 14)),
-                                        title: "PENS",
-                                        blurb: "Half of every boss reward; spent on gacha pulls.")
-                        }
-                    }
-
-                    // Testing aids.
-                    section("TESTING") {
-                        VStack(alignment: .leading, spacing: 10) {
-                            Toggle(isOn: Binding(
-                                get: { game.testUnlockAll },
-                                set: { game.testUnlockAll = $0 }
-                            )) {
-                                settingLabel("UNLOCK ALL BOSSES")
-                            }
-                            .tint(Color(hex: 0xF5C451))
-
-                            Button {
-                                game.coins = 99_999
-                                game.stardust = 99_999
-                                maxedDone = true
-                            } label: {
-                                HStack {
-                                    Image(systemName: "scalemass.fill")
-                                        .font(.system(size: 12, weight: .bold))
-                                    Text("MAX CURRENCIES (99,999)")
-                                        .font(.system(size: 13, weight: .black, design: .rounded))
-                                    Spacer()
+                            VStack(alignment: .leading, spacing: 4) {
+                                Toggle(isOn: $defaultOnionSkin) {
+                                    settingLabel("GHOST FRAMES")
                                 }
-                                .foregroundStyle(Color(hex: 0xF5C451))
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(hex: 0xF5C451).opacity(0.1))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1)
-                                )
-                            }
-                            .buttonStyle(.plain)
+                                .tint(Color(hex: 0xF5C451))
 
-                            if maxedDone {
-                                Text("Coins and pens set to 99,999.")
-                                    .font(.system(size: 11, weight: .semibold))
-                                    .foregroundStyle(.white.opacity(0.45))
+                                Text("Shows the previous frame faintly while you draw.")
+                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.white.opacity(0.4))
                             }
                         }
                     }
@@ -174,7 +91,7 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
 
                             if resetDone {
-                                Text("Progress reset. Your fighter keeps their name.")
+                                Text("Progress reset! Your name and photo stay.")
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(.white.opacity(0.45))
                             }
@@ -199,7 +116,7 @@ struct SettingsView: View {
         }
         .preferredColorScheme(.dark)
         .confirmationDialog(
-            "Reset all progress? Your fighter keeps their name, but blueprints, coins, pens and boss records are wiped.",
+            "Reset all progress? You'll keep your name and photo, but lose your moves, coins, pens, XP and boss records.",
             isPresented: $showResetConfirm,
             titleVisibility: .visible
         ) {
@@ -218,19 +135,6 @@ struct SettingsView: View {
     }
 
     // MARK: Helpers
-
-    private var nameBinding: Binding<String> {
-        Binding(
-            get: { game.username },
-            set: { newValue in
-                var limited = newValue
-                if limited.count > 14 { limited = String(limited.prefix(14)) }
-                let trimmed = limited.trimmingCharacters(in: .whitespacesAndNewlines)
-                // Keep the save valid: never blank out the name entirely.
-                game.username = trimmed.isEmpty ? game.username : trimmed
-            }
-        )
-    }
 
     private var appVersion: String {
         let version = Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String ?? "1.0"
@@ -253,26 +157,5 @@ struct SettingsView: View {
             .font(.system(size: 11, weight: .bold, design: .rounded))
             .foregroundStyle(.white.opacity(0.75))
             .lineSpacing(2)
-    }
-
-    private func currencyRow(icon: AnyView, title: String, blurb: String) -> some View {
-        HStack(spacing: 10) {
-            icon
-            VStack(alignment: .leading, spacing: 1) {
-                Text(title)
-                    .font(.system(size: 12, weight: .black, design: .rounded))
-                    .foregroundStyle(.white)
-                Text(blurb)
-                    .font(.system(size: 10, weight: .semibold))
-                    .foregroundStyle(.white.opacity(0.5))
-            }
-            Spacer()
-        }
-        .padding(.horizontal, 12)
-        .padding(.vertical, 10)
-        .background(
-            RoundedRectangle(cornerRadius: 12)
-                .fill(Color.white.opacity(0.05))
-        )
     }
 }

@@ -3,8 +3,13 @@ import UIKit
 
 struct StartScreenView: View {
     let onStart: () -> Void
-    @State private var isLoading = false
+
+    private let loadingDuration = 1.4
+
     @State private var loadingProgress = 0.0
+    @State private var canStart = false
+    @State private var hasStartedLoading = false
+    @State private var promptPulse = false
 
     var body: some View {
         ZStack {
@@ -21,25 +26,45 @@ struct StartScreenView: View {
 
                 LoadingBar(progress: loadingProgress)
                     .frame(maxWidth: 360)
+
+                Text("TOUCH TO START")
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .tracking(3)
+                    .foregroundStyle(.white.opacity(promptPulse ? 0.75 : 0.3))
+                    .scaleEffect(promptPulse ? 1.06 : 0.96)
+                .animation(
+                    .easeInOut(duration: 0.9).repeatForever(autoreverses: true),
+                    value: promptPulse
+                )
+                .padding(.top, 22)
+                .opacity(canStart ? 1 : 0)
+                .animation(.easeInOut(duration: 0.4), value: canStart)
+                .accessibilityHidden(!canStart)
             }
             .padding(.horizontal, 34)
             .padding(.bottom, 30)
         }
         .contentShape(Rectangle())
         .onTapGesture {
-            startLoading()
+            guard canStart else { return }
+            onStart()
         }
-        .allowsHitTesting(!isLoading)
+        .onAppear(perform: startLoading)
     }
 
     private func startLoading() {
-        guard !isLoading else { return }
-        isLoading = true
-        withAnimation(.easeInOut(duration: 0.85)) {
+        guard !hasStartedLoading else { return }
+        hasStartedLoading = true
+
+        withAnimation(.easeInOut(duration: loadingDuration)) {
             loadingProgress = 1
         }
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.95) {
-            onStart()
+
+        DispatchQueue.main.asyncAfter(deadline: .now() + loadingDuration + 0.1) {
+            withAnimation(.easeInOut(duration: 0.4)) {
+                canStart = true
+            }
+            promptPulse = true
         }
     }
 }

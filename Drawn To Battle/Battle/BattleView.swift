@@ -9,6 +9,7 @@ struct BattleView: View {
 
     @StateObject private var engine: BattleEngine
     @State private var showTips = false
+    @State private var showPause = false
 
     init(boss: BossDefinition, game: GameSave, onExit: @escaping () -> Void) {
         self.boss = boss
@@ -82,6 +83,14 @@ struct BattleView: View {
                     onRetry: { engine.reset() }
                 )
             }
+
+            if showPause {
+                BattlePauseOverlay(
+                    onContinue: resumeBattle,
+                    onExit: exitBattle
+                )
+                .transition(.opacity)
+            }
         }
         .onAppear {
             engine.startLoop()
@@ -91,6 +100,41 @@ struct BattleView: View {
         }
         .onDisappear { engine.stopLoop() }
         .statusBarHidden(true)
+        .overlay(alignment: .topTrailing) {
+            if engine.result == nil && !showTips && !showPause {
+                Button { pauseBattle() } label: {
+                    Image(systemName: "pause.fill")
+                        .font(.system(size: 14, weight: .black))
+                        .foregroundStyle(.white)
+                        .frame(width: 38, height: 38)
+                        .background(Circle().fill(Color.black.opacity(0.55)))
+                        .overlay(Circle().stroke(Color.white.opacity(0.3), lineWidth: 1))
+                }
+                .buttonStyle(.plain)
+                .padding(.trailing, 14)
+                .padding(.top, 62)
+                .accessibilityLabel("Pause battle")
+            }
+        }
+        .animation(.easeInOut(duration: 0.18), value: showPause)
+    }
+
+    // MARK: Pause controls
+
+    private func pauseBattle() {
+        engine.stopLoop()
+        engine.input = BattleInput()
+        withAnimation(.easeInOut(duration: 0.18)) { showPause = true }
+    }
+
+    private func resumeBattle() {
+        withAnimation(.easeInOut(duration: 0.18)) { showPause = false }
+        engine.startLoop()
+    }
+
+    private func exitBattle() {
+        engine.stopLoop()
+        onExit()
     }
 
     // MARK: Scene drawing
@@ -633,7 +677,7 @@ private struct BattleTipsOverlay: View {
                     text: "Fill the purple STAGGER bar to stun the boss, then unload. Combos add up to +40% damage.")
 
                 Button(action: onClose) {
-                    Text("GOT IT")
+                    Text("LET'S FIGHT")
                         .font(.system(size: 15, weight: .black, design: .rounded))
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity)
@@ -667,6 +711,56 @@ private struct BattleTipsOverlay: View {
                     .foregroundStyle(.white.opacity(0.65))
                     .fixedSize(horizontal: false, vertical: true)
             }
+        }
+    }
+}
+
+// MARK: - Pause overlay
+
+private struct BattlePauseOverlay: View {
+    let onContinue: () -> Void
+    let onExit: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.82).ignoresSafeArea()
+
+            VStack(spacing: 18) {
+                Text("PAUSED")
+                    .font(DrawnToBattleTypography.display(38))
+                    .foregroundStyle(.white)
+
+                Text("Your fight is on hold.")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.5))
+
+                VStack(spacing: 10) {
+                    Button {
+                        onContinue()
+                    } label: {
+                        Text("CONTINUE")
+                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: 220)
+                            .padding(.vertical, 12)
+                            .background(Capsule().fill(Color(hex: 0xF5C451)))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        onExit()
+                    } label: {
+                        Text("EXIT")
+                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: 220)
+                            .padding(.vertical, 12)
+                            .background(Capsule().fill(Color.white.opacity(0.12)))
+                    }
+                    .buttonStyle(.plain)
+                }
+            }
+            .padding(30)
         }
     }
 }
@@ -708,11 +802,14 @@ private struct BattleResultOverlay: View {
                     Text("+\(boss.coinReward(firstClear: firstClear)) COINS • +\(boss.penReward(firstClear: firstClear)) PENS")
                         .font(.system(size: 16, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color(hex: 0xF5C451))
+                    Text("+\(boss.xpReward(firstClear: firstClear)) XP")
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.7))
                     Text("YOUR ANIMATION — POWER \(Int(engine.analysis.power)) • \(engine.analysis.powerLabel)")
                         .font(.system(size: 11, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white.opacity(0.6))
                 } else {
-                    Text("The \(boss.bossName) only fears \(boss.requiredTechnique.label) strikes.\nSharpen your animation and return.")
+                    Text("\(boss.bossName) only fears \(boss.requiredTechnique.label) moves.\nSharpen your animation and try again.")
                         .font(.system(size: 13, weight: .semibold, design: .rounded))
                         .multilineTextAlignment(.center)
                         .foregroundStyle(.white.opacity(0.75))
@@ -746,7 +843,7 @@ private struct BattleResultOverlay: View {
                         if result == .victory { game.registerVictory(boss: boss) }
                         onExit()
                     } label: {
-                        Text("BACK")
+                        Text("EXIT")
                             .font(.system(size: 15, weight: .black, design: .rounded))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 22)

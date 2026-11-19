@@ -176,6 +176,7 @@ final class BattleEngine: ObservableObject {
 
     func startLoop() {
         guard simTimer == nil else { return }
+        lastDate = nil
         simTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
             self?.tick(Date())
         }
@@ -261,7 +262,7 @@ final class BattleEngine: ObservableObject {
             return
         }
 
-        if !phaseTwo && bossHP <= bossHPMax * 0.5 {
+        if !phaseTwo && bossHP <= bossHPMax * 0.6 {
             phaseTwo = true
             floaters.append(Floater(text: boss.bossName + " ENRAGES!",
                                     pos: CGPoint(x: bossX, y: groundY - 190),
@@ -291,7 +292,9 @@ final class BattleEngine: ObservableObject {
         dodgeCooldown = max(0, dodgeCooldown - d)
         attackCooldown = max(0, attackCooldown - d)
 
-        let canControl = !attackActive && hurtTimer <= 0
+        // Once the strike has landed the player can move, block and dodge again,
+        // even while the rest of a long animation finishes playing.
+        let canControl = (!attackActive || attackDamageDone) && hurtTimer <= 0
         blockActive = input.blockHeld && canControl && !dodgeActive
         if blockActive && blockStart < 0 { blockStart = time }
         if !input.blockHeld { blockStart = -10 }
@@ -403,7 +406,7 @@ final class BattleEngine: ObservableObject {
         let speed: CGFloat = currentIsUltimate ? 1.6 : 1
         attackTime += d * speed
         attackCharge = min(1, attackTime / attackDuration)
-        let idx = min(project.frames.count - 1, Int(attackTime * fps))
+        let idx = min(project.frames.count - 1, Int(attackTime * playbackFPS))
 
         if !attackDamageDone && idx >= analysis.strikeIndex {
             attackDamageDone = true
@@ -415,7 +418,21 @@ final class BattleEngine: ObservableObject {
         }
     }
 
-    var attackDuration: CGFloat { CGFloat(project.frames.count) / CGFloat(fps) }
+    /// Long hand-drawn animations still need to resolve quickly so the boss
+    /// can't attack while the player is locked in a 2-second move.
+    private static let maxAttackDuration: CGFloat = 0.6
+
+    var attackDuration: CGFloat {
+        let natural = CGFloat(project.frames.count) / CGFloat(fps)
+        return min(natural, Self.maxAttackDuration)
+    }
+
+    /// Frames are remapped onto the capped duration so the whole animation
+    /// still plays, just faster for oversized frame counts.
+    private var playbackFPS: CGFloat {
+        guard attackDuration > 0 else { return CGFloat(fps) }
+        return CGFloat(project.frames.count) / attackDuration
+    }
 
     private func startAttack(ultimate: Bool) {
         attackActive = true
@@ -526,7 +543,7 @@ final class BattleEngine: ObservableObject {
             return
         }
 
-        let speedMul: CGFloat = phaseTwo ? 1.35 : 1
+        let speedMul: CGFloat = phaseTwo ? 1.5 : 1
 
         switch bossState {
         case .idle:
@@ -598,7 +615,7 @@ final class BattleEngine: ObservableObject {
             bossTimer -= d
             if bossTimer <= 0 {
                 bossState = .idle
-                bossTimer = (phaseTwo ? 0.65 : 1.05)
+                bossTimer = (phaseTwo ? 0.5 : 0.85)
             }
         }
     }
@@ -621,7 +638,7 @@ final class BattleEngine: ObservableObject {
     private func punishWindow() {
         charging = false
         bossState = .recover
-        bossTimer = phaseTwo ? 0.85 : 1.1
+        bossTimer = phaseTwo ? 0.6 : 0.85
         floaters.append(Floater(text: "STRIKE NOW!",
                                 pos: CGPoint(x: bossX, y: groundY - 210),
                                 color: Color(hex: 0xF5C451), big: true))
@@ -687,7 +704,7 @@ final class BattleEngine: ObservableObject {
     private func endAttack() {
         charging = false
         bossState = .recover
-        bossTimer = phaseTwo ? 0.45 : 0.7
+        bossTimer = phaseTwo ? 0.32 : 0.55
     }
 
     private func facingSign() -> CGFloat { playerPos.x > bossX ? 1 : -1 }
@@ -881,7 +898,7 @@ final class BattleEngine: ObservableObject {
     /// The pose the view would draw right now (shared logic with the view).
     func currentPoseForRender() -> StickmanPose {
         if attackActive {
-            let idx = min(project.frames.count - 1, Int(attackTime * fps))
+            let idx = min(project.frames.count - 1, Int(attackTime * playbackFPS))
             return project.frames[idx].pose
         }
         if blockActive {

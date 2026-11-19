@@ -184,10 +184,12 @@ enum Gacha {
     static let exchangeCoins = 100
     static let exchangePens = 20
 
-    /// Tiers that actually contain blueprints. Elite and Transcendent are
-    /// reserved for future moves, so they can't be rolled yet.
+    /// Rollable tiers. Base moves are starter moves, never gacha drops.
+    /// Elite and Transcendent are reserved for future moves.
     static var activeRarities: [Rarity] {
-        Rarity.allCases.filter { !BlueprintCatalog.blueprints(in: $0).isEmpty }
+        Rarity.allCases.filter {
+            $0 != .base && !BlueprintCatalog.blueprints(in: $0).isEmpty
+        }
     }
 
     /// Total weight across rollable tiers (used for the displayed rates).

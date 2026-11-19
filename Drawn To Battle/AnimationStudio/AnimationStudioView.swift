@@ -98,6 +98,7 @@ struct AnimationStudioView: View {
                         Button {
                             studio.isPlaying ? studio.stop() : studio.play()
                         } label: {
+<<<<<<< HEAD
                             Image(systemName: studio.isPlaying ? "stop.fill" : "play.fill")
                                 .font(.system(size: 20, weight: .black))
                                 .foregroundStyle(studio.isPlaying ? .black : .white)
@@ -112,10 +113,38 @@ struct AnimationStudioView: View {
                                 .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 8, y: 2)
                         }
                         .buttonStyle(SquashButtonStyle())
+=======
+                            Image("DrawnToBattleFrameButton")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(width: 22, height: 11)
+                                .frame(width: 30, height: 28)
+                                .background(RoundedRectangle(cornerRadius: 9).fill(Color(hex: 0xF5C451)))
+                        }
+                        .buttonStyle(.plain)
+                        .accessibilityLabel("Add frame")
+                        StudioIconButton(systemImage: "doc.on.doc") {
+                            studio.duplicateFrame(at: studio.selectedIndex)
+                        }
+                        StudioIconButton(systemImage: "arrow.left.to.line") {
+                            studio.moveFrame(from: studio.selectedIndex, to: 0)
+                        }
+                        StudioIconButton(systemImage: "arrow.right.to.line") {
+                            studio.moveFrame(from: studio.selectedIndex, to: studio.project.frames.count - 1)
+                        }
+                        StudioIconButton(systemImage: "trash", tinted: Color(hex: 0xE86A6A)) {
+                            studio.deleteFrame(at: studio.selectedIndex)
+                        }
+>>>>>>> main
 
                         StudioIconButton(systemImage: "forward.end.fill") {
                             studio.selectFrame(studio.project.frames.count - 1)
                         }
+<<<<<<< HEAD
+=======
+                        .buttonStyle(.plain)
+                        .accessibilityLabel(studio.onionSkin ? "Hide ghost frames" : "Show ghost frames")
+>>>>>>> main
 
                         // Playback speed toggle.
                         Button {
