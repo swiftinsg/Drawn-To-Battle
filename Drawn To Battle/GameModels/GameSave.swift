@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import Combine
 
 // MARK: - Boss definitions
@@ -145,6 +146,10 @@ final class GameSave: ObservableObject {
     @Published var username: String = "" {
         didSet { persist() }
     }
+    /// Profile photo chosen from the system photo library (compressed JPEG).
+    @Published var profileImageData: Data? {
+        didSet { persist() }
+    }
     /// Testing: every boss is open regardless of defeat records.
     @Published var testUnlockAll: Bool = false {
         didSet { persist() }
@@ -152,6 +157,9 @@ final class GameSave: ObservableObject {
     var hasUsername: Bool { !username.isEmpty }
 
     private static let key = "DrawnToBattle.save.v1"
+
+    /// Coins charged by the settings screen for changing the fighter's name.
+    static let nameChangeCost = 1000
 
     init() {
         if let data = UserDefaults.standard.data(forKey: Self.key),
@@ -163,6 +171,7 @@ final class GameSave: ObservableObject {
             blueprintEdits = saved.blueprintEdits ?? [:]
             coins = saved.coins ?? 0
             username = saved.username ?? ""
+            profileImageData = saved.profileImageData
             testUnlockAll = saved.testUnlockAll ?? false
         }
     }
@@ -177,6 +186,36 @@ final class GameSave: ObservableObject {
 
     func addStardust(_ amount: Int) {
         stardust += amount
+    }
+
+    /// Spends coins to rename the fighter. Fails without spending if the name
+    /// is blank, unchanged, too long, or unaffordable.
+    @discardableResult
+    func changeUsername(to rawName: String) -> Bool {
+        let trimmed = rawName.trimmingCharacters(in: .whitespacesAndNewlines)
+        guard !trimmed.isEmpty, trimmed.count <= 14,
+              trimmed != username, coins >= Self.nameChangeCost else { return false }
+        coins -= Self.nameChangeCost
+        username = trimmed
+        return true
+    }
+
+    /// Downscales and compresses a picked photo so the save stays small.
+    func setProfileImage(_ image: UIImage) {
+        let maxSide: CGFloat = 512
+        let longest = max(image.size.width, image.size.height)
+        let scale = longest > maxSide ? maxSide / longest : 1
+        let target = CGSize(width: image.size.width * scale, height: image.size.height * scale)
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = 1
+        let rendered = UIGraphicsImageRenderer(size: target, format: format).image { _ in
+            image.draw(in: CGRect(origin: .zero, size: target))
+        }
+        profileImageData = rendered.jpegData(compressionQuality: 0.75)
+    }
+
+    func clearProfileImage() {
+        profileImageData = nil
     }
 
     @discardableResult
@@ -257,6 +296,7 @@ final class GameSave: ObservableObject {
         var blueprintEdits: [String: AnimationProject]?
         var coins: Int?
         var username: String?
+        var profileImageData: Data?
         var testUnlockAll: Bool?
     }
 
@@ -269,6 +309,7 @@ final class GameSave: ObservableObject {
             blueprintEdits: blueprintEdits,
             coins: coins,
             username: username,
+            profileImageData: profileImageData,
             testUnlockAll: testUnlockAll
         )
         if let encoded = try? JSONEncoder().encode(data) {

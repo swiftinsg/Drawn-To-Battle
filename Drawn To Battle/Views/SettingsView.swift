@@ -1,4 +1,6 @@
 import SwiftUI
+import UIKit
+import PhotosUI
 
 // MARK: - Settings
 
@@ -14,6 +16,12 @@ struct SettingsView: View {
     @State private var showResetConfirm = false
     @State private var resetDone = false
     @State private var maxedDone = false
+
+    // Profile editing.
+    @State private var photoItem: PhotosPickerItem?
+    @State private var draftName = ""
+    @State private var showRenameConfirm = false
+    @State private var renameMessage: String?
 
     var body: some View {
         ZStack {
@@ -41,28 +49,108 @@ struct SettingsView: View {
                     }
                     .padding(.top, 12)
 
-                    // Fighter identity.
-                    section("FIGHTER") {
-                        VStack(alignment: .leading, spacing: 8) {
-                            Text("NAME")
-                                .font(.system(size: 9, weight: .heavy, design: .rounded))
-                                .foregroundStyle(.white.opacity(0.45))
-                            TextField("FIGHTER NAME", text: nameBinding)
-                                .font(.system(size: 18, weight: .black, design: .rounded))
-                                .foregroundStyle(.white)
-                                .autocorrectionDisabled()
-                                .textInputAutocapitalization(.characters)
-                                .submitLabel(.done)
-                                .padding(.horizontal, 12)
-                                .padding(.vertical, 12)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color.white.opacity(0.06))
-                                )
-                                .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                                )
+                    // Profile: photo + paid rename.
+                    section("PROFILE") {
+                        VStack(alignment: .leading, spacing: 16) {
+                            HStack(spacing: 12) {
+                                ProfileAvatarView(data: game.profileImageData, size: 56)
+
+                                VStack(alignment: .leading, spacing: 6) {
+                                    Text("PROFILE PICTURE")
+                                        .font(.system(size: 9, weight: .heavy, design: .rounded))
+                                        .foregroundStyle(.white.opacity(0.45))
+
+                                    PhotosPicker(selection: $photoItem, matching: .images) {
+                                        Text(game.profileImageData == nil ? "CHOOSE PHOTO" : "CHANGE PHOTO")
+                                            .font(.system(size: 12, weight: .black, design: .rounded))
+                                            .foregroundStyle(Color(hex: 0xF5C451))
+                                    }
+                                    .buttonStyle(.plain)
+
+                                    if game.profileImageData != nil {
+                                        Button {
+                                            game.clearProfileImage()
+                                        } label: {
+                                            Text("REMOVE PHOTO")
+                                                .font(.system(size: 10, weight: .bold, design: .rounded))
+                                                .foregroundStyle(.white.opacity(0.5))
+                                        }
+                                        .buttonStyle(.plain)
+                                    }
+                                }
+
+                                Spacer()
+                            }
+
+                            Rectangle()
+                                .fill(Color.white.opacity(0.08))
+                                .frame(height: 1)
+
+                            VStack(alignment: .leading, spacing: 8) {
+                                Text("NAME")
+                                    .font(.system(size: 9, weight: .heavy, design: .rounded))
+                                    .foregroundStyle(.white.opacity(0.45))
+
+                                TextField("FIGHTER NAME", text: $draftName)
+                                    .font(.system(size: 18, weight: .black, design: .rounded))
+                                    .foregroundStyle(.white)
+                                    .autocorrectionDisabled()
+                                    .textInputAutocapitalization(.characters)
+                                    .submitLabel(.done)
+                                    .onChange(of: draftName) { _, newValue in
+                                        if newValue.count > 14 { draftName = String(newValue.prefix(14)) }
+                                        renameMessage = nil
+                                    }
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color.white.opacity(0.06))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                                    )
+
+                                Button {
+                                    showRenameConfirm = true
+                                } label: {
+                                    HStack {
+                                        Text("CHANGE NAME")
+                                        Spacer()
+                                        HStack(spacing: 4) {
+                                            Image(systemName: "circlebadge.fill")
+                                            Text(GameSave.nameChangeCost.formatted())
+                                        }
+                                    }
+                                    .font(.system(size: 13, weight: .black, design: .rounded))
+                                    .foregroundStyle(canRename ? Color(hex: 0xF5C451) : Color.white.opacity(0.35))
+                                    .padding(.horizontal, 12)
+                                    .padding(.vertical, 12)
+                                    .background(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .fill(Color(hex: 0xF5C451).opacity(canRename ? 0.1 : 0.04))
+                                    )
+                                    .overlay(
+                                        RoundedRectangle(cornerRadius: 12)
+                                            .stroke(Color(hex: 0xF5C451).opacity(canRename ? 0.35 : 0.1), lineWidth: 1)
+                                    )
+                                }
+                                .buttonStyle(.plain)
+                                .disabled(!canRename)
+
+                                if game.coins < GameSave.nameChangeCost {
+                                    Text("Need \(GameSave.nameChangeCost.formatted()) coins — you have \(game.coins).")
+                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(.white.opacity(0.5))
+                                }
+
+                                if let renameMessage {
+                                    Text(renameMessage)
+                                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                                        .foregroundStyle(.white.opacity(0.5))
+                                }
+                            }
                         }
                     }
 
@@ -174,7 +262,7 @@ struct SettingsView: View {
                             .buttonStyle(.plain)
 
                             if resetDone {
-                                Text("Progress reset. Your fighter keeps their name.")
+                                Text("Progress reset. Your fighter keeps their name and photo.")
                                     .font(.system(size: 11, weight: .semibold))
                                     .foregroundStyle(.white.opacity(0.45))
                             }
@@ -199,7 +287,7 @@ struct SettingsView: View {
         }
         .preferredColorScheme(.dark)
         .confirmationDialog(
-            "Reset all progress? Your fighter keeps their name, but blueprints, coins, pens and boss records are wiped.",
+            "Reset all progress? Your fighter keeps their name and photo, but blueprints, coins, pens and boss records are wiped.",
             isPresented: $showResetConfirm,
             titleVisibility: .visible
         ) {
@@ -208,6 +296,29 @@ struct SettingsView: View {
                 resetDone = true
             }
             Button("Cancel", role: .cancel) {}
+        }
+        .confirmationDialog(
+            "Change your name to \(trimmedDraftName) for \(GameSave.nameChangeCost.formatted()) coins?",
+            isPresented: $showRenameConfirm,
+            titleVisibility: .visible
+        ) {
+            Button("CHANGE NAME") {
+                if game.changeUsername(to: draftName) {
+                    renameMessage = "Name changed. \(GameSave.nameChangeCost.formatted()) coins spent."
+                } else {
+                    renameMessage = "Name not changed — check your coins."
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        }
+        .onAppear { draftName = game.username }
+        .onChange(of: photoItem) { _, newItem in
+            guard let newItem else { return }
+            Task {
+                guard let data = try? await newItem.loadTransferable(type: Data.self),
+                      let image = UIImage(data: data) else { return }
+                game.setProfileImage(image)
+            }
         }
         .onChange(of: defaultFPS) { _, newValue in
             UserDefaults.standard.set(newValue, forKey: "DrawnToBattle.defaultFPS")
@@ -219,17 +330,15 @@ struct SettingsView: View {
 
     // MARK: Helpers
 
-    private var nameBinding: Binding<String> {
-        Binding(
-            get: { game.username },
-            set: { newValue in
-                var limited = newValue
-                if limited.count > 14 { limited = String(limited.prefix(14)) }
-                let trimmed = limited.trimmingCharacters(in: .whitespacesAndNewlines)
-                // Keep the save valid: never blank out the name entirely.
-                game.username = trimmed.isEmpty ? game.username : trimmed
-            }
-        )
+    private var trimmedDraftName: String {
+        draftName.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var canRename: Bool {
+        !trimmedDraftName.isEmpty
+            && trimmedDraftName.count <= 14
+            && trimmedDraftName != game.username
+            && game.coins >= GameSave.nameChangeCost
     }
 
     private var appVersion: String {

@@ -36,9 +36,7 @@ struct HomeHubView: View {
                         showSettings = true
                     } label: {
                         HStack(spacing: 7) {
-                            Image(systemName: "person.crop.circle.fill")
-                                .font(.system(size: 20))
-                                .foregroundStyle(Color(hex: 0xF5C451))
+                            ProfileAvatarView(data: game.profileImageData, size: 22)
                             VStack(alignment: .leading, spacing: 0) {
                                 Text("FIGHTER")
                                     .font(.system(size: 8, weight: .heavy, design: .rounded))
