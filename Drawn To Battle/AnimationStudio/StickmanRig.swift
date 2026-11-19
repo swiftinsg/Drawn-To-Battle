@@ -81,7 +81,7 @@ struct StickmanPose: Codable, Equatable {
         bodyRotation: CGFloat = 0,
         scale: CGFloat = 1,
         thickness: CGFloat = 6,
-        colorARGB: UInt32 = 0xFFEDEDED,
+        colorARGB: UInt32 = 0xFF0094F7,
         angles: [Bone: CGFloat]? = nil
     ) {
         self.root = root

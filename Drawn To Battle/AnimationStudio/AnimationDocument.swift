@@ -256,6 +256,42 @@ final class StudioState: ObservableObject {
         hasUnsavedChanges = false
         editingBlueprintID = nil
     }
+
+    // MARK: Clipboard
+
+    /// Frame copy-pasted into the studio (or nil when there is none).
+    @Published var pastedFrame: AnimationFrame?
+
+    func copySelectedFrame() {
+        pastedFrame = currentFrame
+    }
+
+    func pasteFrame() {
+        guard let frame = pastedFrame, project.frames.indices.contains(selectedIndex) else { return }
+        var copy = frame
+        copy.id = UUID()
+        project.frames.insert(copy, at: selectedIndex + 1)
+        selectedIndex = min(selectedIndex + 1, project.frames.count - 1)
+        hasUnsavedChanges = true
+        game?.hasAnimated = true
+    }
+
+    // MARK: Timeline readouts
+
+    /// Duration the selected frame is held, in seconds (hold ticks at fps).
+    var currentFrameDuration: TimeInterval {
+        guard project.frames.indices.contains(selectedIndex), project.fps > 0 else { return 0 }
+        return TimeInterval(max(0, project.frames[selectedIndex].hold)) / TimeInterval(project.fps)
+    }
+
+    /// Time the selected frame starts, in seconds from the start of the project.
+    var currentFrameStartTime: TimeInterval {
+        guard project.frames.indices.contains(selectedIndex) else { return 0 }
+        let fps = TimeInterval(max(1, project.fps))
+        return Array(project.frames[..<selectedIndex]).reduce(0.0) { acc, f in
+            acc + TimeInterval(max(0, f.hold)) / fps
+        }
+    }
 }
 
 extension Array {

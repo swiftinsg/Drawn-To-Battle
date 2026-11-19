@@ -12,153 +12,49 @@ struct AnimationStudioView: View {
 
     var onBack: (() -> Void)?
 
+    @State private var mode: StudioMode = .animate
+
     var body: some View {
-        ZStack {
-            Color(hex: 0x0C0D12).ignoresSafeArea()
-
-            // Full-screen editing canvas with overlaid panels.
-            StickmanCanvasView(
-                pose: studio.currentFrame?.pose ?? StickmanPose(),
-                selectedBone: $selectedBone,
-                onRotate: handleRotate,
-                onMove: { newRoot in
-                    studio.updateCurrentPose { pose in
-                        pose.root = CGPoint(
-                            x: min(390, max(10, newRoot.x)),
-                            y: min(505, max(30, newRoot.y))
-                        )
-                    }
-                },
-                editingHandles: !studio.isPlaying,
-                bottomInset: bottomPanelHeight,
-                ghostPoses: onionSkinGhosts
-            )
-            .ignoresSafeArea(edges: .bottom)
-
-            VStack(spacing: 0) {
-                // Top bar.
-                HStack(spacing: 10) {
-                    if let onBack {
-                        StudioIconButton(systemImage: "chevron.left") { onBack() }
-                    }
-                    Button {
-                        nameEditorShown = true
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text(studio.project.name)
-                                .font(DrawnToBattleTypography.display(17))
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                            Image(systemName: "pencil")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.5))
+        GeometryReader { geo in
+            ZStack {
+                // Full-screen paper canvas, inset to keep the figure and floor
+                // above the bottom panel when animating.
+                StickmanCanvasView(
+                    pose: studio.currentFrame?.pose ?? StickmanPose(),
+                    selectedBone: $selectedBone,
+                    onRotate: handleRotate,
+                    onMove: { newRoot in
+                        studio.updateCurrentPose { pose in
+                            pose.root = CGPoint(
+                                x: min(390, max(10, newRoot.x)),
+                                y: min(505, max(30, newRoot.y))
+                            )
                         }
-                    }
-                    .buttonStyle(.plain)
-
-                    // Live quality readout — re-scored on every edit, and the
-                    // same score that sets battle damage.
-                    let live = AnimationAnalysis.analyze(studio.project)
-                    Text("POWER \(Int(live.power)) • \(live.powerLabel)")
-                        .font(.system(size: 10, weight: .black, design: .rounded))
-                        .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color(hex: 0xF5C451).opacity(0.1)))
-                        .lineLimit(1)
-
-                    Spacer()
-
-                    if studio.hasUnsavedChanges {
-                        Circle()
-                            .fill(Color(hex: 0xF5C451))
-                            .frame(width: 7, height: 7)
-                    }
-                    StudioIconButton(systemImage: "square.and.arrow.down") { _ = try? studio.save() }
-                    StudioIconButton(systemImage: "folder") { projectsBrowserShown = true }
-                    StudioIconButton(systemImage: "plus.rectangle.on.rectangle") { studio.newProject() }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 6)
-                .padding(.bottom, 4)
-
-                Spacer()
-
-                // Studio controls, arranged from the top of the bottom zone
-                // down: timeline, playback, pose strip, frame strip.
-                VStack(spacing: 8) {
-                    // Timeline with gold playhead.
-                    FrameTimelineView(studio: studio)
-
-                    // Playback row — the starring zone: big STOP/PLAY and
-                    // back/forward buttons, speed toggle.
-                    HStack(spacing: 10) {
-                        StudioIconButton(systemImage: "backward.end.fill") { studio.selectFrame(0) }
-
-                        Button {
-                            studio.isPlaying ? studio.stop() : studio.play()
-                        } label: {
-                            Image(systemName: studio.isPlaying ? "stop.fill" : "play.fill")
-                                .font(.system(size: 20, weight: .black))
-                                .foregroundStyle(studio.isPlaying ? .black : .white)
-                                .frame(width: 64, height: 64)
-                                .background(
-                                    Circle().fill(studio.isPlaying
-                                        ? Color.white.opacity(0.12)
-                                        : Color(hex: 0xF5C451)))
-                                .overlay(
-                                    Circle().stroke(Color.white.opacity(0.2), lineWidth: 1.5)
-                                )
-                                .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 8, y: 2)
-                        }
-                        .buttonStyle(SquashButtonStyle())
-
-                        // Playback speed toggle.
-                        Button {
-                            studio.cyclePlaybackSpeed()
-                        } label: {
-                            Text(speedLabel)
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(studio.playbackSpeed == 1 ? Color.white.opacity(0.85) : Color(hex: 0xF5C451))
-                                .frame(width: 40, height: 28)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 8)
-                                        .fill(Color.white.opacity(0.08))
-                                )
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    // Pose strip: bone picker, angle, thickness, scale, color.
-                    PoseStrip(
-                        selectedBone: $selectedBone,
-                        pose: studio.currentFrame?.pose ?? StickmanPose(),
-                        onRotate: handleRotate,
-                        onThickness: { value in
-                            studio.updateCurrentPose { pose in pose.thickness = value }
-                        },
-                        onScale: { value in
-                            studio.updateCurrentPose { pose in pose.scale = value }
-                        },
-                        onBodyRotation: { value in
-                            studio.updateCurrentPose { pose in pose.bodyRotation = value }
-                        },
-                        onColor: { value in
-                            studio.updateCurrentPose { pose in pose.colorARGB = value }
-                        }
-                    )
-
-                    // Frame strip: add/duplicate/move/delete.
-                    FrameMgmtStrip(studio: studio)
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                .padding(.bottom, 6)
-                .background(
-                    RoundedTopCorners(radius: 18)
-                        .fill(Color(hex: 0x14161E).opacity(0.97))
-                        .ignoresSafeArea(edges: .bottom)
+                    },
+                    editingHandles: !studio.isPlaying,
+                    bottomInset: mode == .animate ? bottomPanelHeight : 0,
+                    ghostPoses: onionSkinGhosts
                 )
+                .ignoresSafeArea(edges: .bottom)
+
+                if mode == .animate {
+                    CanvasToolbar(studio: studio, sceneSize: sceneSize(geo))
+                        .offset(y: topBarHeight)
+                    bottomPanel
+                }
+
+                // Top bar.
+                topBar
+
+                // Right-hand inspector panel (floats over the canvas).
+                if mode == .animate {
+                    StudioInspectorPanel(studio: studio, selectedBone: $selectedBone)
+                        .frame(width: inspectorWidth, height: zoneHeight(geo))
+                        .position(
+                            x: geo.size.width - inspectorWidth / 2,
+                            y: zoneTop(geo) + zoneHeight(geo) / 2
+                        )
+                }
             }
         }
         .onAppear {
@@ -184,10 +80,184 @@ struct AnimationStudioView: View {
         }
     }
 
-    /// Height of the overlaid bottom panel — timeline + playback + pose
-    /// strip + frame strip — used by the canvas to keep the figure and
-    /// floor line above it.
+    // MARK: Regions
+
+    /// Top bar: BACK, project chip, quality readout, mode tabs, save.
+    private var topBar: some View {
+        HStack(spacing: 8) {
+            if let onBack {
+                StudioIconButton(systemImage: "chevron.left") { onBack() }
+            }
+            Button {
+                nameEditorShown = true
+            } label: {
+                HStack(spacing: 6) {
+                    Text(studio.project.name)
+                        .font(DrawnToBattleTypography.display(17))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Image(systemName: "pencil")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+            }
+            .buttonStyle(.plain)
+
+            // Live quality readout — re-scored on every edit, and the
+            // same score that sets battle damage.
+            let live = AnimationAnalysis.analyze(studio.project)
+            Text("POWER \(Int(live.power)) • \(live.powerLabel)")
+                .font(.system(size: 10, weight: .black, design: .rounded))
+                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(Color(hex: 0xF5C451).opacity(0.1)))
+                .lineLimit(1)
+
+            Spacer()
+
+            ModeTabs(mode: $mode)
+
+            Spacer()
+
+            if studio.hasUnsavedChanges {
+                Circle()
+                    .fill(Color(hex: 0xF5C451))
+                    .frame(width: 7, height: 7)
+            }
+            StudioIconButton(systemImage: "square.and.arrow.down") { _ = try? studio.save() }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
+    }
+
+    /// Thin row under the top bar: scene size label + JOINTS toggle.
+    private struct CanvasToolbar: View {
+        @ObservedObject var studio: StudioState
+        let sceneSize: CGSize
+
+        var body: some View {
+            HStack(spacing: 12) {
+                Text("SCENE \(Int(sceneSize.width.rounded())) × \(Int(sceneSize.height.rounded()))")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.45))
+                    .lineLimit(1)
+
+                Spacer()
+
+                Toggle("JOINTS", isOn: Binding(
+                    get: { studio.onionSkin },
+                    set: { studio.onionSkin = $0 }
+                ))
+                .toggleStyle(SwitchToggleStyle(tint: Color(hex: 0xF5C451)))
+                .font(.system(size: 9, weight: .semibold))
+            }
+            .padding(.horizontal, 12)
+        }
+    }
+
+    /// Bottom zone: timeline, playback, pose strip, frame strip.
+    private var bottomPanel: some View {
+        VStack(spacing: 8) {
+            // Timeline with gold playhead.
+            FrameTimelineView(studio: studio)
+
+            // Playback row — the starring zone: big STOP/PLAY and
+            // back/forward buttons, speed toggle.
+            HStack(spacing: 10) {
+                StudioIconButton(systemImage: "backward.end.fill") { studio.selectFrame(0) }
+
+                Button {
+                    studio.isPlaying ? studio.stop() : studio.play()
+                } label: {
+                    Image(systemName: studio.isPlaying ? "stop.fill" : "play.fill")
+                        .font(.system(size: 20, weight: .black))
+                        .foregroundStyle(studio.isPlaying ? .black : .white)
+                        .frame(width: 64, height: 64)
+                        .background(
+                            Circle().fill(studio.isPlaying
+                                ? Color.white.opacity(0.12)
+                                : Color(hex: 0xF5C451)))
+                        .overlay(
+                            Circle().stroke(Color.white.opacity(0.2), lineWidth: 1.5)
+                        )
+                        .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 8, y: 2)
+                }
+                .buttonStyle(SquashButtonStyle())
+
+                // Playback speed toggle.
+                Button {
+                    studio.cyclePlaybackSpeed()
+                } label: {
+                    Text(speedLabel)
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .foregroundStyle(studio.playbackSpeed == 1 ? Color.white.opacity(0.85) : Color(hex: 0xF5C451))
+                        .frame(width: 40, height: 28)
+                        .background(
+                            RoundedRectangle(cornerRadius: 8)
+                                .fill(Color.white.opacity(0.08))
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+
+            // Pose strip: bone picker, angle, thickness, scale, color.
+            PoseStrip(
+                selectedBone: $selectedBone,
+                pose: studio.currentFrame?.pose ?? StickmanPose(),
+                onRotate: handleRotate,
+                onThickness: { value in
+                    studio.updateCurrentPose { pose in pose.thickness = value }
+                },
+                onScale: { value in
+                    studio.updateCurrentPose { pose in pose.scale = value }
+                },
+                onBodyRotation: { value in
+                    studio.updateCurrentPose { pose in pose.bodyRotation = value }
+                },
+                onColor: { value in
+                    studio.updateCurrentPose { pose in pose.colorARGB = value }
+                }
+            )
+
+            // Frame strip: add/duplicate/move/delete + clipboard.
+            FrameMgmtStrip(studio: studio)
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 8)
+        .padding(.bottom, 6)
+        .background(
+            RoundedTopCorners(radius: 18)
+                .fill(Color(hex: 0x14161E).opacity(0.97))
+                .ignoresSafeArea(edges: .bottom)
+        )
+    }
+
+    // MARK: Geometry helpers
+
+    private var inspectorWidth: CGFloat { 240 }
+    private var topBarHeight: CGFloat { 54 }
+    private var canvasToolbarHeight: CGFloat { 34 }
     private var bottomPanelHeight: CGFloat { 202 }
+
+    /// Space above the canvas zone (top bar + canvas toolbar when animating).
+    private func zoneTop(_ geo: GeometryProxy) -> CGFloat {
+        topBarHeight + (mode == .animate ? canvasToolbarHeight : 0)
+    }
+
+    /// Height of the canvas zone (between top bar/toolbar and bottom panel).
+    private func zoneHeight(_ geo: GeometryProxy) -> CGFloat {
+        max(0, geo.size.height - zoneTop(geo) - (mode == .animate ? bottomPanelHeight : 0))
+    }
+
+    /// Scene size shown in the canvas toolbar label.
+    private func sceneSize(_ geo: GeometryProxy) -> CGSize {
+        CGSize(
+            width: mode == .animate ? geo.size.width - inspectorWidth - 8 : geo.size.width,
+            height: zoneHeight(geo)
+        )
+    }
 
     private var speedLabel: String {
         switch studio.playbackSpeed {
@@ -246,6 +316,46 @@ struct AnimationStudioView: View {
         if a > .pi { a -= 2 * .pi }
         if a < -.pi { a += 2 * .pi }
         return a
+    }
+}
+
+// MARK: - Studio mode
+
+enum StudioMode: Equatable {
+    case animate, draw
+}
+
+// MARK: - Mode tabs (reference: Animate / Draw)
+
+private struct ModeTabs: View {
+    @Binding var mode: StudioMode
+
+    var body: some View {
+        HStack(spacing: 6) {
+            ModeTab(title: "ANIMATE", active: mode == .animate) { mode = .animate }
+            ModeTab(title: "DRAW", active: mode == .draw) { mode = .draw }
+        }
+    }
+}
+
+private struct ModeTab: View {
+    let title: String
+    let active: Bool
+    let action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Text(title)
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundStyle(active ? AnyShapeStyle(Color(hex: 0xF5C451)) : AnyShapeStyle(Color.white.opacity(0.55)))
+                .padding(EdgeInsets(top: 5, leading: 9, bottom: 5, trailing: 9))
+                .background(
+                    RoundedRectangle(cornerRadius: 7)
+                        .fill(active ? Color(hex: 0xF5C451).opacity(0.14) : Color.clear)
+                )
+        }
+        .buttonStyle(.plain)
+        .accessibilityLabel("\(title) mode")
     }
 }
 
@@ -443,15 +553,18 @@ private struct PoseStrip: View {
         )
     }
 
-    private func rgbaToARGB(_ color: Color) -> UInt32 {
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
-        let R = UInt32(max(0, min(255, r * 255)))
-        let G = UInt32(max(0, min(255, g * 255)))
-        let B = UInt32(max(0, min(255, b * 255)))
-        let A = UInt32(max(0, min(255, a * 255)))
-        return (A << 24) | (R << 16) | (G << 8) | B
-    }
+}
+
+// MARK: - Shared UI bits
+
+func rgbaToARGB(_ color: Color) -> UInt32 {
+    var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+    UIColor(color).getRed(&r, green: &g, blue: &b, alpha: &a)
+    let R = UInt32(max(0, min(255, r * 255)))
+    let G = UInt32(max(0, min(255, g * 255)))
+    let B = UInt32(max(0, min(255, b * 255)))
+    let A = UInt32(max(0, min(255, a * 255)))
+    return (A << 24) | (R << 16) | (G << 8) | B
 }
 
 // MARK: - Frame management strip
@@ -498,6 +611,36 @@ private struct FrameMgmtStrip: View {
                 studio.deleteFrame(at: studio.selectedIndex)
             }
 
+            // Clipboard: copy the selected frame, paste it after the selection.
+            Text("COPY")
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color(hex: 0xF5C451))
+                .frame(width: 44, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color(hex: 0xF5C451).opacity(0.12))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 9)
+                        .stroke(Color(hex: 0xF5C451).opacity(0.4), lineWidth: 1)
+                )
+                .onTapGesture { studio.copySelectedFrame() }
+                .accessibilityLabel("Copy frame")
+            Text("PASTE")
+                .font(.system(size: 10, weight: .semibold, design: .rounded))
+                .foregroundStyle(Color(hex: 0xF5C451))
+                .frame(width: 44, height: 28)
+                .background(
+                    RoundedRectangle(cornerRadius: 9)
+                        .fill(Color(hex: 0xF5C451).opacity(0.12))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 9)
+                        .stroke(Color(hex: 0xF5C451).opacity(0.4), lineWidth: 1)
+                )
+                .onTapGesture { studio.pasteFrame() }
+                .accessibilityLabel("Paste frame")
+
             // Onion skinning toggle.
             Button {
                 studio.onionSkin.toggle()
@@ -520,6 +663,161 @@ private struct FrameMgmtStrip: View {
 
             Spacer()
         }
+    }
+}
+
+// MARK: - Right inspector panel (reference: Properties)
+
+/// Floating panel on the right of the canvas in ANIMATE mode:
+/// the selected bone's transform and appearance.
+private struct StudioInspectorPanel: View {
+    @ObservedObject var studio: StudioState
+    @Binding var selectedBone: Bone?
+    @State private var colorPickerShown = false
+
+    private var pose: StickmanPose { studio.currentFrame?.pose ?? StickmanPose() }
+    private var bone: Bone { selectedBone ?? .torso }
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 12) {
+            Text("PROPERTIES")
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.4))
+                .padding(.horizontal, 12)
+
+            InspectorSection(title: "TRANSFORM") {
+                InspectorRow(label: "X", binding: rootXBinding, range: 0...420,
+                             display: "\(Int(pose.root.x.rounded()))")
+                InspectorRow(label: "Y", binding: rootYBinding, range: 0...520,
+                             display: "\(Int(pose.root.y.rounded()))")
+                InspectorRow(label: "ANGLE", binding: angleBinding, range: -3.15...3.15,
+                             display: String(format: "%.0f°", degrees(pose.angles[bone] ?? 0)))
+                InspectorRow(label: "SCALE", binding: scaleBinding, range: 0.5...2.0,
+                             display: String(format: "%.1f", pose.scale))
+            }
+            .padding(.horizontal, 12)
+
+            InspectorSection(title: "APPEARANCE") {
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(pose.color)
+                        .frame(width: 20, height: 20)
+                        .overlay(Circle().stroke(Color.white.opacity(0.45), lineWidth: 1))
+                        .onTapGesture { colorPickerShown = true }
+                    Text(hexText)
+                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                        .foregroundStyle(.white.opacity(0.85))
+                }
+                .onTapGesture { colorPickerShown = true }
+            }
+            .padding(.horizontal, 12)
+
+            Spacer()
+        }
+        .padding(.top, 8)
+        .background(
+            RoundedRectangle(cornerRadius: 14)
+                .fill(Color(hex: 0x121420))
+                .shadow(color: Color.black.opacity(0.4), radius: 8, y: 4)
+                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.07), lineWidth: 1))
+        )
+        .popover(isPresented: $colorPickerShown) {
+            ColorPicker("Stickman color", selection: Binding(
+                get: { pose.color },
+                set: { color in studio.updateCurrentPose { $0.colorARGB = rgbaToARGB(color) } }
+            ))
+            .padding()
+        }
+    }
+
+    // MARK: Bindings
+
+    private var rootXBinding: Binding<Double> {
+        Binding(
+            get: { Double(pose.root.x) },
+            set: { x in studio.updateCurrentPose { $0.root.x = CGFloat(x).clamped(10...390) } }
+        )
+    }
+
+    private var rootYBinding: Binding<Double> {
+        Binding(
+            get: { Double(pose.root.y) },
+            set: { y in studio.updateCurrentPose { $0.root.y = CGFloat(y).clamped(30...505) } }
+        )
+    }
+
+    private var angleBinding: Binding<Double> {
+        Binding(
+            get: { Double(pose.angles[bone] ?? 0) },
+            set: { angle in studio.updateCurrentPose { $0.angles[bone] = CGFloat(angle) } }
+        )
+    }
+
+    private var scaleBinding: Binding<Double> {
+        Binding(
+            get: { Double(pose.scale) },
+            set: { scale in studio.updateCurrentPose { $0.scale = CGFloat(scale).clamped(0.5...2.0) } }
+        )
+    }
+
+    private func degrees(_ radians: CGFloat) -> CGFloat {
+        radians * 57.2958
+    }
+
+    private var hexText: String {
+        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
+        UIColor(pose.color).getRed(&r, green: &g, blue: &b, alpha: &a)
+        func hex(_ v: CGFloat) -> String {
+            String(format: "%02X", Int(max(0, min(1, v)) * 255))
+        }
+        return "#\(hex(r))\(hex(g))\(hex(b))"
+    }
+}
+
+private struct InspectorSection<Content: View>: View {
+    let title: String
+    @ViewBuilder let content: () -> Content
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(title)
+                .font(.system(size: 9, weight: .black, design: .rounded))
+                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.7))
+                .tracking(0.8)
+            content()
+        }
+    }
+}
+
+private struct InspectorRow: View {
+    let label: String
+    let binding: Binding<Double>
+    let range: ClosedRange<Double>
+    let display: String
+
+    var body: some View {
+        HStack(spacing: 8) {
+            Text(label)
+                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.6))
+                .frame(width: 30, alignment: .leading)
+            Slider(value: binding, in: range)
+                .tint(Color(hex: 0xF5C451))
+                .controlSize(.small)
+            Text(display)
+                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.8))
+                .frame(width: 44, alignment: .trailing)
+        }
+    }
+}
+
+extension CGFloat {
+    fileprivate func clamped(_ range: ClosedRange<CGFloat>) -> CGFloat {
+        var result = self
+        if result < range.lowerBound { result = range.lowerBound }
+        if result > range.upperBound { result = range.upperBound }
+        return result
     }
 }
 

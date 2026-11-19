@@ -29,10 +29,18 @@ struct FrameTimelineView: View {
                 .padding(.horizontal, 2)
             }
 
-            Text("\(studio.selectedIndex + 1)/\(studio.project.frames.count)")
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
+            Spacer()
+
+            // Frame counter + hold time, like the reference's "Frame n of m holds 0.42 s".
+            Text("FRAME \(studio.selectedIndex + 1) OF \(studio.project.frames.count) · HOLDS \(String(format: "%.2f", studio.currentFrameDuration)) S")
+                .font(.system(size: 10, weight: .semibold, design: .monospaced))
                 .foregroundStyle(.white.opacity(0.55))
-                .frame(minWidth: 34)
+                .lineLimit(1)
+
+            // Timecode from the start of the project through the selected frame.
+            Text(timecodeString(studio.currentFrameStartTime))
+                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                .foregroundStyle(.white.opacity(0.55))
 
             // FPS stepper.
             Stepper("FPS \(studio.project.fps)", value: Binding(
@@ -102,6 +110,12 @@ struct Triangle: Shape {
         path.closeSubpath()
         return path
     }
+}
+
+/// HH:MM:SS timecode.
+private func timecodeString(_ seconds: TimeInterval) -> String {
+    let s = Int(seconds.rounded())
+    return String(format: "%02d:%02d:%02d", s / 3600, (s / 60) % 60, s % 60)
 }
 
 private struct FrameThumbnail: View {
