@@ -393,7 +393,7 @@ private struct GachaResultCard: View {
     }
 }
 
-// MARK: - Simplified gacha mascot
+// MARK: - Gacha machine icon
 
 private struct GachaMascotView: View {
     var body: some View {
@@ -405,41 +405,49 @@ private struct GachaMascotView: View {
 
             let gold = Color(hex: 0xF5C451)
             let ink = Color(hex: 0x11131A)
+            let blue = Color(hex: 0x4FC3F7)
 
-            // Simple capsule machine.
-            let capsule = Path(roundedRect: CGRect(x: 23, y: 36, width: 34, height: 36), cornerRadius: 17)
-            context.fill(capsule, with: .color(Color(hex: 0x15171F)))
-            context.stroke(capsule, with: .color(gold.opacity(0.9)),
+            // Machine body.
+            let body = Path(roundedRect: CGRect(x: 16, y: 26, width: 48, height: 46), cornerRadius: 12)
+            context.fill(body, with: .color(Color(hex: 0x15171F)))
+            context.stroke(body, with: .color(gold.opacity(0.9)),
                            style: StrokeStyle(lineWidth: 2.5))
 
-            // Stickman: head, body, two raised arms.
-            context.fill(
-                Path(ellipseIn: CGRect(x: 34, y: 8, width: 12, height: 12)),
-                with: .color(ink)
-            )
-            context.fill(Path(ellipseIn: CGRect(x: 38, y: 12, width: 1.8, height: 1.8)), with: .color(.white))
-            context.fill(Path(ellipseIn: CGRect(x: 42, y: 12, width: 1.8, height: 1.8)), with: .color(.white))
+            // Glass dome with capsules.
+            let dome = Path(ellipseIn: CGRect(x: 24, y: 8, width: 32, height: 32))
+            context.fill(dome, with: .color(blue.opacity(0.3)))
+            context.stroke(dome, with: .color(blue.opacity(0.9)),
+                           style: StrokeStyle(lineWidth: 2))
 
-            let line = StrokeStyle(lineWidth: 5, lineCap: .round, lineJoin: .round)
+            let capsules: [(CGFloat, CGFloat, CGFloat, Color)] = [
+                (33, 21, 6, gold),
+                (46, 20, 5, Color(hex: 0xA86CFF)),
+                (40, 29, 5, Color(hex: 0xE86A6A)),
+            ]
+            for capsule in capsules {
+                let x = capsule.0 - capsule.2
+                let y = capsule.1 - capsule.2
+                let d = capsule.2 * 2
+                context.fill(Path(ellipseIn: CGRect(x: x, y: y, width: d, height: d)),
+                             with: .color(capsule.3))
+                context.fill(Path(ellipseIn: CGRect(x: x + d * 0.22, y: y + d * 0.18,
+                                                     width: d * 0.22, height: d * 0.22)),
+                             with: .color(.white.opacity(0.8)))
+            }
 
-            var torso = Path()
-            torso.move(to: CGPoint(x: 40, y: 22))
-            torso.addLine(to: CGPoint(x: 40, y: 50))
-            context.stroke(torso, with: .color(ink), style: line)
+            // Knob and chute.
+            context.fill(Path(ellipseIn: CGRect(x: 35, y: 43, width: 10, height: 10)), with: .color(gold))
+            context.stroke(Path(ellipseIn: CGRect(x: 35, y: 43, width: 10, height: 10)),
+                           with: .color(ink.opacity(0.5)), style: StrokeStyle(lineWidth: 1.5))
 
-            var arms = Path()
-            arms.move(to: CGPoint(x: 40, y: 30))
-            arms.addLine(to: CGPoint(x: 28, y: 25))
-            arms.addLine(to: CGPoint(x: 23, y: 18))
-            arms.move(to: CGPoint(x: 40, y: 30))
-            arms.addLine(to: CGPoint(x: 52, y: 25))
-            arms.addLine(to: CGPoint(x: 57, y: 18))
-            context.stroke(arms, with: .color(ink), style: line)
+            let slot = Path(roundedRect: CGRect(x: 29, y: 57, width: 22, height: 9), cornerRadius: 4)
+            context.fill(slot, with: .color(ink))
+            context.stroke(slot, with: .color(gold.opacity(0.9)),
+                           style: StrokeStyle(lineWidth: 1.5))
 
-            context.fill(Path(ellipseIn: CGRect(x: 19, y: 14, width: 8, height: 8)), with: .color(gold))
-            context.fill(Path(ellipseIn: CGRect(x: 53, y: 14, width: 8, height: 8)), with: .color(gold))
-
-            let plate = Path(roundedRect: CGRect(x: 18, y: 68, width: 44, height: 6), cornerRadius: 3)
+            // Capsule waiting in the chute and the base plate.
+            context.fill(Path(ellipseIn: CGRect(x: 35, y: 57, width: 10, height: 10)), with: .color(gold))
+            let plate = Path(roundedRect: CGRect(x: 14, y: 68, width: 52, height: 6), cornerRadius: 3)
             context.fill(plate, with: .color(gold))
         }
         .allowsHitTesting(false)

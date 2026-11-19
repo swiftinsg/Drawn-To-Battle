@@ -272,7 +272,7 @@ private struct HubBackdrop: View {
 
                 // The three boss planets.
                 let planets: [(CGFloat, CGFloat, CGFloat, UInt32, UInt32)] = [
-                    (0.16, 0.35, 22, 0x3FA65C, 0x4C8DFF),
+                    (0.30, 0.72, 22, 0x3FA65C, 0x4C8DFF),
                     (0.53, 0.23, 14, 0xF5C451, 0xFF8A3C),
                     (0.82, 0.60, 28, 0x4FC3F7, 0xB3E5FC),
                 ]
@@ -301,33 +301,33 @@ private struct HubBackdrop: View {
                     )
                 }
 
-                // Faint fighter silhouette.
+                // Fighter silhouette — visible, but still behind the controls.
                 let cx = size.width * 0.64
-                let cy = size.height * 0.60
-                let ink = Color.white.opacity(0.07)
+                let cy = size.height * 0.58
+                let ink = Color.white.opacity(0.18)
 
                 var torso = Path()
-                torso.move(to: CGPoint(x: cx, y: cy - 44))
-                torso.addLine(to: CGPoint(x: cx, y: cy + 16))
+                torso.move(to: CGPoint(x: cx, y: cy - 50))
+                torso.addLine(to: CGPoint(x: cx, y: cy + 20))
 
                 var arms = Path()
-                arms.move(to: CGPoint(x: cx, y: cy - 28))
-                arms.addLine(to: CGPoint(x: cx - 30, y: cy - 14))
-                arms.move(to: CGPoint(x: cx, y: cy - 28))
-                arms.addLine(to: CGPoint(x: cx + 30, y: cy - 40))
+                arms.move(to: CGPoint(x: cx, y: cy - 32))
+                arms.addLine(to: CGPoint(x: cx - 36, y: cy - 18))
+                arms.move(to: CGPoint(x: cx, y: cy - 32))
+                arms.addLine(to: CGPoint(x: cx + 36, y: cy - 46))
 
                 var legs = Path()
-                legs.move(to: CGPoint(x: cx, y: cy + 16))
-                legs.addLine(to: CGPoint(x: cx - 24, y: cy + 58))
-                legs.move(to: CGPoint(x: cx, y: cy + 16))
-                legs.addLine(to: CGPoint(x: cx + 22, y: cy + 58))
+                legs.move(to: CGPoint(x: cx, y: cy + 20))
+                legs.addLine(to: CGPoint(x: cx - 28, y: cy + 66))
+                legs.move(to: CGPoint(x: cx, y: cy + 20))
+                legs.addLine(to: CGPoint(x: cx + 26, y: cy + 66))
 
-                let stroke = StrokeStyle(lineWidth: 7, lineCap: .round, lineJoin: .round)
+                let stroke = StrokeStyle(lineWidth: 10, lineCap: .round, lineJoin: .round)
                 context.stroke(torso, with: .color(ink), style: stroke)
                 context.stroke(arms, with: .color(ink), style: stroke)
                 context.stroke(legs, with: .color(ink), style: stroke)
                 context.fill(
-                    Path(ellipseIn: CGRect(x: cx - 15, y: cy - 74, width: 30, height: 30)),
+                    Path(ellipseIn: CGRect(x: cx - 18, y: cy - 84, width: 36, height: 36)),
                     with: .color(ink)
                 )
             }
