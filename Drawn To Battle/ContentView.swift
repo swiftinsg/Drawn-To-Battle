@@ -12,7 +12,7 @@ struct ContentView: View {
     @StateObject private var studioState = StudioState()
     @StateObject private var game = GameSave()
 
-    // Debug: SIMCTL_CHILD_DTB_ROUTE=<hub|solar|username|gacha|collection|battle-earth|battle-mars|battle-sun|studio> skips the start screen.
+    // Debug: SIMCTL_CHILD_DTB_ROUTE=<hub|solar|username|gacha|collection|battle-earth|battle-uranus|battle-sun|studio> skips the start screen.
     private var debugRoute: String? {
         ProcessInfo.processInfo.environment["DTB_ROUTE"]
     }
@@ -71,7 +71,7 @@ struct ContentView: View {
         case "battle-earth":
             BattleView(boss: BossDefinition.boss(id: "earth")!, game: game) { }
         // Debug routes to eyeball the other bosses' props/poses.
-        case "battle-mars":
+        case "battle-mars", "battle-uranus":
             BattleView(boss: BossDefinition.boss(id: "mars")!, game: game) { }
         case "battle-sun":
             BattleView(boss: BossDefinition.boss(id: "sun")!, game: game) { }

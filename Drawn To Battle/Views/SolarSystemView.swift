@@ -97,13 +97,20 @@ struct SolarSystemView: View {
     }
 
     private var nextGoalText: String {
-        if let next = BossDefinition.all.first(where: { !game.isUnlocked($0) }) {
-            if let prereqID = next.unlockAfter, let prereq = BossDefinition.boss(id: prereqID) {
-                return "Beat \(prereq.bossName) to unlock \(next.planetName)"
-            }
-            return "\(next.planetName) awaits"
+        let allDefeated = BossDefinition.all.allSatisfy { game.defeatedBosses.contains($0.id) }
+        if allDefeated {
+            return "ALL PLANETS CONQUERED — YOU ARE A LEGEND"
         }
-        return "ALL PLANETS CONQUERED — you are legend"
+
+        guard let next = BossDefinition.all.first(where: { !game.defeatedBosses.contains($0.id) }) else {
+            return "THE GALAXY AWAITS"
+        }
+        if let prereqID = next.unlockAfter,
+           !game.defeatedBosses.contains(prereqID),
+           let prereq = BossDefinition.boss(id: prereqID) {
+            return "Beat \(prereq.planetName) to unlock \(next.planetName)"
+        }
+        return "\(next.planetName) awaits"
     }
 }
 

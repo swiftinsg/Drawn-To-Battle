@@ -61,15 +61,16 @@ struct BossDefinition: Identifiable, Hashable {
             unlockAfter: nil
         ),
         BossDefinition(
-            id: "mars", planetName: "MARS", bossName: "CRIMSON WARLOCK",
-            title: "The Red Duelist", hp: 130,
+            // Internal id stays "mars" so existing save records keep working.
+            id: "mars", planetName: "URANUS", bossName: "AZURE WARLOCK",
+            title: "The Ice Duelist", hp: 130,
             requiredTechnique: .kick,
             rewardFirstClear: 180, rewardRepeat: 55,
-            bodyColor: 0xE86A3A, accentColor: 0xFFB37A,
+            bodyColor: 0x4FC3F7, accentColor: 0xB3E5FC,
             attacks: [
-                BossAttackDef(name: "WAR RAM", kind: .charge, damage: 18, telegraph: 0.9),
-                BossAttackDef(name: "EMBER UPPERCUT", kind: .melee, damage: 15, telegraph: 0.8),
-                BossAttackDef(name: "SPEAR SHARDS", kind: .fan, damage: 12, telegraph: 1.0),
+                BossAttackDef(name: "FROST RAM", kind: .charge, damage: 18, telegraph: 0.9),
+                BossAttackDef(name: "ICE UPPERCUT", kind: .melee, damage: 15, telegraph: 0.8),
+                BossAttackDef(name: "SHARD BURST", kind: .fan, damage: 12, telegraph: 1.0),
             ],
             unlockAfter: "earth"
         ),
@@ -150,10 +151,6 @@ final class GameSave: ObservableObject {
     @Published var profileImageData: Data? {
         didSet { persist() }
     }
-    /// Testing: every boss is open regardless of defeat records.
-    @Published var testUnlockAll: Bool = false {
-        didSet { persist() }
-    }
     var hasUsername: Bool { !username.isEmpty }
 
     private static let key = "DrawnToBattle.save.v1"
@@ -172,7 +169,6 @@ final class GameSave: ObservableObject {
             coins = saved.coins ?? 0
             username = saved.username ?? ""
             profileImageData = saved.profileImageData
-            testUnlockAll = saved.testUnlockAll ?? false
         }
     }
 
@@ -281,7 +277,6 @@ final class GameSave: ObservableObject {
     }
 
     func isUnlocked(_ boss: BossDefinition) -> Bool {
-        if testUnlockAll { return true }
         guard let prereq = boss.unlockAfter else { return true }
         return defeatedBosses.contains(prereq)
     }
@@ -297,7 +292,6 @@ final class GameSave: ObservableObject {
         var coins: Int?
         var username: String?
         var profileImageData: Data?
-        var testUnlockAll: Bool?
     }
 
     private func persist() {
@@ -309,8 +303,7 @@ final class GameSave: ObservableObject {
             blueprintEdits: blueprintEdits,
             coins: coins,
             username: username,
-            profileImageData: profileImageData,
-            testUnlockAll: testUnlockAll
+            profileImageData: profileImageData
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: Self.key)

@@ -14,6 +14,8 @@ struct HomeHubView: View {
     @State private var showCollection = false
     @State private var showSolar = false
     @State private var showSettings = false
+    @State private var showProfile = false
+    @State private var activeCurrency: Currency?
 
     var body: some View {
         ZStack {
@@ -33,7 +35,7 @@ struct HomeHubView: View {
                 // Top row: profile • coins, pens, settings.
                 HStack(spacing: 7) {
                     Button {
-                        showSettings = true
+                        showProfile = true
                     } label: {
                         HStack(spacing: 7) {
                             ProfileAvatarView(data: game.profileImageData, size: 22)
@@ -54,28 +56,38 @@ struct HomeHubView: View {
 
                     Spacer(minLength: 6)
 
-                    HStack(spacing: 5) {
-                        Image(systemName: "circlebadge.fill")
-                            .font(.system(size: 12, weight: .bold))
-                            .foregroundStyle(Color(hex: 0xF5C451))
-                        Text("\(game.coins)")
-                            .font(.system(size: 14, weight: .heavy, design: .rounded))
-                            .foregroundStyle(.white)
+                    Button {
+                        activeCurrency = .coins
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image(systemName: "circlebadge.fill")
+                                .font(.system(size: 12, weight: .bold))
+                                .foregroundStyle(Color(hex: 0xF5C451))
+                            Text("\(game.coins)")
+                                .font(.system(size: 14, weight: .heavy, design: .rounded))
+                                .foregroundStyle(.white)
+                        }
                     }
+                    .buttonStyle(.plain)
                     .bubbleChrome(paddingX: 10, sketchSeed: 23)
-                    .accessibilityLabel("Coins balance")
+                    .accessibilityLabel("Coins balance, tap for description")
 
-                    HStack(spacing: 5) {
-                        Image("DrawnToBattleGachaToken")
-                            .resizable()
-                            .scaledToFit()
-                            .frame(height: 18)
-                        Text("\(game.stardust)")
-                            .font(.system(size: 14, weight: .heavy, design: .rounded))
-                            .foregroundStyle(.white)
+                    Button {
+                        activeCurrency = .pens
+                    } label: {
+                        HStack(spacing: 5) {
+                            Image("DrawnToBattleGachaToken")
+                                .resizable()
+                                .scaledToFit()
+                                .frame(height: 18)
+                            Text("\(game.stardust)")
+                                .font(.system(size: 14, weight: .heavy, design: .rounded))
+                                .foregroundStyle(.white)
+                        }
                     }
+                    .buttonStyle(.plain)
                     .bubbleChrome(paddingX: 10, sketchSeed: 37)
-                    .accessibilityLabel("Pens balance")
+                    .accessibilityLabel("Pens balance, tap for description")
 
                     Button {
                         showSettings = true
@@ -141,7 +153,13 @@ struct HomeHubView: View {
                 .padding(.horizontal, 16)
                 .padding(.bottom, 14)
             }
+
+            if let currency = activeCurrency {
+                CurrencyInfoCard(currency: currency) { activeCurrency = nil }
+                    .zIndex(10)
+            }
         }
+        .animation(.easeInOut(duration: 0.18), value: activeCurrency)
         .fullScreenCover(isPresented: $showStudio) {
             AnimationStudioView(studio: studio, onBack: { showStudio = false })
                 .background(StudioBackgroundRemoval())
@@ -154,6 +172,9 @@ struct HomeHubView: View {
         }
         .fullScreenCover(isPresented: $showSolar) {
             SolarSystemView(game: game)
+        }
+        .fullScreenCover(isPresented: $showProfile) {
+            ProfileView(game: game)
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(game: game)
@@ -271,5 +292,100 @@ private struct MenuBubble: View {
             .bubbleChrome(paddingX: 16, sketchSeed: seed)
         }
         .buttonStyle(SquashButtonStyle())
+    }
+}
+
+// MARK: - Currency info popover
+
+private enum Currency: String, Identifiable {
+    case coins
+    case pens
+
+    var id: String { rawValue }
+
+    var title: String {
+        switch self {
+        case .coins: return "COINS"
+        case .pens: return "PENS"
+        }
+    }
+
+    var description: String {
+        switch self {
+        case .coins:
+            return "Earned by defeating bosses. Spend them on things like renaming your fighter."
+        case .pens:
+            return "Earned alongside coins from battles. Spend them on gacha pulls."
+        }
+    }
+}
+
+private struct CurrencyInfoCard: View {
+    let currency: Currency
+    let dismiss: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.6)
+                .ignoresSafeArea()
+                .onTapGesture(perform: dismiss)
+
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(spacing: 8) {
+                    icon
+                    Text(currency.title)
+                        .font(.system(size: 15, weight: .black, design: .rounded))
+                        .foregroundStyle(.white)
+                    Spacer()
+                    Button { dismiss() } label: {
+                        Image(systemName: "xmark.circle.fill")
+                            .font(.system(size: 16, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Close")
+                }
+
+                Text(currency.description)
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .fixedSize(horizontal: false, vertical: true)
+
+                Button {
+                    dismiss()
+                } label: {
+                    Text("GOT IT")
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .foregroundStyle(.black)
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 9)
+                        .background(Capsule().fill(Color(hex: 0xF5C451)))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(18)
+            .frame(maxWidth: 300)
+            .background(RoundedRectangle(cornerRadius: 18).fill(Color(hex: 0x15161D)))
+            .overlay(
+                RoundedRectangle(cornerRadius: 18)
+                    .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1)
+            )
+            .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
+        }
+    }
+
+    @ViewBuilder
+    private var icon: some View {
+        switch currency {
+        case .coins:
+            Image(systemName: "circlebadge.fill")
+                .font(.system(size: 15, weight: .bold))
+                .foregroundStyle(Color(hex: 0xF5C451))
+        case .pens:
+            Image("DrawnToBattleGachaToken")
+                .resizable()
+                .scaledToFit()
+                .frame(height: 18)
+        }
     }
 }
