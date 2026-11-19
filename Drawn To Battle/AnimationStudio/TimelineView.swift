@@ -2,12 +2,18 @@ import SwiftUI
 
 // MARK: - Frame timeline
 //
-// Dedicated timeline strip below the canvas: horizontal scroll of frame
-// thumbnails, a gold playhead triangle on the selected frame, and the
-// FPS stepper. Kept visually distinct from the pose controls above it.
+// Horizontal strip of frame thumbnails. Hold a frame then drag left or right
+// to reorder it. The gold marker sits on the selected thumbnail itself, so it
+// stays aligned even after the strip has been scrolled.
 
 struct FrameTimelineView: View {
     @ObservedObject var studio: StudioState
+
+    @State private var draggingIndex: Int?
+    @State private var dropIndex: Int?
+    @State private var dragOffset: CGFloat = 0
+
+    private let cellWidth: CGFloat = 48 // 42pt thumbnail + 6pt spacing
 
     var body: some View {
         HStack(spacing: 10) {
@@ -19,11 +25,62 @@ struct FrameTimelineView: View {
                             isSelected: index == studio.selectedIndex,
                             index: index
                         )
-                        .onTapGesture { studio.selectFrame(index) }
-                        .contextMenu {
-                            Button("Duplicate") { studio.duplicateFrame(at: index) }
-                            Button("Delete", role: .destructive) { studio.deleteFrame(at: index) }
+                        .overlay(alignment: .top) {
+                            if draggingIndex == nil && index == studio.selectedIndex {
+                                Triangle()
+                                    .fill(Color(hex: 0xF5C451))
+                                    .frame(width: 12, height: 8)
+                                    .offset(y: -1)
+                                    .allowsHitTesting(false)
+                            }
                         }
+                        .overlay(
+                            RoundedRectangle(cornerRadius: 8)
+                                .stroke(Color(hex: 0xF5C451), lineWidth: 2)
+                                .opacity(dropIndex == index && draggingIndex != index ? 1 : 0)
+                                .allowsHitTesting(false)
+                        )
+                        .scaleEffect(draggingIndex == index ? 1.12 : 1)
+                        .offset(x: draggingIndex == index ? dragOffset : 0)
+                        .zIndex(draggingIndex == index ? 10 : 0)
+                        .onTapGesture {
+                            if draggingIndex == nil { studio.selectFrame(index) }
+                        }
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.35)
+                                .onEnded { _ in
+                                    draggingIndex = index
+                                    dropIndex = index
+                                    Haptics.light()
+                                }
+                        )
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    guard draggingIndex == index else { return }
+                                    dragOffset = value.translation.width
+                                    let steps = Int((value.translation.width / cellWidth).rounded())
+                                    let target = max(0,
+                                                     min(studio.project.frames.count - 1,
+                                                         index + steps))
+                                    if target != dropIndex {
+                                        dropIndex = target
+                                        Haptics.light()
+                                    }
+                                }
+                                .onEnded { _ in
+                                    guard draggingIndex == index else { return }
+                                    if let target = dropIndex, target != index {
+                                        studio.moveFrame(from: index, to: target)
+                                    }
+                                    withAnimation(.easeOut(duration: 0.15)) {
+                                        draggingIndex = nil
+                                        dropIndex = nil
+                                        dragOffset = 0
+                                    }
+                                }
+                        )
+                        .accessibilityLabel("Frame \(index + 1). Hold and drag to reorder.")
                     }
                 }
                 .padding(.horizontal, 2)
@@ -45,7 +102,7 @@ struct FrameTimelineView: View {
             // FPS stepper.
             Stepper("FPS \(studio.project.fps)", value: Binding(
                 get: { studio.project.fps },
-                set: { studio.project.fps = $0; studio.hasUnsavedChanges = true }
+                set: { studio.project.fps = $0; studio.markProjectChanged() }
             ), in: 1...30)
                 .font(.system(size: 11, weight: .semibold))
                 .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
@@ -56,46 +113,13 @@ struct FrameTimelineView: View {
         .padding(.top, 4)
         .padding(.bottom, 8)
         .background(
-            ZStack {
-                Color(hex: 0x14161E)
-                // Gold playhead on the selected frame.
-                if !studio.project.frames.isEmpty {
-                    PlayheadMarker(index: studio.selectedIndex)
-                }
-            }
-            .clipShape(RoundedRectangle(cornerRadius: 10))
-            .overlay(
-                RoundedRectangle(cornerRadius: 10)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
-            )
+            RoundedRectangle(cornerRadius: 10)
+                .fill(Color(hex: 0x14161E))
+                .overlay(
+                    RoundedRectangle(cornerRadius: 10)
+                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                )
         )
-    }
-}
-
-// MARK: - Playhead
-
-/// Vertical gold triangle marking the selected frame, roughly aligned
-/// above its thumbnail (the thumbnails are 42pt wide, 6pt apart, 2pt
-/// padding, starting after the top-bar padding — approximate is fine).
-struct PlayheadMarker: View {
-    let index: Int
-
-    /// Approximate x of the selected thumbnail: 2pt padding + N thumbnails
-    /// of 42pt + 6pt spacing, center of the selected one.
-    private var x: CGFloat {
-        2 + CGFloat(index) * (42 + 6) + (42 + 6) / 2
-    }
-
-    var body: some View {
-        ZStack(alignment: .topLeading) {
-            Color.clear
-            Triangle()
-                .fill(Color(hex: 0xF5C451))
-                .frame(width: 12, height: 8)
-                .position(x: x, y: 12)
-                .zIndex(1)
-        }
-        .allowsHitTesting(false)
     }
 }
 

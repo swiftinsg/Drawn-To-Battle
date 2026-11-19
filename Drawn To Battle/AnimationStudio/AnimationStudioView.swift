@@ -7,7 +7,7 @@ struct AnimationStudioView: View {
     @State private var selectedBone: Bone?
     @State private var projectsBrowserShown = false
     @State private var nameEditorShown = false
-    /// First-time walkthrough — shown once per fighter.
+    /// First-time walkthrough, shown once per fighter.
     @State private var showTutorial = false
 
     var onBack: (() -> Void)?
@@ -67,14 +67,17 @@ struct AnimationStudioView: View {
                 StudioTutorialView(game: game)
             }
         }
-        .onDisappear { studio.stop() }
+        .onDisappear {
+            studio.stop()
+            studio.flushAutosave()
+        }
         .sheet(isPresented: $projectsBrowserShown) {
             ProjectBrowserSheet(studio: studio)
         }
         .alert("Project name", isPresented: $nameEditorShown) {
             TextField("Name", text: Binding(
                 get: { studio.project.name },
-                set: { studio.project.name = $0; studio.hasUnsavedChanges = true }
+                set: { studio.project.name = $0; studio.markProjectChanged() }
             ))
             Button("OK") {}
         }
@@ -120,12 +123,10 @@ struct AnimationStudioView: View {
 
             Spacer()
 
-            if studio.hasUnsavedChanges {
-                Circle()
-                    .fill(Color(hex: 0xF5C451))
-                    .frame(width: 7, height: 7)
-            }
-            StudioIconButton(systemImage: "square.and.arrow.down") { _ = try? studio.save() }
+            Text(studio.hasUnsavedChanges ? "SAVING" : "AUTO SAVED")
+                .font(.system(size: 8, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.35))
+            StudioIconButton(systemImage: "questionmark.circle") { showTutorial = true }
         }
         .padding(.horizontal, 12)
         .padding(.top, 6)
@@ -207,14 +208,17 @@ struct AnimationStudioView: View {
                 selectedBone: $selectedBone,
                 pose: studio.currentFrame?.pose ?? StickmanPose(),
                 onRotate: handleRotate,
+                onSetAngle: setBoneAngle,
                 onThickness: { value in
                     studio.updateCurrentPose { pose in pose.thickness = value }
                 },
                 onScale: { value in
                     studio.updateCurrentPose { pose in pose.scale = value }
                 },
-                onBodyRotation: { value in
-                    studio.updateCurrentPose { pose in pose.bodyRotation = value }
+                onBodyRotation: { radians in
+                    studio.updateCurrentPose { pose in
+                        pose.bodyRotation = self.normalizedAngle(radians)
+                    }
                 },
                 onColor: { value in
                     studio.updateCurrentPose { pose in pose.colorARGB = value }
@@ -283,11 +287,16 @@ struct AnimationStudioView: View {
 
     // MARK: Rotation conversion
 
+    /// Slider edits set the bone's stored angle directly, in radians.
+    private func setBoneAngle(_ bone: Bone, radians: CGFloat) {
+        studio.updateCurrentPose { $0.angles[bone] = self.normalizedAngle(radians) }
+    }
+
     /// Convert a drag's world angle into the bone's stored relative angle.
     private func handleRotate(bone: Bone, worldDragAngle: CGFloat) {
         let pose = studio.currentFrame?.pose ?? StickmanPose()
         let parentWorld = parentWorldAngle(of: bone, pose: pose)
-        // Angle 0 points down: world angle = drag angle − π/2 − parent.
+        // Angle 0 points down: world angle is drag angle minus π/2 minus parent.
         let relative = normalizedAngle(worldDragAngle - .pi / 2 - parentWorld)
         studio.updateCurrentPose { $0.angles[bone] = relative }
     }
@@ -392,6 +401,7 @@ private struct PoseStrip: View {
     @Binding var selectedBone: Bone?
     let pose: StickmanPose
     let onRotate: (Bone, CGFloat) -> Void
+    let onSetAngle: (Bone, CGFloat) -> Void
     let onThickness: (CGFloat) -> Void
     let onScale: (CGFloat) -> Void
     let onBodyRotation: (CGFloat) -> Void
@@ -400,7 +410,14 @@ private struct PoseStrip: View {
     @State private var colorPickerShown = false
 
     var angleDisplay: String {
-        String(format: "%3.0f°", (pose.angles[selectedBone ?? .torso] ?? 0) * 57.3)
+        String(format: "%3.0f°", Self.degrees(from: pose.angles[selectedBone ?? .torso] ?? 0))
+    }
+
+    /// Angles are stored in radians but shown and edited as 0 through 360.
+    private static func degrees(from radians: CGFloat) -> Double {
+        let raw = radians * 180 / .pi
+        let wrapped = raw.truncatingRemainder(dividingBy: 360)
+        return Double(wrapped < 0 ? wrapped + 360 : wrapped)
     }
 
     var thicknessDisplay: String {
@@ -415,11 +432,11 @@ private struct PoseStrip: View {
         Binding(
             get: {
                 let bone = selectedBone ?? .torso
-                return Double(pose.angles[bone] ?? 0)
+                return Self.degrees(from: pose.angles[bone] ?? 0)
             },
             set: {
                 let bone = selectedBone ?? .torso
-                onRotate(bone, CGFloat($0))
+                onSetAngle(bone, CGFloat($0) * .pi / 180)
             }
         )
     }
@@ -440,8 +457,8 @@ private struct PoseStrip: View {
 
     private var rotationBinding: Binding<Double> {
         Binding(
-            get: { Double(pose.bodyRotation) },
-            set: { onBodyRotation(CGFloat($0)) }
+            get: { Self.degrees(from: pose.bodyRotation) },
+            set: { onBodyRotation(CGFloat($0) * .pi / 180) }
         )
     }
 
@@ -449,7 +466,7 @@ private struct PoseStrip: View {
         VStack(spacing: 4) {
             // Row 1: bone picker, angle, scale, color.
             HStack(spacing: 12) {
-                // Bone picker — shows the selected bone's name.
+                // Bone picker, shows the selected bone's name.
                 Menu {
                     ForEach(Bone.rotatable, id: \.self) { bone in
                         Button(bone.label) { selectedBone = bone }
@@ -478,7 +495,7 @@ private struct PoseStrip: View {
 
                 // Angle slider (selected bone's relative angle).
                 VStack(spacing: 2) {
-                    Slider(value: angleBinding, in: -3.15...3.15)
+                    Slider(value: angleBinding, in: 0...360)
                         .tint(Color(hex: 0xF5C451))
                         .controlSize(.small)
                     Text("Angle \(angleDisplay)")
@@ -500,10 +517,10 @@ private struct PoseStrip: View {
 
                 // Body rotation slider.
                 VStack(spacing: 2) {
-                    Slider(value: rotationBinding, in: -180...180)
+                    Slider(value: rotationBinding, in: 0...360)
                         .tint(Color(hex: 0xF5C451))
                         .controlSize(.small)
-                    Text("Rotate \(Int(pose.bodyRotation * 57.3))°")
+                    Text("Rotate \(Int(Self.degrees(from: pose.bodyRotation)))°")
                         .font(.system(size: 9, weight: .semibold))
                         .foregroundStyle(.white.opacity(0.6))
                 }
@@ -596,7 +613,7 @@ private struct FrameMgmtStrip: View {
             }
             .buttonStyle(SquashButtonStyle())
 
-            // Second-pass copy of duplicates — increases contrast
+            // Second-pass copy of duplicates, increases contrast
             // between "safe" and "destructive" management.
             StudioIconButton(systemImage: "doc.on.doc") {
                 studio.duplicateFrame(at: studio.selectedIndex)

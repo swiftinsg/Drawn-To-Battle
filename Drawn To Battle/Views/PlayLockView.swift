@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Play lock overlay
 //
 // Shown when the fighter taps Play before animating their own move.
-// Battles are locked behind hasAnimated — you can't fight with someone
+// Battles are locked behind hasAnimated, you can't fight with someone
 // else's animation.
 
 struct PlayLockView: View {

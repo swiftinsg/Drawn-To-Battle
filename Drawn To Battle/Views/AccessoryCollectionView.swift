@@ -1,27 +1,24 @@
 import SwiftUI
 
-// MARK: - Costume gacha
-
-/// World gear is unlocked by beating that world's boss, then equipped from
-/// here. The home fighter updates as soon as an accessory is equipped.
-struct CostumeVaultView: View {
+/// Browse every accessory, equip the ones you own, and see how to earn the rest.
+struct AccessoryCollectionView: View {
     @ObservedObject var game: GameSave
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("WORLD COSTUMES")
+                Text("ACCESSORIES")
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .tracking(2)
                     .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
-                Text("Conquer a world to unlock its gear, then dress your fighter.")
+                Text("World drops and level rewards. Equip one to dress your fighter.")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.5))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
             ForEach(Accessory.allCases) { accessory in
-                costumeRow(accessory)
+                accessoryRow(accessory)
             }
 
             Button {
@@ -47,36 +44,38 @@ struct CostumeVaultView: View {
         }
     }
 
-    private func costumeRow(_ accessory: Accessory) -> some View {
-        let unlocked = game.isAccessoryUnlocked(accessory)
+    private func accessoryRow(_ accessory: Accessory) -> some View {
+        let owned = game.isAccessoryOwned(accessory)
         let equipped = game.equippedAccessory == accessory
 
         return HStack(spacing: 12) {
-            FighterFigureView(accessory: accessory)
-                .frame(width: 66, height: 88)
-                .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(unlocked ? 0.06 : 0.02))
-                )
+            ZStack {
+                FighterFigureView(accessory: accessory)
+                    .frame(width: 66, height: 88)
+                    .opacity(owned ? 1 : 0.12)
+                if !owned {
+                    Image(systemName: "lock.fill")
+                        .font(.system(size: 18, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.75))
+                }
+            }
+            .frame(width: 66, height: 88)
+            .background(
+                RoundedRectangle(cornerRadius: 12)
+                    .fill(Color.white.opacity(owned ? 0.06 : 0.02))
+            )
 
             VStack(alignment: .leading, spacing: 5) {
-                HStack(spacing: 6) {
-                    Text(accessory.name.uppercased())
-                        .font(.system(size: 13, weight: .black, design: .rounded))
-                        .foregroundStyle(.white)
-                    if !unlocked {
-                        Image(systemName: "lock.fill")
-                            .font(.system(size: 10, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                }
+                Text(accessory.name.uppercased())
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .foregroundStyle(owned ? .white : .white.opacity(0.45))
 
-                Text(unlocked ? accessory.subtitle : "DEFEAT \(accessory.planetName) TO UNLOCK")
+                Text(unlockHint(accessory))
                     .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundStyle(unlocked ? .white.opacity(0.6) : accessory.tint.opacity(0.8))
+                    .foregroundStyle(owned ? .white.opacity(0.6) : accessory.tint.opacity(0.75))
                     .fixedSize(horizontal: false, vertical: true)
 
-                if unlocked {
+                if owned {
                     Button {
                         game.equip(accessory: accessory)
                         Haptics.light()
@@ -107,6 +106,17 @@ struct CostumeVaultView: View {
                 .stroke(equipped ? Color(hex: 0xF5C451) : Color.white.opacity(0.1),
                         lineWidth: equipped ? 2 : 1)
         )
-        .opacity(unlocked ? 1 : 0.72)
+        .opacity(owned ? 1 : 0.8)
+    }
+
+    private func unlockHint(_ accessory: Accessory) -> String {
+        if game.isAccessoryOwned(accessory) { return accessory.subtitle }
+        if let planet = accessory.planetName {
+            return "Win the \(planet) boss or draw in its accessory gacha."
+        }
+        if let level = accessory.milestoneLevel {
+            return "Reach level \(level) to unlock."
+        }
+        return "Keep playing to unlock."
     }
 }

@@ -152,10 +152,13 @@ struct PoseViewTransform {
     let offsetY: CGFloat
 
     init(canvasSize: CGSize, bottomMargin: CGFloat = 18) {
-        let s = min(canvasSize.width / Self.space.width, canvasSize.height / Self.space.height)
+        // Fit the figure into the space ABOVE the control panel. Scaling
+        // against the full canvas and then shifting up clipped the head.
+        let usableHeight = max(1, canvasSize.height - bottomMargin)
+        let s = min(canvasSize.width / Self.space.width, usableHeight / Self.space.height)
         scale = s
         offsetX = (canvasSize.width - Self.space.width * s) / 2
-        offsetY = canvasSize.height - Self.space.height * s - bottomMargin
+        offsetY = (usableHeight - Self.space.height * s) / 2
     }
 
     func toCanvas(_ p: CGPoint) -> CGPoint {
@@ -297,7 +300,7 @@ enum StickmanKinematics {
         line(.leftKnee, .leftFoot)
         line(.hip, .rightKnee)
         line(.rightKnee, .rightFoot)
-        // Note: no neck→head-top line — the filled head circle IS the head.
+        // Note: no neck→head-top line, the filled head circle IS the head.
 
         return path
     }

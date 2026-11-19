@@ -1,5 +1,6 @@
 import SwiftUI
 import Combine
+import Foundation
 
 
 
@@ -98,6 +99,8 @@ final class StudioState: ObservableObject {
     private var playbackTimer: Timer?
     private var playbackFrameIndex = 0
     private var playbackHoldCounter = 0
+    /// Debounced write so continuous dragging does not hammer the filesystem.
+    private var autosaveWorkItem: DispatchWorkItem?
 
     init(project: AnimationProject = .blank()) {
         self.project = project
@@ -116,8 +119,7 @@ final class StudioState: ObservableObject {
         var pose = project.frames[selectedIndex].pose
         transform(&pose)
         project.frames[selectedIndex].pose = pose
-        hasUnsavedChanges = true
-        game?.hasAnimated = true
+        markAnimatedChange()
     }
 
 
@@ -127,8 +129,7 @@ final class StudioState: ObservableObject {
         let insertAt = min(selectedIndex + 1, project.frames.count)
         project.frames.insert(AnimationFrame(pose: pose), at: insertAt)
         selectedIndex = insertAt
-        hasUnsavedChanges = true
-        game?.hasAnimated = true
+        markAnimatedChange()
     }
 
     func duplicateFrame(at index: Int) {
@@ -137,16 +138,14 @@ final class StudioState: ObservableObject {
         copy.id = UUID()
         project.frames.insert(copy, at: index + 1)
         selectedIndex = index + 1
-        hasUnsavedChanges = true
-        game?.hasAnimated = true
+        markAnimatedChange()
     }
 
     func deleteFrame(at index: Int) {
         guard project.frames.count > 1, project.frames.indices.contains(index) else { return }
         project.frames.remove(at: index)
         clampSelection()
-        hasUnsavedChanges = true
-        game?.hasAnimated = true
+        markAnimatedChange()
     }
 
     func moveFrame(from source: Int, to destination: Int) {
@@ -155,8 +154,7 @@ final class StudioState: ObservableObject {
         let frame = project.frames.remove(at: source)
         project.frames.insert(frame, at: dest)
         selectedIndex = dest
-        hasUnsavedChanges = true
-        game?.hasAnimated = true
+        markAnimatedChange()
     }
 
     func selectFrame(_ index: Int) {
@@ -220,11 +218,39 @@ final class StudioState: ObservableObject {
 
 
 
-    @discardableResult
-    func save() throws -> URL? {
-        stop()
-        hasUnsavedChanges = false
-    
+    // MARK: Autosave
+
+    /// Pose and frame edits save themselves. The delay keeps a drag from
+    /// writing a file on every touch move.
+    private func markAnimatedChange() {
+        hasUnsavedChanges = true
+        game?.hasAnimated = true
+        scheduleAutosave()
+    }
+
+    /// Name and FPS edits are saved too, but do not unlock battles.
+    func markProjectChanged() {
+        hasUnsavedChanges = true
+        scheduleAutosave()
+    }
+
+    private func scheduleAutosave() {
+        autosaveWorkItem?.cancel()
+        let work = DispatchWorkItem { [weak self] in
+            guard let self else { return }
+            try? self.persistProject()
+            self.hasUnsavedChanges = false
+        }
+        autosaveWorkItem = work
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.45, execute: work)
+    }
+
+    private func cancelAutosave() {
+        autosaveWorkItem?.cancel()
+        autosaveWorkItem = nil
+    }
+
+    private func persistProject() throws -> URL? {
         if let blueprintID = editingBlueprintID, let game {
             game.setBlueprintEdit(blueprintID, project: project)
             return nil
@@ -232,8 +258,26 @@ final class StudioState: ObservableObject {
         return try AnimationProjectStore.save(project)
     }
 
+    /// Writes immediately when the studio closes, so the last edit survives.
+    func flushAutosave() {
+        guard hasUnsavedChanges else { return }
+        cancelAutosave()
+        try? persistProject()
+        hasUnsavedChanges = false
+    }
+
+    @discardableResult
+    func save() throws -> URL? {
+        stop()
+        cancelAutosave()
+        let url = try persistProject()
+        hasUnsavedChanges = false
+        return url
+    }
+
     func editBlueprint(_ blueprint: MoveBlueprint, edited: AnimationProject?) {
         stop()
+        cancelAutosave()
         project = edited ?? blueprint.baseAnimation
         editingBlueprintID = blueprint.id
         selectedIndex = 0
@@ -242,6 +286,7 @@ final class StudioState: ObservableObject {
 
     func load(from url: URL) throws {
         stop()
+        cancelAutosave()
         let loaded = try AnimationProjectStore.load(from: url)
         project = loaded
         selectedIndex = 0
@@ -251,6 +296,7 @@ final class StudioState: ObservableObject {
 
     func newProject() {
         stop()
+        cancelAutosave()
         project = .blank()
         selectedIndex = 0
         hasUnsavedChanges = false

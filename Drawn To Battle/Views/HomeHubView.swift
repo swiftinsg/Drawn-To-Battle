@@ -20,6 +20,9 @@ struct HomeHubView: View {
     /// Blocked until the fighter has animated their own move.
     @State private var showPlayLock = false
 
+    /// The gacha and play stickers share one footprint.
+    private let bottomButtonSize = CGSize(width: 148, height: 79)
+
     var body: some View {
         ZStack {
             Color(hex: 0x0C0D12).ignoresSafeArea()
@@ -143,12 +146,13 @@ struct HomeHubView: View {
                         Image("DrawnToBattlePlayButton")
                             .resizable()
                             .scaledToFit()
-                            .frame(width: 148, height: 79)
+                            .frame(width: bottomButtonSize.width,
+                                   height: bottomButtonSize.height)
                             .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 16, y: 5)
                             .modifier(StickerBob())
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Battle — choose a boss")
+                    .accessibilityLabel("Battle, choose a boss")
                 }
                 .padding(.horizontal, 16)
                 .padding(.bottom, 14)
@@ -185,7 +189,7 @@ struct HomeHubView: View {
             DailyRewardView(game: game)
                 .presentationBackground(Color(hex: 0x0C0D12))
         }
-        // Play lock — you can't fight until you've animated your own move.
+        // Play lock, you can't fight until you've animated your own move.
         .overlay {
             if showPlayLock {
                 PlayLockView(onGoToStudio: {
@@ -235,7 +239,7 @@ struct HomeHubView: View {
                     .font(.system(size: 12, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
             }
-            .frame(width: 148, height: 79)
+            .frame(width: bottomButtonSize.width, height: bottomButtonSize.height)
             .background(
                 RoundedRectangle(cornerRadius: 18)
                     .fill(Color(hex: 0x15171F).opacity(0.92))
@@ -247,7 +251,7 @@ struct HomeHubView: View {
             .shadow(color: Color(hex: 0xF5C451).opacity(0.25), radius: 14, y: 5)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Gacha — move and costume draws")
+        .accessibilityLabel("Gacha, move and accessory draws")
     }
 
     private var loadoutChip: some View {
@@ -266,7 +270,7 @@ struct HomeHubView: View {
                         .lineLimit(1)
                 }
             } else {
-                Text("No move equipped — open COLLECTION")
+                Text("No move equipped. Open COLLECTION")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.5))
             }
@@ -349,11 +353,11 @@ private struct HubBackdrop: View {
                     style: StrokeStyle(lineWidth: 1, dash: [6, 10])
                 )
 
-                // The three boss planets, kept clear of the side controls.
+                // The three boss planets, kept above the bottom sticker row.
                 let planets: [(CGFloat, CGFloat, CGFloat, UInt32, UInt32)] = [
-                    (0.87, 0.38, 24, 0x3FA65C, 0x4C8DFF),
-                    (0.70, 0.16, 16, 0xF5C451, 0xFF8A3C),
-                    (0.91, 0.68, 28, 0x4FC3F7, 0xB3E5FC),
+                    (0.87, 0.34, 24, 0x3FA65C, 0x4C8DFF),
+                    (0.70, 0.14, 16, 0xF5C451, 0xFF8A3C),
+                    (0.88, 0.56, 28, 0x4FC3F7, 0xB3E5FC),
                 ]
                 for planet in planets {
                     let x = planet.0 * size.width
@@ -454,7 +458,7 @@ private enum Currency: String, Identifiable {
     var description: String {
         switch self {
         case .coins:
-            return "Earned from battles. Spend them on things like changing your fighter's name."
+            return "Earned from battles. Spend them on accessory draws or changing your fighter's name."
         case .pens:
             return "Earned from battles. Spend them on gacha draws."
         }
@@ -478,13 +482,6 @@ private struct CurrencyInfoCard: View {
                         .font(.system(size: 15, weight: .black, design: .rounded))
                         .foregroundStyle(.white)
                     Spacer()
-                    Button { dismiss() } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 16, weight: .bold))
-                            .foregroundStyle(.white.opacity(0.5))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel("Close")
                 }
 
                 Text(currency.description)

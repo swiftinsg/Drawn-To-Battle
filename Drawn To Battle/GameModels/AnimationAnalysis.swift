@@ -12,9 +12,9 @@ struct AnalysisResult {
     var balance: Double = 0
     var timing: Double = 0
     var telegraph: Double = 0
-    /// Overall 0–100 power score.
+    /// Overall 0 to 100 power score.
     var power: Double = 0
-    /// How the power score reads in words — shown in the HUD, studio and collection.
+    /// How the power score reads in words, shown in the HUD, studio and collection.
     var powerLabel: String {
         switch power {
         case ..<25: return "SLOPPY"

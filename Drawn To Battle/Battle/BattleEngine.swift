@@ -72,7 +72,7 @@ struct Afterimage {
 
 /// Runs the whole boss fight simulation. Updated on a Timer from
 /// BattleView; HUD-relevant values are published. All mutating work happens
-/// here — never during view rendering.
+/// here, never during view rendering.
 final class BattleEngine: ObservableObject {
     // Config
     let boss: BossDefinition
@@ -87,6 +87,8 @@ final class BattleEngine: ObservableObject {
     @Published var bossHP: Double
     @Published var ultMeter: Double = 0
     @Published var phaseTwo = false
+    /// Live fight clock for the HUD. Reset every time the fight restarts.
+    @Published var elapsedTime: Double = 0
     @Published var result: BattleResult?
     @Published var attackCharge: Double = 0     // 0...1 attack animation progress
     @Published var currentAttackName: String = ""
@@ -237,6 +239,10 @@ final class BattleEngine: ObservableObject {
         particles = []
         afterimages = []
         lastDate = nil
+        time = 0
+        elapsedTime = 0
+        bossFlashDmg = 0
+        dodgeDir = -1
         damageDealt = 0
         damageTaken = 0
         parries = 0
@@ -252,6 +258,7 @@ final class BattleEngine: ObservableObject {
         let dt = min(max(now.timeIntervalSince(lastDate ?? now), 0), 0.05)
         lastDate = now
         time += CGFloat(dt)
+        if Double(time) - elapsedTime >= 0.05 { elapsedTime = Double(time) }
         let d = CGFloat(dt)
 
         // Hit-stop: the world freezes for a beat on big impacts.
@@ -456,7 +463,7 @@ final class BattleEngine: ObservableObject {
         let techMatch = analysis.techniques.contains(boss.requiredTechnique)
         if !techMatch {
             dmg *= 0.18
-            floaters.append(Floater(text: "MISMATCH — needs \(boss.requiredTechnique.label)",
+            floaters.append(Floater(text: "MISMATCH! NEEDS \(boss.requiredTechnique.label)",
                                     pos: CGPoint(x: bossX, y: groundY - 200),
                                     color: Color(hex: 0xE86A6A)))
         }
@@ -493,7 +500,7 @@ final class BattleEngine: ObservableObject {
         }
 
         floaters.append(Floater(
-            text: ultimate ? "-\(Int(dmg)) ULT!" : "-\(Int(dmg))",
+            text: ultimate ? "ULT \(Int(dmg))" : "HIT \(Int(dmg))",
             pos: CGPoint(x: bossX, y: groundY - 160),
             color: ultimate ? Color(hex: 0xF5C451) : (techMatch ? .white : Color(hex: 0xE86A6A)),
             big: ultimate || (bossStunTimer > 0)
@@ -634,7 +641,7 @@ final class BattleEngine: ObservableObject {
         return pool.randomElement() ?? boss.attacks[0]
     }
 
-    /// The boss whiffed — a longer recovery the player can punish.
+    /// The boss whiffed, a longer recovery the player can punish.
     private func punishWindow() {
         charging = false
         bossState = .recover
@@ -722,7 +729,7 @@ final class BattleEngine: ObservableObject {
                 parry()
                 return
             }
-            // Ordinary block: solid shield — the hit is fully absorbed,
+            // Ordinary block: solid shield, the hit is fully absorbed,
             // only the follow-through registers (bursts, shake, meter).
             hurtTimer = 0.15
             flashPlayer = 0.15
@@ -751,7 +758,7 @@ final class BattleEngine: ObservableObject {
         spawnBurst(at: CGPoint(x: playerPos.x, y: playerPos.y - 40), count: 10,
                    color: Color(hex: 0xE86A6A), speed: 240)
         floaters.append(Floater(
-            text: "-\(Int(raw))",
+            text: "HIT \(Int(raw))",
             pos: CGPoint(x: playerPos.x, y: playerPos.y - 130),
             color: Color(hex: 0xE86A6A)
         ))
@@ -805,7 +812,7 @@ final class BattleEngine: ObservableObject {
                     flashBoss = 0.2
                     bossStagger = min(bossStaggerMax, bossStagger + 8)
                     maybeStaggerBreak()
-                    floaters.append(Floater(text: "REFLECTED -\(Int(dmg))",
+                    floaters.append(Floater(text: "REFLECTED \(Int(dmg))",
                                             pos: CGPoint(x: bossX, y: groundY - 160),
                                             color: Color(hex: 0xF5C451)))
                     spawnBurst(at: p.pos, count: 10, color: Color(hex: 0xF5C451), speed: 240)

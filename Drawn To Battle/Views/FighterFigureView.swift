@@ -28,9 +28,10 @@ struct FighterFigureView: View {
         let outlineColor = Color.black.opacity(0.72)
         let ink = Color.white.opacity(0.96)
 
-        let headCenter = CGPoint(x: cx, y: cy - 122 * scale)
+        let headCenter = CGPoint(x: cx, y: cy - 120 * scale)
         let headRadius = 25 * scale
-        let shoulder = CGPoint(x: cx, y: cy - 86 * scale)
+        // Shoulders touch the head so there is no floating neck.
+        let shoulder = CGPoint(x: cx, y: headCenter.y + headRadius - 2 * scale)
         let hip = CGPoint(x: cx, y: cy + 20 * scale)
 
         // Spawn ring and shadow under the fighter.
@@ -47,8 +48,9 @@ struct FighterFigureView: View {
         )
 
         // Wings sit behind the body.
-        if accessory == .iceWings {
-            drawWings(in: &context, cx: cx, cy: cy, scale: scale)
+        let tint = accessory?.tint ?? Color(hex: 0xF5C451)
+        if accessory?.render == .wings {
+            drawWings(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
         }
 
         var torso = Path()
@@ -56,14 +58,13 @@ struct FighterFigureView: View {
         torso.addLine(to: hip)
 
         var arms = Path()
-        let leftFist = CGPoint(x: cx - 58 * scale, y: cy - 98 * scale)
-        let rightFist = CGPoint(x: cx + 62 * scale, y: cy - 106 * scale)
-        arms.move(to: CGPoint(x: cx, y: cy - 76 * scale))
-        arms.addLine(to: CGPoint(x: cx - 40 * scale, y: cy - 62 * scale))
-        arms.addLine(to: leftFist)
-        arms.move(to: CGPoint(x: cx, y: cy - 76 * scale))
-        arms.addLine(to: CGPoint(x: cx + 42 * scale, y: cy - 70 * scale))
-        arms.addLine(to: rightFist)
+        // Relaxed arms instead of raised fists.
+        arms.move(to: shoulder)
+        arms.addLine(to: CGPoint(x: cx - 30 * scale, y: cy - 54 * scale))
+        arms.addLine(to: CGPoint(x: cx - 36 * scale, y: cy - 20 * scale))
+        arms.move(to: shoulder)
+        arms.addLine(to: CGPoint(x: cx + 30 * scale, y: cy - 54 * scale))
+        arms.addLine(to: CGPoint(x: cx + 36 * scale, y: cy - 20 * scale))
 
         var legs = Path()
         legs.move(to: hip)
@@ -80,16 +81,8 @@ struct FighterFigureView: View {
             context.stroke(path, with: .color(ink), style: inner)
         }
 
-        // Gold fists give the silhouette a bit of character.
-        for fist in [leftFist, rightFist] {
-            context.fill(
-                Path(ellipseIn: CGRect(x: fist.x - 7 * scale, y: fist.y - 7 * scale,
-                                       width: 14 * scale, height: 14 * scale)),
-                with: .color(gold)
-            )
-        }
+        // Plain head with a dark outline.
 
-        // Head with a dark outline and two eyes.
         let outerR = headRadius + 3 * scale
         context.fill(
             Path(ellipseIn: CGRect(x: headCenter.x - outerR, y: headCenter.y - outerR,
@@ -101,26 +94,17 @@ struct FighterFigureView: View {
                                    width: headRadius * 2, height: headRadius * 2)),
             with: .color(ink)
         )
-        let eye = Color(hex: 0x11131A)
-        context.fill(
-            Path(ellipseIn: CGRect(x: headCenter.x - 10 * scale, y: headCenter.y - 4 * scale,
-                                   width: 5 * scale, height: 7 * scale)),
-            with: .color(eye)
-        )
-        context.fill(
-            Path(ellipseIn: CGRect(x: headCenter.x + 5 * scale, y: headCenter.y - 4 * scale,
-                                   width: 5 * scale, height: 7 * scale)),
-            with: .color(eye)
-        )
-
-        switch accessory {
-        case .some(.leafCrown):
+        switch accessory?.render {
+        case .some(.crown):
             drawLeafCrown(in: &context, headCenter: headCenter,
-                          headRadius: headRadius, scale: scale)
-        case .some(.solarHalo):
+                          headRadius: headRadius, scale: scale, tint: tint)
+        case .some(.halo):
             drawHalo(in: &context, headCenter: headCenter,
-                     headRadius: headRadius, scale: scale)
-        case .some(.iceWings), nil:
+                     headRadius: headRadius, scale: scale, tint: tint)
+        case .some(.star):
+            drawStar(in: &context, headCenter: headCenter,
+                     headRadius: headRadius, scale: scale, tint: tint)
+        case .some(.wings), nil:
             break
         }
     }
@@ -128,9 +112,9 @@ struct FighterFigureView: View {
     // MARK: Accessories
 
     private func drawWings(in context: inout GraphicsContext, cx: CGFloat,
-                           cy: CGFloat, scale: CGFloat) {
-        let ice = Color(hex: 0xB3E5FC)
-        let blue = Color(hex: 0x4FC3F7)
+                           cy: CGFloat, scale: CGFloat, tint: Color) {
+        let ice = tint
+        let blue = tint.opacity(0.7)
 
         for side in [CGFloat(-1), CGFloat(1)] {
             let root = CGPoint(x: cx + side * 16 * scale, y: cy - 72 * scale)
@@ -167,7 +151,8 @@ struct FighterFigureView: View {
     }
 
     private func drawLeafCrown(in context: inout GraphicsContext,
-                               headCenter: CGPoint, headRadius: CGFloat, scale: CGFloat) {
+                               headCenter: CGPoint, headRadius: CGFloat,
+                               scale: CGFloat, tint: Color) {
         let baseY = headCenter.y - headRadius + 5 * scale
         let angles: [CGFloat] = [-0.95, -0.48, 0, 0.48, 0.95]
 
@@ -197,8 +182,8 @@ struct FighterFigureView: View {
                 control: CGPoint(x: mid.x - perpendicular.x * width,
                                  y: mid.y - perpendicular.y * width)
             )
-            context.fill(leaf, with: .color(Color(hex: index == 2 ? 0x6DD36D : 0x3FA65C)))
-            context.stroke(leaf, with: .color(Color(hex: 0x247A3C)),
+            context.fill(leaf, with: .color(tint))
+            context.stroke(leaf, with: .color(Color.black.opacity(0.45)),
                            style: StrokeStyle(lineWidth: 1.2 * scale))
 
             var vein = Path()
@@ -212,24 +197,53 @@ struct FighterFigureView: View {
         context.fill(
             Path(ellipseIn: CGRect(x: headCenter.x - headRadius, y: baseY - 3 * scale,
                                    width: headRadius * 2, height: 9 * scale)),
-            with: .color(Color(hex: 0x247A3C))
+            with: .color(tint.opacity(0.85))
         )
     }
 
     private func drawHalo(in context: inout GraphicsContext,
-                          headCenter: CGPoint, headRadius: CGFloat, scale: CGFloat) {
+                          headCenter: CGPoint, headRadius: CGFloat,
+                          scale: CGFloat, tint: Color) {
         let center = CGPoint(x: headCenter.x, y: headCenter.y - headRadius - 24 * scale)
         let ring = CGRect(x: center.x - 34 * scale, y: center.y - 9 * scale,
                           width: 68 * scale, height: 18 * scale)
-        let gold = Color(hex: 0xF5C451)
 
         context.fill(
             Path(ellipseIn: ring.insetBy(dx: -6 * scale, dy: -6 * scale)),
-            with: .color(gold.opacity(0.16))
+            with: .color(tint.opacity(0.16))
         )
-        context.stroke(Path(ellipseIn: ring), with: .color(gold),
+        context.stroke(Path(ellipseIn: ring), with: .color(tint),
                        style: StrokeStyle(lineWidth: 5 * scale))
         context.stroke(Path(ellipseIn: ring), with: .color(Color.white.opacity(0.85)),
+                       style: StrokeStyle(lineWidth: 1.5 * scale))
+    }
+
+    private func drawStar(in context: inout GraphicsContext,
+                          headCenter: CGPoint, headRadius: CGFloat,
+                          scale: CGFloat, tint: Color) {
+        let center = CGPoint(x: headCenter.x, y: headCenter.y - headRadius - 28 * scale)
+        let outer = 22 * scale
+        let inner = 9 * scale
+        var star = Path()
+
+        for index in 0..<10 {
+            let angle = CGFloat(index) * .pi / 5 - .pi / 2
+            let radius = index.isMultiple(of: 2) ? outer : inner
+            let point = CGPoint(
+                x: center.x + cos(angle) * radius,
+                y: center.y + sin(angle) * radius
+            )
+            if index == 0 { star.move(to: point) } else { star.addLine(to: point) }
+        }
+        star.closeSubpath()
+
+        context.fill(
+            Path(ellipseIn: CGRect(x: center.x - outer * 1.5, y: center.y - outer * 1.5,
+                                   width: outer * 3, height: outer * 3)),
+            with: .color(tint.opacity(0.14))
+        )
+        context.fill(star, with: .color(tint))
+        context.stroke(star, with: .color(Color.white.opacity(0.9)),
                        style: StrokeStyle(lineWidth: 1.5 * scale))
     }
 }

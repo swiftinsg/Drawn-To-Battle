@@ -16,7 +16,7 @@ enum CombatTechnique: String, Codable, CaseIterable, Hashable {
         case .slam: return "Both arms raised, then brought down hard."
         case .spin: return "The whole body sweeps through a rotation."
         case .dash: return "The fighter surges across the arena."
-        case .smear: return "A limb whips through a huge arc in a blink — a smear frame strike."
+        case .smear: return "A limb whips through a huge arc in a blink, a smear frame strike."
         }
     }
 }
@@ -180,6 +180,9 @@ enum BlueprintCatalog {
 enum Gacha {
     static let pullCost = 100
     static let duplicateRefund = 30
+    /// Accessory gachas run on coins instead of pens.
+    static let accessoryPullCost = 250
+    static let accessoryDuplicateRefund = 50
     /// Coin → pen exchange (battles pay coins; the gacha runs on pens).
     static let exchangeCoins = 100
     static let exchangePens = 20
@@ -209,7 +212,7 @@ enum Gacha {
 
     /// One copy of each blueprint: while the collection is incomplete, every
     /// pull is guaranteed to be something you don't own (weighted by rarity).
-    /// Once you own them all, the gacha opens up — duplicates refund coins.
+    /// Once you own them all, the gacha opens up, duplicates refund coins.
     static func roll(owned: Set<String>) -> MoveBlueprint {
         let unowned = BlueprintCatalog.all.filter { !owned.contains($0.id) }
         if !unowned.isEmpty {
