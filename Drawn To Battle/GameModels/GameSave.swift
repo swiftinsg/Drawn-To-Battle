@@ -120,6 +120,14 @@ struct EquippedLoadout: Codable, Equatable {
     var project: AnimationProject
 }
 
+/// One entry in the gacha history (newest first, capped at 20).
+struct GachaPullRecord: Codable, Identifiable, Hashable {
+    let id: UUID
+    let blueprintID: String
+    let isNew: Bool
+    let date: Date
+}
+
 // MARK: - Persistent game save
 
 final class GameSave: ObservableObject {
@@ -151,6 +159,10 @@ final class GameSave: ObservableObject {
     @Published var profileImageData: Data? {
         didSet { persist() }
     }
+    /// Last 20 gacha pulls, newest first.
+    @Published var gachaHistory: [GachaPullRecord] = [] {
+        didSet { persist() }
+    }
     var hasUsername: Bool { !username.isEmpty }
 
     private static let key = "DrawnToBattle.save.v1"
@@ -169,6 +181,7 @@ final class GameSave: ObservableObject {
             coins = saved.coins ?? 0
             username = saved.username ?? ""
             profileImageData = saved.profileImageData
+            gachaHistory = saved.gachaHistory ?? []
         }
     }
 
@@ -223,6 +236,18 @@ final class GameSave: ObservableObject {
         }
         ownedBlueprints.insert(blueprint.id)
         return true
+    }
+
+    /// Keeps the last 20 pulls for the history screen.
+    func recordPull(_ blueprint: MoveBlueprint, isNew: Bool) {
+        let record = GachaPullRecord(
+            id: UUID(),
+            blueprintID: blueprint.id,
+            isNew: isNew,
+            date: Date()
+        )
+        gachaHistory.insert(record, at: 0)
+        if gachaHistory.count > 20 { gachaHistory.removeLast() }
     }
 
     func equip(blueprint: MoveBlueprint) {
@@ -292,6 +317,7 @@ final class GameSave: ObservableObject {
         var coins: Int?
         var username: String?
         var profileImageData: Data?
+        var gachaHistory: [GachaPullRecord]?
     }
 
     private func persist() {
@@ -303,7 +329,8 @@ final class GameSave: ObservableObject {
             blueprintEdits: blueprintEdits,
             coins: coins,
             username: username,
-            profileImageData: profileImageData
+            profileImageData: profileImageData,
+            gachaHistory: gachaHistory
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: Self.key)
