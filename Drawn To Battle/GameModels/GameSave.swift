@@ -151,6 +151,15 @@ final class GameSave: ObservableObject {
     @Published var testUnlockAll: Bool = false {
         didSet { persist() }
     }
+    /// Has the fighter animated their own move at least once?
+    /// Battles are locked behind this — you can't fight with someone else's animation.
+    @Published var hasAnimated: Bool = false {
+        didSet { persist() }
+    }
+    /// Has the fighter seen the studio tutorial yet?
+    @Published var hasSeenStudioTutorial: Bool = false {
+        didSet { persist() }
+    }
     var hasUsername: Bool { !username.isEmpty }
 
     private static let key = "DrawnToBattle.save.v1"
@@ -166,6 +175,8 @@ final class GameSave: ObservableObject {
             coins = saved.coins ?? 0
             username = saved.username ?? ""
             testUnlockAll = saved.testUnlockAll ?? false
+            hasAnimated = saved.hasAnimated ?? false
+            hasSeenStudioTutorial = saved.hasSeenStudioTutorial ?? false
         }
     }
 
@@ -241,6 +252,7 @@ final class GameSave: ObservableObject {
         defeatedBosses = []
         blueprintEdits = [:]
         coins = 0
+        hasAnimated = false
     }
 
     func isUnlocked(_ boss: BossDefinition) -> Bool {
@@ -260,6 +272,8 @@ final class GameSave: ObservableObject {
         var coins: Int?
         var username: String?
         var testUnlockAll: Bool?
+        var hasAnimated: Bool?
+        var hasSeenStudioTutorial: Bool?
     }
 
     private func persist() {
@@ -271,7 +285,9 @@ final class GameSave: ObservableObject {
             blueprintEdits: blueprintEdits,
             coins: coins,
             username: username,
-            testUnlockAll: testUnlockAll
+            testUnlockAll: testUnlockAll,
+            hasAnimated: hasAnimated,
+            hasSeenStudioTutorial: hasSeenStudioTutorial
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: Self.key)

@@ -14,6 +14,8 @@ struct HomeHubView: View {
     @State private var showCollection = false
     @State private var showSolar = false
     @State private var showSettings = false
+    /// Blocked until the fighter has animated their own move.
+    @State private var showPlayLock = false
 
     var body: some View {
         ZStack {
@@ -123,11 +125,16 @@ struct HomeHubView: View {
                     }
                     Spacer()
                     MenuBubble(title: "STUDIO", systemImage: "film") {
+                        studio.game = game
                         showStudio = true
                     }
                     Spacer()
                     Button {
-                        showSolar = true
+                        if game.hasAnimated {
+                            showSolar = true
+                        } else {
+                            showPlayLock = true
+                        }
                     } label: {
                         Image("DrawnToBattlePlayButton")
                             .resizable()
@@ -147,6 +154,7 @@ struct HomeHubView: View {
         .fullScreenCover(isPresented: $showStudio) {
             AnimationStudioView(studio: studio, onBack: { showStudio = false })
                 .background(StudioBackgroundRemoval())
+                .onAppear { studio.game = game }
         }
         .fullScreenCover(isPresented: $showGacha) {
             GachaView(game: game)
@@ -160,6 +168,15 @@ struct HomeHubView: View {
         .sheet(isPresented: $showSettings) {
             SettingsView(game: game)
                 .presentationBackground(Color(hex: 0x0C0D12))
+        }
+        // Play lock — you can't fight until you've animated your own move.
+        .overlay {
+            if showPlayLock {
+                PlayLockView(onGoToStudio: {
+                    showPlayLock = false
+                    showStudio = true
+                })
+            }
         }
     }
 

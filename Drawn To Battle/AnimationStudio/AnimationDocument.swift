@@ -117,17 +117,18 @@ final class StudioState: ObservableObject {
         transform(&pose)
         project.frames[selectedIndex].pose = pose
         hasUnsavedChanges = true
+        game?.hasAnimated = true
     }
 
 
 
     func addFrame() {
-      
         let pose = currentFrame?.pose ?? StickmanPose()
         let insertAt = min(selectedIndex + 1, project.frames.count)
         project.frames.insert(AnimationFrame(pose: pose), at: insertAt)
         selectedIndex = insertAt
         hasUnsavedChanges = true
+        game?.hasAnimated = true
     }
 
     func duplicateFrame(at index: Int) {
@@ -137,6 +138,7 @@ final class StudioState: ObservableObject {
         project.frames.insert(copy, at: index + 1)
         selectedIndex = index + 1
         hasUnsavedChanges = true
+        game?.hasAnimated = true
     }
 
     func deleteFrame(at index: Int) {
@@ -144,6 +146,7 @@ final class StudioState: ObservableObject {
         project.frames.remove(at: index)
         clampSelection()
         hasUnsavedChanges = true
+        game?.hasAnimated = true
     }
 
     func moveFrame(from source: Int, to destination: Int) {
@@ -153,6 +156,7 @@ final class StudioState: ObservableObject {
         project.frames.insert(frame, at: dest)
         selectedIndex = dest
         hasUnsavedChanges = true
+        game?.hasAnimated = true
     }
 
     func selectFrame(_ index: Int) {

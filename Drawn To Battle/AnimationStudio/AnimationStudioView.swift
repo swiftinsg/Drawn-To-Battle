@@ -7,6 +7,8 @@ struct AnimationStudioView: View {
     @State private var selectedBone: Bone?
     @State private var projectsBrowserShown = false
     @State private var nameEditorShown = false
+    /// First-time walkthrough — shown once per fighter.
+    @State private var showTutorial = false
 
     var onBack: (() -> Void)?
 
@@ -202,6 +204,16 @@ struct AnimationStudioView: View {
                         .fill(Color(hex: 0x14161E).opacity(0.97))
                         .ignoresSafeArea(edges: .bottom)
                 )
+            }
+        }
+        .onAppear {
+            if let game = studio.game, !game.hasSeenStudioTutorial {
+                showTutorial = true
+            }
+        }
+        .sheet(isPresented: $showTutorial) {
+            if let game = studio.game {
+                StudioTutorialView(game: game)
             }
         }
         .onDisappear { studio.stop() }

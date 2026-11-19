@@ -21,6 +21,9 @@ struct ContentView: View {
         root
             .animation(.easeInOut(duration: 0.35), value: stage)
             .onAppear {
+                // Set the studio's game reference up front so first-time
+                // screens (tutorial) see it as soon as they appear.
+                studioState.game = game
                 if debugRoute != nil { stage = .hub }
                 if debugRoute == "collection-demo" && game.ownedBlueprints.isEmpty {
                     for id in ["jab", "hammer_drop", "lunge_step", "cross",
@@ -78,6 +81,10 @@ struct ContentView: View {
         // Debug route to eyeball the Animation Studio (onion skin, speed toggle).
         case "studio":
             AnimationStudioView(studio: studioState, onBack: { })
+                .onAppear { studioState.game = game }
+        // Debug route: studio tutorial alone.
+        case "tutorial":
+            StudioTutorialView(game: game)
         default:
             HomeHubView(game: game, studio: studioState)
         }
