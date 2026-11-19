@@ -722,13 +722,11 @@ final class BattleEngine: ObservableObject {
                 parry()
                 return
             }
-            // Ordinary block: reduced damage.
+            // Ordinary block: solid shield — the hit is fully absorbed,
+            // only the follow-through registers (bursts, shake, meter).
             hurtTimer = 0.15
             flashPlayer = 0.15
-            let dmg = raw * 0.25
-            playerHP = max(0, playerHP - dmg)
-            damageTaken += dmg
-            ultMeter = min(100, ultMeter + 6)
+            ultMeter = min(100, ultMeter + 4)
             floaters.append(Floater(text: "BLOCKED",
                                     pos: CGPoint(x: playerPos.x, y: playerPos.y - 110),
                                     color: Color(hex: 0x4C8DFF)))
@@ -736,7 +734,6 @@ final class BattleEngine: ObservableObject {
                        count: 6, color: Color(hex: 0x4C8DFF), speed: 160)
             shake = max(shake, 4)
             Haptics.light()
-            if playerHP <= 0 { finish(.defeat) }
             return
         }
 

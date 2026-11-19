@@ -93,6 +93,10 @@ struct BattleView: View {
             }
         }
         .onAppear {
+            // Fresh start every time the battle is entered — hard-reset so
+            // the end screen is a new screen, never a stale result from a
+            // previous run.
+            engine.reset()
             engine.startLoop()
             if !UserDefaults.standard.bool(forKey: "dtb.seenTips.v2") {
                 showTips = true
