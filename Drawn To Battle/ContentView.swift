@@ -81,7 +81,11 @@ struct ContentView: View {
         // Debug route to eyeball the Animation Studio (onion skin, speed toggle).
         case "studio":
             AnimationStudioView(studio: studioState, onBack: { })
-                .onAppear { studioState.game = game }
+                .onAppear {
+                    studioState.game = game
+                    // Debug: hide the one-time tutorial so we can eyeball the studio itself.
+                    studioState.game?.hasSeenStudioTutorial = true
+                }
         // Debug route: studio tutorial alone.
         case "tutorial":
             StudioTutorialView(game: game)

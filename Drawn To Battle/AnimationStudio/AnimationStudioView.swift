@@ -84,9 +84,57 @@ struct AnimationStudioView: View {
 
                 Spacer()
 
-                // Bottom panel: pose controls, timeline, playback.
-                VStack(spacing: 6) {
-                    PoseControls(
+                // Studio controls, arranged from the top of the bottom zone
+                // down: timeline, playback, pose strip, frame strip.
+                VStack(spacing: 8) {
+                    // Timeline with gold playhead.
+                    FrameTimelineView(studio: studio)
+
+                    // Playback row — the starring zone: big STOP/PLAY and
+                    // back/forward buttons, speed toggle.
+                    HStack(spacing: 10) {
+                        StudioIconButton(systemImage: "backward.end.fill") { studio.selectFrame(0) }
+
+                        Button {
+                            studio.isPlaying ? studio.stop() : studio.play()
+                        } label: {
+                            Image(systemName: studio.isPlaying ? "stop.fill" : "play.fill")
+                                .font(.system(size: 20, weight: .black))
+                                .foregroundStyle(studio.isPlaying ? .black : .white)
+                                .frame(width: 64, height: 64)
+                                .background(
+                                    Circle().fill(studio.isPlaying
+                                        ? Color.white.opacity(0.12)
+                                        : Color(hex: 0xF5C451)))
+                                .overlay(
+                                    Circle().stroke(Color.white.opacity(0.2), lineWidth: 1.5)
+                                )
+                                .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 8, y: 2)
+                        }
+                        .buttonStyle(SquashButtonStyle())
+
+                        StudioIconButton(systemImage: "forward.end.fill") {
+                            studio.selectFrame(studio.project.frames.count - 1)
+                        }
+
+                        // Playback speed toggle.
+                        Button {
+                            studio.cyclePlaybackSpeed()
+                        } label: {
+                            Text(speedLabel)
+                                .font(.system(size: 11, weight: .black, design: .rounded))
+                                .foregroundStyle(studio.playbackSpeed == 1 ? Color.white.opacity(0.85) : Color(hex: 0xF5C451))
+                                .frame(width: 40, height: 28)
+                                .background(
+                                    RoundedRectangle(cornerRadius: 8)
+                                        .fill(Color.white.opacity(0.08))
+                                )
+                        }
+                        .buttonStyle(.plain)
+                    }
+
+                    // Pose strip: bone picker, angle, thickness, scale, color.
+                    PoseStrip(
                         selectedBone: $selectedBone,
                         pose: studio.currentFrame?.pose ?? StickmanPose(),
                         onRotate: handleRotate,
@@ -104,97 +152,8 @@ struct AnimationStudioView: View {
                         }
                     )
 
-                    HStack(spacing: 10) {
-                        StudioIconButton(systemImage: "backward.end.fill") { studio.selectFrame(0) }
-                        if studio.isPlaying {
-                            StudioIconButton(systemImage: "stop.fill", prominent: true) { studio.stop() }
-                        } else {
-                            StudioIconButton(systemImage: "play.fill", prominent: true) { studio.play() }
-                        }
-                        StudioIconButton(systemImage: "forward.end.fill") {
-                            studio.selectFrame(studio.project.frames.count - 1)
-                        }
-
-                        // Frame management. The add-frame button carries the
-                        // hand-drawn film strip on a gold chip.
-                        Button {
-                            studio.addFrame()
-                        } label: {
-                            Image("DrawnToBattleFrameButton")
-                                .resizable()
-                                .scaledToFit()
-                                .frame(width: 22, height: 11)
-                                .frame(width: 30, height: 28)
-                                .background(RoundedRectangle(cornerRadius: 9).fill(Color(hex: 0xF5C451)))
-                                .stickerShadow()
-                        }
-                        .buttonStyle(SquashButtonStyle())
-                        .accessibilityLabel("Add frame")
-                        StudioIconButton(systemImage: "doc.on.doc") {
-                            studio.duplicateFrame(at: studio.selectedIndex)
-                        }
-                        StudioIconButton(systemImage: "arrow.left.to.line") {
-                            studio.moveFrame(from: studio.selectedIndex, to: 0)
-                        }
-                        StudioIconButton(systemImage: "arrow.right.to.line") {
-                            studio.moveFrame(from: studio.selectedIndex, to: studio.project.frames.count - 1)
-                        }
-                        StudioIconButton(systemImage: "trash", tinted: Color(hex: 0xE86A6A)) {
-                            studio.deleteFrame(at: studio.selectedIndex)
-                        }
-
-                        // Onion skinning toggle.
-                        Button {
-                            studio.onionSkin.toggle()
-                        } label: {
-                            Image(systemName: "square.on.square")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(studio.onionSkin ? AnyShapeStyle(.black) : AnyShapeStyle(Color.white.opacity(0.85)))
-                                .frame(width: 30, height: 28)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 9)
-                                        .fill(studio.onionSkin ? Color(hex: 0xF5C451) : Color.white.opacity(0.08))
-                                )
-                        }
-                        .buttonStyle(.plain)
-
-                        // Playback speed toggle.
-                        Button {
-                            studio.cyclePlaybackSpeed()
-                        } label: {
-                            Text(speedLabel)
-                                .font(.system(size: 11, weight: .black, design: .rounded))
-                                .foregroundStyle(studio.playbackSpeed == 1 ? Color.white.opacity(0.85) : Color(hex: 0xF5C451))
-                                .frame(width: 34, height: 28)
-                                .background(
-                                    RoundedRectangle(cornerRadius: 9)
-                                        .fill(Color.white.opacity(0.08))
-                                )
-                        }
-                        .buttonStyle(.plain)
-
-                        FrameTimelineView(studio: studio)
-                    }
-
-                    HStack(spacing: 10) {
-                        Stepper(
-                            "FPS \(studio.project.fps)",
-                            value: Binding(
-                                get: { studio.project.fps },
-                                set: { studio.project.fps = $0; studio.hasUnsavedChanges = true }
-                            ),
-                            in: 1...30
-                        )
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.white.opacity(0.7))
-                        .fixedSize()
-
-                        Spacer()
-
-                        Text("Drag a joint to rotate • drag elsewhere to move")
-                            .font(.system(size: 10, weight: .medium))
-                            .foregroundStyle(.white.opacity(0.35))
-                    }
+                    // Frame strip: add/duplicate/move/delete.
+                    FrameMgmtStrip(studio: studio)
                 }
                 .padding(.horizontal, 12)
                 .padding(.top, 8)
@@ -229,9 +188,10 @@ struct AnimationStudioView: View {
         }
     }
 
-    /// Approximate height of the overlaid bottom panel, used by the canvas
-    /// to keep the figure and floor line above it.
-    private var bottomPanelHeight: CGFloat { 150 }
+    /// Height of the overlaid bottom panel — timeline + playback + pose
+    /// strip + frame strip — used by the canvas to keep the figure and
+    /// floor line above it.
+    private var bottomPanelHeight: CGFloat { 202 }
 
     private var speedLabel: String {
         switch studio.playbackSpeed {
@@ -317,9 +277,12 @@ struct RoundedTopCorners: Shape {
     }
 }
 
-// MARK: - Pose controls (bone list, fine angle slider, color)
+// MARK: - Pose strip
+//
+// Controls for the selected pose: bone picker, angle slider with live
+// value display, thickness, scale, body rotation, and color.
 
-private struct PoseControls: View {
+private struct PoseStrip: View {
     @Binding var selectedBone: Bone?
     let pose: StickmanPose
     let onRotate: (Bone, CGFloat) -> Void
@@ -329,6 +292,18 @@ private struct PoseControls: View {
     let onColor: (UInt32) -> Void
 
     @State private var colorPickerShown = false
+
+    var angleDisplay: String {
+        String(format: "%3.0f°", (pose.angles[selectedBone ?? .torso] ?? 0) * 57.3)
+    }
+
+    var thicknessDisplay: String {
+        String(format: "%0.1f", pose.thickness)
+    }
+
+    var scaleDisplay: String {
+        String(format: "%0.1f", pose.scale)
+    }
 
     private var angleBinding: Binding<Double> {
         Binding(
@@ -343,54 +318,133 @@ private struct PoseControls: View {
         )
     }
 
+    private var thicknessBinding: Binding<Double> {
+        Binding(
+            get: { Double(pose.thickness) },
+            set: { onThickness(CGFloat($0)) }
+        )
+    }
+
+    private var scaleBinding: Binding<Double> {
+        Binding(
+            get: { Double(pose.scale) },
+            set: { onScale(CGFloat($0)) }
+        )
+    }
+
+    private var rotationBinding: Binding<Double> {
+        Binding(
+            get: { Double(pose.bodyRotation) },
+            set: { onBodyRotation(CGFloat($0)) }
+        )
+    }
+
     var body: some View {
-        HStack(spacing: 10) {
-            // Bone picker.
-            Menu {
-                ForEach(Bone.rotatable, id: \.self) { bone in
-                    Button(bone.label) { selectedBone = bone }
+        VStack(spacing: 4) {
+            // Row 1: bone picker, angle, scale, color.
+            HStack(spacing: 12) {
+                // Bone picker — shows the selected bone's name.
+                Menu {
+                    ForEach(Bone.rotatable, id: \.self) { bone in
+                        Button(bone.label) { selectedBone = bone }
+                    }
+                } label: {
+                    HStack(spacing: 6) {
+                        Text(selectedBone?.label ?? "Torso")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(Color(hex: 0xF5C451))
+                        Image(systemName: "chevron.up.chevron.down")
+                            .font(.system(size: 7, weight: .bold))
+                            .foregroundStyle(.white.opacity(0.5))
+                    }
+                    .padding(.horizontal, 8)
+                    .frame(height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8)
+                            .fill(Color(hex: 0xF5C451).opacity(0.12))
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 8)
+                                    .stroke(Color(hex: 0xF5C451).opacity(0.4), lineWidth: 1)
+                            )
+                    )
                 }
-            } label: {
-                HStack(spacing: 5) {
-                    Text(selectedBone?.label ?? "Select bone")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(.white)
-                        .lineLimit(1)
-                    Image(systemName: "chevron.up.chevron.down")
-                        .font(.system(size: 8, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.5))
+                .frame(width: 118)
+
+                // Angle slider (selected bone's relative angle).
+                VStack(spacing: 2) {
+                    Slider(value: angleBinding, in: -3.15...3.15)
+                        .tint(Color(hex: 0xF5C451))
+                        .controlSize(.small)
+                    Text("Angle \(angleDisplay)")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
                 }
-                .padding(.horizontal, 10)
-                .frame(height: 30)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.08)))
-            }
-            .frame(maxWidth: 150)
+                .frame(width: 64)
 
-            // Fine angle slider for the selected bone.
-            Slider(value: angleBinding, in: -3.15...3.15)
-                .tint(Color(hex: 0xF5C451))
-                .controlSize(.small)
+                // Scale slider.
+                VStack(spacing: 2) {
+                    Slider(value: scaleBinding, in: 0.5...1.8)
+                        .tint(Color(hex: 0xF5C451))
+                        .controlSize(.small)
+                    Text("Scale \(scaleDisplay)")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .frame(width: 64)
 
-            // Color.
-            Button {
-                colorPickerShown = true
-            } label: {
-                Circle()
-                    .fill(pose.color)
-                    .frame(width: 22, height: 22)
-                    .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 1.5))
-                    .padding(3)
-                    .background(Circle().fill(Color.white.opacity(0.08)))
+                // Body rotation slider.
+                VStack(spacing: 2) {
+                    Slider(value: rotationBinding, in: -180...180)
+                        .tint(Color(hex: 0xF5C451))
+                        .controlSize(.small)
+                    Text("Rotate \(Int(pose.bodyRotation * 57.3))°")
+                        .font(.system(size: 9, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.6))
+                }
+                .frame(width: 76)
+
+                // Color button.
+                Button {
+                    colorPickerShown = true
+                } label: {
+                    Circle()
+                        .fill(pose.color)
+                        .frame(width: 22, height: 22)
+                        .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 1.5))
+                        .padding(3)
+                        .background(Circle().fill(Color.white.opacity(0.08)))
+                }
+                .buttonStyle(.plain)
+                .popover(isPresented: $colorPickerShown) {
+                    ColorPicker("Stickman color", selection: Binding(
+                        get: { Color(hex: pose.colorARGB) },
+                        set: { onColor(rgbaToARGB($0)) }
+                    ))
+                    .padding()
+                }
             }
-            .buttonStyle(.plain)
-            .popover(isPresented: $colorPickerShown) {
-                ColorPicker("Stickman color", selection: Binding(
-                    get: { Color(hex: pose.colorARGB) },
-                    set: { onColor(rgbaToARGB($0)) }
-                ))
-                .padding()
+
+            // Row 2: thickness slider with live value.
+            HStack(spacing: 12) {
+                Text("Thickness")
+                    .font(.system(size: 9, weight: .semibold))
+                    .foregroundStyle(.white.opacity(0.6))
+                    .frame(width: 56, alignment: .leading)
+                Slider(value: thicknessBinding, in: 0.4...8.0)
+                    .tint(Color(hex: 0xF5C451))
+                    .controlSize(.small)
+                Text("\(thicknessDisplay)")
+                    .font(.system(size: 9, weight: .semibold, design: .monospaced))
+                    .foregroundStyle(Color(hex: 0xF5C451))
+                    .frame(width: 34, alignment: .trailing)
             }
         }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 4)
+        .background(
+            RoundedRectangle(cornerRadius: 9)
+                .fill(Color.white.opacity(0.04))
+        )
     }
 
     private func rgbaToARGB(_ color: Color) -> UInt32 {
@@ -401,6 +455,74 @@ private struct PoseControls: View {
         let B = UInt32(max(0, min(255, b * 255)))
         let A = UInt32(max(0, min(255, a * 255)))
         return (A << 24) | (R << 16) | (G << 8) | B
+    }
+}
+
+// MARK: - Frame management strip
+//
+// Compact row of frame-management tools with clearly distinguished roles.
+
+private struct FrameMgmtStrip: View {
+    @ObservedObject var studio: StudioState
+
+    var body: some View {
+        HStack(spacing: 10) {
+            // Frame management. The add-frame button carries the
+            // hand-drawn film strip on a gold chip.
+            Button {
+                studio.addFrame()
+            } label: {
+                Image("DrawnToBattleFrameButton")
+                    .resizable()
+                    .scaledToFit()
+                    .frame(width: 22, height: 11)
+                    .frame(width: 30, height: 28)
+                    .background(RoundedRectangle(cornerRadius: 9).fill(Color(hex: 0xF5C451)))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9)
+                            .stroke(Color.black.opacity(0.25), lineWidth: 1)
+                    )
+                    .stickerShadow()
+                    .accessibilityLabel("Add frame")
+            }
+            .buttonStyle(SquashButtonStyle())
+
+            // Second-pass copy of duplicates — increases contrast
+            // between "safe" and "destructive" management.
+            StudioIconButton(systemImage: "doc.on.doc") {
+                studio.duplicateFrame(at: studio.selectedIndex)
+            }
+            StudioIconButton(systemImage: "arrow.left.to.line") {
+                studio.moveFrame(from: studio.selectedIndex, to: 0)
+            }
+            StudioIconButton(systemImage: "arrow.right.to.line") {
+                studio.moveFrame(from: studio.selectedIndex, to: studio.project.frames.count - 1)
+            }
+            StudioIconButton(systemImage: "trash", tinted: Color(hex: 0xE86A6A)) {
+                studio.deleteFrame(at: studio.selectedIndex)
+            }
+
+            // Onion skinning toggle.
+            Button {
+                studio.onionSkin.toggle()
+            } label: {
+                Image(systemName: "square.on.square")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(studio.onionSkin ? AnyShapeStyle(.black) : AnyShapeStyle(Color.white.opacity(0.85)))
+                    .frame(width: 30, height: 28)
+                    .background(
+                        RoundedRectangle(cornerRadius: 9)
+                            .fill(studio.onionSkin ? Color(hex: 0xF5C451) : Color.white.opacity(0.08))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 9)
+                            .stroke(studio.onionSkin ? Color(hex: 0xF5C451).opacity(0.6) : Color.white.opacity(0.06), lineWidth: 1)
+                    )
+            }
+            .buttonStyle(.plain)
+
+            Spacer()
+        }
     }
 }
 
