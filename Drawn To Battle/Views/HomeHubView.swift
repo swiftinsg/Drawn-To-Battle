@@ -14,14 +14,11 @@ struct HomeHubView: View {
     @State private var showCollection = false
     @State private var showSolar = false
     @State private var showSettings = false
-<<<<<<< HEAD
-    /// Blocked until the fighter has animated their own move.
-    @State private var showPlayLock = false
-=======
     @State private var showProfile = false
     @State private var showDaily = false
     @State private var activeCurrency: Currency?
->>>>>>> main
+    /// Blocked until the fighter has animated their own move.
+    @State private var showPlayLock = false
 
     var body: some View {
         ZStack {
@@ -134,18 +131,7 @@ struct HomeHubView: View {
 
                 // Bottom row: gacha and play share the same footprint.
                 HStack(alignment: .bottom, spacing: 12) {
-<<<<<<< HEAD
-                    MenuBubble(title: "COLLECTION", systemImage: "square.grid.2x2") {
-                        showCollection = true
-                    }
-                    Spacer()
-                    MenuBubble(title: "STUDIO", systemImage: "film") {
-                        studio.game = game
-                        showStudio = true
-                    }
-=======
                     gachaTile
->>>>>>> main
                     Spacer()
                     Button {
                         if game.hasAnimated {
@@ -159,6 +145,7 @@ struct HomeHubView: View {
                             .scaledToFit()
                             .frame(width: 148, height: 79)
                             .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 16, y: 5)
+                            .modifier(StickerBob())
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Battle — choose a boss")
@@ -194,7 +181,10 @@ struct HomeHubView: View {
             SettingsView(game: game)
                 .presentationBackground(Color(hex: 0x0C0D12))
         }
-<<<<<<< HEAD
+        .sheet(isPresented: $showDaily) {
+            DailyRewardView(game: game)
+                .presentationBackground(Color(hex: 0x0C0D12))
+        }
         // Play lock — you can't fight until you've animated your own move.
         .overlay {
             if showPlayLock {
@@ -203,11 +193,6 @@ struct HomeHubView: View {
                     showStudio = true
                 })
             }
-        }
-=======
-        .sheet(isPresented: $showDaily) {
-            DailyRewardView(game: game)
-                .presentationBackground(Color(hex: 0x0C0D12))
         }
     }
 
@@ -263,7 +248,6 @@ struct HomeHubView: View {
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Gacha — move and costume draws")
->>>>>>> main
     }
 
     private var loadoutChip: some View {

@@ -50,50 +50,27 @@ struct BossDefinition: Identifiable, Hashable {
     static let all: [BossDefinition] = [
         BossDefinition(
             id: "earth", planetName: "EARTH", bossName: "TERRA COLOSSUS",
-<<<<<<< HEAD
-            title: "The Sleeping Mountain", hp: 130,
-=======
             title: "The Sleeping Mountain", hp: 140,
->>>>>>> main
             requiredTechnique: .smear,
-            rewardFirstClear: 160, rewardRepeat: 55,
+            rewardFirstClear: 120, rewardRepeat: 40,
             bodyColor: 0x3FA65C, accentColor: 0x4C8DFF,
             attacks: [
-<<<<<<< HEAD
-                BossAttackDef(name: "BOULDER TOSS", kind: .projectileLob, damage: 16, telegraph: 0.85),
-                BossAttackDef(name: "QUAKE WAVE", kind: .groundShock, damage: 18, telegraph: 0.9),
-                BossAttackDef(name: "ROCK SLIDE", kind: .projectileLob, damage: 14, telegraph: 0.95),
-=======
                 BossAttackDef(name: "BOULDER TOSS", kind: .projectileLob, damage: 16, telegraph: 0.9),
                 BossAttackDef(name: "QUAKE WAVE", kind: .groundShock, damage: 18, telegraph: 0.9),
->>>>>>> main
             ],
             unlockAfter: nil
         ),
-        // The second planet's boss — AZURE WARLOCK, labeled "URANUS"
-        // (id stays "mars" so existing save records keep working).
         BossDefinition(
-<<<<<<< HEAD
-            id: "mars", planetName: "URANUS", bossName: "AZURE WARLOCK",
-            title: "The Ice Duelist", hp: 130,
-=======
             // Internal id stays "mars" so existing save records keep working.
             id: "mars", planetName: "URANUS", bossName: "AZURE WARLOCK",
             title: "The Ice Duelist", hp: 210,
->>>>>>> main
             requiredTechnique: .kick,
             rewardFirstClear: 180, rewardRepeat: 55,
             bodyColor: 0x4FC3F7, accentColor: 0xB3E5FC,
             attacks: [
-<<<<<<< HEAD
-                BossAttackDef(name: "FROST RAM", kind: .charge, damage: 18, telegraph: 0.9),
-                BossAttackDef(name: "ICE UPPERCUT", kind: .melee, damage: 15, telegraph: 0.8),
-                BossAttackDef(name: "SHARD BURST", kind: .fan, damage: 12, telegraph: 1.0),
-=======
                 BossAttackDef(name: "FROST RAM", kind: .charge, damage: 22, telegraph: 0.8),
                 BossAttackDef(name: "ICE UPPERCUT", kind: .melee, damage: 19, telegraph: 0.7),
                 BossAttackDef(name: "SHARD BURST", kind: .fan, damage: 16, telegraph: 0.85),
->>>>>>> main
             ],
             unlockAfter: "earth"
         ),
@@ -214,6 +191,10 @@ final class GameSave: ObservableObject {
     @Published var lastDailyClaimDate: String? {
         didSet { persist() }
     }
+    /// Testing: every boss is open regardless of defeat records.
+    @Published var testUnlockAll: Bool = false {
+        didSet { persist() }
+    }
     /// Has the fighter animated their own move at least once?
     /// Battles are locked behind this — you can't fight with someone else's animation.
     @Published var hasAnimated: Bool = false {
@@ -272,18 +253,15 @@ final class GameSave: ObservableObject {
             blueprintEdits = saved.blueprintEdits ?? [:]
             coins = saved.coins ?? 0
             username = saved.username ?? ""
-<<<<<<< HEAD
-            testUnlockAll = saved.testUnlockAll ?? false
-            hasAnimated = saved.hasAnimated ?? false
-            hasSeenStudioTutorial = saved.hasSeenStudioTutorial ?? false
-=======
             profileImageData = saved.profileImageData
             gachaHistory = saved.gachaHistory ?? []
             equippedAccessory = saved.equippedAccessory.flatMap { Accessory(rawValue: $0) }
             dailyStreak = saved.dailyStreak ?? 0
             lastDailyClaimDate = saved.lastDailyClaimDate
+            testUnlockAll = saved.testUnlockAll ?? false
+            hasAnimated = saved.hasAnimated ?? false
+            hasSeenStudioTutorial = saved.hasSeenStudioTutorial ?? false
             if needsStarterMoves { persist() }
->>>>>>> main
         }
     }
 
@@ -485,16 +463,12 @@ final class GameSave: ObservableObject {
         equipped = nil
         defeatedBosses = []
         blueprintEdits = [:]
-<<<<<<< HEAD
-        coins = 0
-        hasAnimated = false
-=======
         coins = 100
         gachaHistory = []
         equippedAccessory = nil
         dailyStreak = 0
         lastDailyClaimDate = nil
->>>>>>> main
+        hasAnimated = false
     }
 
     func isUnlocked(_ boss: BossDefinition) -> Bool {
@@ -513,17 +487,14 @@ final class GameSave: ObservableObject {
         var blueprintEdits: [String: AnimationProject]?
         var coins: Int?
         var username: String?
-<<<<<<< HEAD
-        var testUnlockAll: Bool?
-        var hasAnimated: Bool?
-        var hasSeenStudioTutorial: Bool?
-=======
         var profileImageData: Data?
         var gachaHistory: [GachaPullRecord]?
         var equippedAccessory: String?
         var dailyStreak: Int?
         var lastDailyClaimDate: String?
->>>>>>> main
+        var testUnlockAll: Bool?
+        var hasAnimated: Bool?
+        var hasSeenStudioTutorial: Bool?
     }
 
     private func persist() {
@@ -536,17 +507,14 @@ final class GameSave: ObservableObject {
             blueprintEdits: blueprintEdits,
             coins: coins,
             username: username,
-<<<<<<< HEAD
-            testUnlockAll: testUnlockAll,
-            hasAnimated: hasAnimated,
-            hasSeenStudioTutorial: hasSeenStudioTutorial
-=======
             profileImageData: profileImageData,
             gachaHistory: gachaHistory,
             equippedAccessory: equippedAccessory?.rawValue,
             dailyStreak: dailyStreak,
-            lastDailyClaimDate: lastDailyClaimDate
->>>>>>> main
+            lastDailyClaimDate: lastDailyClaimDate,
+            testUnlockAll: testUnlockAll,
+            hasAnimated: hasAnimated,
+            hasSeenStudioTutorial: hasSeenStudioTutorial
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: Self.key)
