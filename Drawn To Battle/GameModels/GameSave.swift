@@ -60,17 +60,18 @@ struct BossDefinition: Identifiable, Hashable {
             ],
             unlockAfter: nil
         ),
+        // The second planet's boss — AZURE WARLOCK, labeled "URANUS"
+        // (id stays "mars" so existing save records keep working).
         BossDefinition(
-            id: "mars", planetName: "MARS", bossName: "CRIMSON WARLOCK",
-            title: "The Red Duelist", hp: 190,
+            id: "mars", planetName: "URANUS", bossName: "AZURE WARLOCK",
+            title: "The Ice Duelist", hp: 130,
             requiredTechnique: .kick,
-            rewardFirstClear: 250, rewardRepeat: 75,
-            bodyColor: 0xE86A3A, accentColor: 0xFFB37A,
+            rewardFirstClear: 180, rewardRepeat: 55,
+            bodyColor: 0x4FC3F7, accentColor: 0xB3E5FC,
             attacks: [
-                BossAttackDef(name: "WAR RAM", kind: .charge, damage: 22, telegraph: 0.75),
-                BossAttackDef(name: "EMBER UPPERCUT", kind: .melee, damage: 19, telegraph: 0.7),
-                BossAttackDef(name: "SPEAR SHARDS", kind: .fan, damage: 16, telegraph: 0.85),
-                BossAttackDef(name: "MARTIAN SANDSTORM", kind: .groundShock, damage: 16, telegraph: 0.9),
+                BossAttackDef(name: "FROST RAM", kind: .charge, damage: 18, telegraph: 0.9),
+                BossAttackDef(name: "ICE UPPERCUT", kind: .melee, damage: 15, telegraph: 0.8),
+                BossAttackDef(name: "SHARD BURST", kind: .fan, damage: 12, telegraph: 1.0),
             ],
             unlockAfter: "earth"
         ),
