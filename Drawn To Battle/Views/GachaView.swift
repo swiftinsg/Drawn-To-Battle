@@ -1,13 +1,18 @@
 import SwiftUI
 
+private struct GachaDrawResult: Identifiable {
+    let id = UUID()
+    let blueprint: MoveBlueprint
+    let isNew: Bool
+}
+
 // MARK: - Gacha screen
 
 struct GachaView: View {
     @ObservedObject var game: GameSave
     @Environment(\.dismiss) private var dismiss
 
-    @State private var pulled: MoveBlueprint?
-    @State private var isNew = false
+    @State private var results: [GachaDrawResult] = []
     @State private var rolling = false
     @State private var showRates = false
     @State private var showHistory = false
@@ -44,11 +49,16 @@ struct GachaView: View {
             }
         }
         .overlay {
-            if let bp = pulled {
-                GachaResultCard(blueprint: bp, isNew: isNew) {
-                    pulled = nil
+            if results.count == 1, let first = results.first {
+                GachaResultCard(blueprint: first.blueprint, isNew: first.isNew) {
+                    results = []
                 }
                 .transition(.scale(scale: 0.8).combined(with: .opacity))
+            } else if !results.isEmpty {
+                GachaBatchResultView(results: results) {
+                    results = []
+                }
+                .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
         }
         .sheet(isPresented: $showRates) {
@@ -59,6 +69,8 @@ struct GachaView: View {
         }
         .preferredColorScheme(.dark)
     }
+
+    private var availableDraws: Int { game.stardust / Gacha.pullCost }
 
     // MARK: Sections
 
@@ -113,9 +125,10 @@ struct GachaView: View {
     }
 
     private var machine: some View {
-        let canPull = game.stardust >= Gacha.pullCost && !rolling
+        let enabled = availableDraws >= 1 && !rolling
+        let allCost = availableDraws * Gacha.pullCost
 
-        return VStack(spacing: 12) {
+        return VStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
                     .fill(Color(hex: 0x15171F))
@@ -130,10 +143,8 @@ struct GachaView: View {
                         .tint(Color(hex: 0xF5C451))
                         .scaleEffect(1.4)
                 } else {
-                    Image("DrawnToBattleGachaToken")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 76)
+                    GachaMascotView()
+                        .frame(width: 132, height: 132)
                 }
 
                 RoundedRectangle(cornerRadius: 20)
@@ -143,33 +154,52 @@ struct GachaView: View {
                     .allowsHitTesting(false)
             }
 
-            Button {
-                pull()
-            } label: {
-                HStack(spacing: 8) {
-                    Image("DrawnToBattleGachaToken")
-                        .resizable()
-                        .scaledToFit()
-                        .frame(height: 22)
-                    Text("DRAW — \(Gacha.pullCost)")
-                        .font(.system(size: 17, weight: .black, design: .rounded))
-                }
-                .frame(maxWidth: 260)
-                .padding(.vertical, 13)
-                .background(
-                    RoundedRectangle(cornerRadius: 14)
-                        .fill(canPull ? Color(hex: 0xF5C451) : Color.white.opacity(0.12))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color(hex: 0xF5C451).opacity(canPull ? 0.9 : 0.2), lineWidth: 2)
-                )
-                .foregroundStyle(canPull ? Color.black : Color.white.opacity(0.5))
+            HStack(spacing: 10) {
+                drawButton(
+                    title: "DRAW — \(Gacha.pullCost)",
+                    enabled: enabled,
+                    accessibility: "Draw one move for \(Gacha.pullCost) pens"
+                ) { pull(1) }
+
+                drawButton(
+                    title: "DRAW ALL — \(availableDraws)",
+                    enabled: enabled,
+                    accessibility: "Draw all \(availableDraws) moves for \(allCost) pens"
+                ) { pull(availableDraws) }
             }
-            .buttonStyle(.plain)
-            .disabled(!canPull)
-            .accessibilityLabel("Draw a blueprint for \(Gacha.pullCost) pens")
         }
+    }
+
+    private func drawButton(
+        title: String,
+        enabled: Bool,
+        accessibility: String,
+        action: @escaping () -> Void
+    ) -> some View {
+        Button(action: action) {
+            HStack(spacing: 6) {
+                GachaMascotView()
+                    .frame(width: 20, height: 20)
+                Text(title)
+                    .font(.system(size: 13, weight: .black, design: .rounded))
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.75)
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 12)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(enabled ? Color(hex: 0xF5C451) : Color.white.opacity(0.12))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(Color(hex: 0xF5C451).opacity(enabled ? 0.9 : 0.2), lineWidth: 2)
+            )
+            .foregroundStyle(enabled ? Color.black : Color.white.opacity(0.5))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel(accessibility)
     }
 
     private var collectionProgress: some View {
@@ -237,23 +267,40 @@ struct GachaView: View {
 
     // MARK: Actions
 
-    private func pull() {
-        guard game.spendStardust(Gacha.pullCost) else { return }
+    private func pull(_ count: Int) {
+        guard !rolling else { return }
+        let draws = min(max(1, count), availableDraws)
+        guard draws > 0, game.spendStardust(draws * Gacha.pullCost) else { return }
+
+        results = []
         rolling = true
         beamColor = .clear
         beamOpacity = 0
-        // Suspense, then a rarity-colored beam, then the card.
+
+        // Suspense, then a rarity-colored beam, then the result(s).
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.5) {
-            let bp = Gacha.roll(owned: game.ownedBlueprints)
-            beamColor = bp.rarity.color
+            var newResults: [GachaDrawResult] = []
+            var topStars = 0
+            var topColor: Color = .white
+
+            for _ in 0..<draws {
+                let bp = Gacha.roll(owned: game.ownedBlueprints)
+                let new = game.registerPull(bp)
+                game.recordPull(bp, isNew: new)
+                newResults.append(GachaDrawResult(blueprint: bp, isNew: new))
+                if bp.rarity.stars > topStars {
+                    topStars = bp.rarity.stars
+                    topColor = bp.rarity.color
+                }
+            }
+
+            beamColor = topColor
             withAnimation(.easeIn(duration: 0.16)) { beamOpacity = 0.9 }
-            if bp.rarity.stars >= 4 { Haptics.success() } else { Haptics.light() }
+            if topStars >= 4 { Haptics.success() } else { Haptics.light() }
+
             DispatchQueue.main.asyncAfter(deadline: .now() + 0.42) {
                 withAnimation(.spring(response: 0.45, dampingFraction: 0.72)) {
-                    let new = game.registerPull(bp)
-                    game.recordPull(bp, isNew: new)
-                    isNew = new
-                    pulled = bp
+                    results = newResults
                     rolling = false
                     beamOpacity = 0
                 }
@@ -341,6 +388,167 @@ private struct GachaResultCard: View {
                 .frame(maxWidth: .infinity)
             }
         }
+    }
+}
+
+// MARK: - Gacha mascot (drawn in code, no pen token needed)
+
+private struct GachaMascotView: View {
+    var body: some View {
+        Canvas { context, size in
+            let scale = min(size.width / 80, size.height / 80)
+            guard scale > 0 else { return }
+            context.translateBy(x: (size.width - 80 * scale) / 2, y: (size.height - 80 * scale) / 2)
+            context.scaleBy(x: scale, y: scale)
+
+            let gold = Color(hex: 0xF5C451)
+            let ink = Color(hex: 0x11131A)
+            let blue = Color(hex: 0x4FC3F7)
+
+            // Soft spotlight.
+            context.fill(
+                Path(ellipseIn: CGRect(x: 12, y: 10, width: 56, height: 60)),
+                with: .color(gold.opacity(0.16))
+            )
+
+            // Capsule machine body.
+            let capsule = Path(roundedRect: CGRect(x: 20, y: 30, width: 40, height: 42), cornerRadius: 20)
+            context.fill(capsule, with: .color(Color(hex: 0x15171F)))
+            context.stroke(capsule, with: .color(gold.opacity(0.8)),
+                           style: StrokeStyle(lineWidth: 2))
+
+            let glass = Path(ellipseIn: CGRect(x: 24, y: 16, width: 32, height: 28))
+            context.fill(glass, with: .color(blue.opacity(0.4)))
+            context.stroke(glass, with: .color(blue.opacity(0.7)),
+                           style: StrokeStyle(lineWidth: 1.5))
+
+            // Stickman bursting out, fists up.
+            var torso = Path()
+            torso.move(to: CGPoint(x: 40, y: 28))
+            torso.addLine(to: CGPoint(x: 40, y: 48))
+            context.stroke(torso, with: .color(ink),
+                           style: StrokeStyle(lineWidth: 4.5, lineCap: .round, lineJoin: .round))
+
+            var leftArm = Path()
+            leftArm.move(to: CGPoint(x: 40, y: 33))
+            leftArm.addLine(to: CGPoint(x: 29, y: 28))
+            leftArm.addLine(to: CGPoint(x: 23, y: 20))
+            context.stroke(leftArm, with: .color(ink),
+                           style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+
+            var rightArm = Path()
+            rightArm.move(to: CGPoint(x: 40, y: 33))
+            rightArm.addLine(to: CGPoint(x: 51, y: 27))
+            rightArm.addLine(to: CGPoint(x: 57, y: 18))
+            context.stroke(rightArm, with: .color(ink),
+                           style: StrokeStyle(lineWidth: 4, lineCap: .round, lineJoin: .round))
+
+            context.fill(Path(ellipseIn: CGRect(x: 19, y: 16, width: 8, height: 8)), with: .color(gold))
+            context.fill(Path(ellipseIn: CGRect(x: 53, y: 14, width: 8, height: 8)), with: .color(gold))
+
+            context.fill(Path(ellipseIn: CGRect(x: 34, y: 8, width: 12, height: 12)), with: .color(ink))
+            context.fill(Path(ellipseIn: CGRect(x: 38, y: 12, width: 1.8, height: 1.8)), with: .color(.white))
+            context.fill(Path(ellipseIn: CGRect(x: 42, y: 12, width: 1.8, height: 1.8)), with: .color(.white))
+
+            let plate = Path(roundedRect: CGRect(x: 16, y: 67, width: 48, height: 6), cornerRadius: 3)
+            context.fill(plate, with: .color(gold))
+
+            // Two little doodle sparkles.
+            var sparkle = Path()
+            sparkle.move(to: CGPoint(x: 12, y: 30))
+            sparkle.addLine(to: CGPoint(x: 12, y: 36))
+            sparkle.move(to: CGPoint(x: 9, y: 33))
+            sparkle.addLine(to: CGPoint(x: 15, y: 33))
+            context.stroke(sparkle, with: .color(gold),
+                           style: StrokeStyle(lineWidth: 1.5, lineCap: .round))
+        }
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+// MARK: - Multi-draw results
+
+private struct GachaBatchResultView: View {
+    let results: [GachaDrawResult]
+    let onClose: () -> Void
+
+    private var newCount: Int { results.filter { $0.isNew }.count }
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.8)
+                .ignoresSafeArea()
+                .onTapGesture(perform: onClose)
+
+            ScrollView(showsIndicators: false) {
+                VStack(spacing: 14) {
+                    Text("\(results.count) DRAWS")
+                        .font(DrawnToBattleTypography.display(28))
+                        .foregroundStyle(Color(hex: 0xF5C451))
+
+                    Text("\(newCount) NEW  •  \(results.count - newCount) DUPLICATES")
+                        .font(.system(size: 11, weight: .black, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.65))
+
+                    LazyVGrid(
+                        columns: [GridItem(.adaptive(minimum: 92), spacing: 10)],
+                        spacing: 10
+                    ) {
+                        ForEach(results) { result in
+                            batchCard(result)
+                        }
+                    }
+
+                    Button {
+                        onClose()
+                    } label: {
+                        Text("CONTINUE")
+                            .font(.system(size: 14, weight: .black, design: .rounded))
+                            .foregroundStyle(.black)
+                            .frame(maxWidth: 220)
+                            .padding(.vertical, 12)
+                            .background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: 0xF5C451)))
+                    }
+                    .buttonStyle(.plain)
+                }
+                .padding(20)
+                .frame(maxWidth: .infinity)
+            }
+        }
+    }
+
+    private func batchCard(_ result: GachaDrawResult) -> some View {
+        let blueprint = result.blueprint
+        return VStack(spacing: 5) {
+            Text(String(repeating: "★", count: blueprint.rarity.stars))
+                .font(.system(size: 9, weight: .black))
+                .foregroundStyle(blueprint.rarity.color)
+                .lineLimit(1)
+                .minimumScaleFactor(0.6)
+
+            Text(blueprint.name)
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundStyle(.white)
+                .multilineTextAlignment(.center)
+                .lineLimit(2)
+                .minimumScaleFactor(0.75)
+
+            Text(blueprint.technique.label)
+                .font(.system(size: 8, weight: .heavy, design: .rounded))
+                .foregroundStyle(.white.opacity(0.5))
+
+            Text(result.isNew ? "NEW" : "+\(Gacha.duplicateRefund) COINS")
+                .font(.system(size: 8, weight: .black, design: .rounded))
+                .foregroundStyle(result.isNew ? Color(hex: 0xF5C451) : .white.opacity(0.45))
+        }
+        .padding(10)
+        .frame(maxWidth: .infinity, minHeight: 96)
+        .background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: 0x14161E)))
+        .overlay(
+            RoundedRectangle(cornerRadius: 12)
+                .stroke(blueprint.rarity.color.opacity(0.6), lineWidth: 1.5)
+        )
     }
 }
 

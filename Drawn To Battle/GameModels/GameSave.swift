@@ -50,41 +50,41 @@ struct BossDefinition: Identifiable, Hashable {
     static let all: [BossDefinition] = [
         BossDefinition(
             id: "earth", planetName: "EARTH", bossName: "TERRA COLOSSUS",
-            title: "The Sleeping Mountain", hp: 90,
+            title: "The Sleeping Mountain", hp: 140,
             requiredTechnique: .smear,
             rewardFirstClear: 120, rewardRepeat: 40,
             bodyColor: 0x3FA65C, accentColor: 0x4C8DFF,
             attacks: [
-                BossAttackDef(name: "BOULDER TOSS", kind: .projectileLob, damage: 12, telegraph: 1.0),
-                BossAttackDef(name: "QUAKE WAVE", kind: .groundShock, damage: 14, telegraph: 1.1),
+                BossAttackDef(name: "BOULDER TOSS", kind: .projectileLob, damage: 16, telegraph: 0.9),
+                BossAttackDef(name: "QUAKE WAVE", kind: .groundShock, damage: 18, telegraph: 0.9),
             ],
             unlockAfter: nil
         ),
         BossDefinition(
             // Internal id stays "mars" so existing save records keep working.
             id: "mars", planetName: "URANUS", bossName: "AZURE WARLOCK",
-            title: "The Ice Duelist", hp: 130,
+            title: "The Ice Duelist", hp: 210,
             requiredTechnique: .kick,
             rewardFirstClear: 180, rewardRepeat: 55,
             bodyColor: 0x4FC3F7, accentColor: 0xB3E5FC,
             attacks: [
-                BossAttackDef(name: "FROST RAM", kind: .charge, damage: 18, telegraph: 0.9),
-                BossAttackDef(name: "ICE UPPERCUT", kind: .melee, damage: 15, telegraph: 0.8),
-                BossAttackDef(name: "SHARD BURST", kind: .fan, damage: 12, telegraph: 1.0),
+                BossAttackDef(name: "FROST RAM", kind: .charge, damage: 22, telegraph: 0.8),
+                BossAttackDef(name: "ICE UPPERCUT", kind: .melee, damage: 19, telegraph: 0.7),
+                BossAttackDef(name: "SHARD BURST", kind: .fan, damage: 16, telegraph: 0.85),
             ],
             unlockAfter: "earth"
         ),
         BossDefinition(
             id: "sun", planetName: "SUN", bossName: "SOLAR OVERLORD",
-            title: "The Burning Eye", hp: 240,
+            title: "The Burning Eye", hp: 380,
             requiredTechnique: .spin,
             rewardFirstClear: 340, rewardRepeat: 95,
             bodyColor: 0xF5C451, accentColor: 0xFF8A3C,
             attacks: [
-                BossAttackDef(name: "SOLAR FLARE", kind: .flare, damage: 22, telegraph: 0.95),
-                BossAttackDef(name: "CORONA RING", kind: .fan, damage: 18, telegraph: 0.7),
-                BossAttackDef(name: "HEAT LUNGE", kind: .charge, damage: 24, telegraph: 0.6),
-                BossAttackDef(name: "SUNSPOT SLAM", kind: .groundShock, damage: 20, telegraph: 0.85),
+                BossAttackDef(name: "SOLAR FLARE", kind: .flare, damage: 28, telegraph: 0.85),
+                BossAttackDef(name: "CORONA RING", kind: .fan, damage: 22, telegraph: 0.6),
+                BossAttackDef(name: "HEAT LUNGE", kind: .charge, damage: 30, telegraph: 0.5),
+                BossAttackDef(name: "SUNSPOT SLAM", kind: .groundShock, damage: 26, telegraph: 0.72),
             ],
             unlockAfter: "mars"
         ),
@@ -131,10 +131,17 @@ struct GachaPullRecord: Codable, Identifiable, Hashable {
 // MARK: - Persistent game save
 
 final class GameSave: ObservableObject {
-    @Published var stardust: Int = 150 {
+    /// Pens granted to a fresh fighter (and after resetting progress).
+    static let startingStardust = 100
+    /// Foundational moves every fighter owns from the start.
+    static let starterBlueprintIDs: Set<String> = [
+        "jab", "front_kick", "hammer_drop", "lunge_step"
+    ]
+
+    @Published var stardust: Int = GameSave.startingStardust {
         didSet { persist() }
     }
-    @Published var ownedBlueprints: Set<String> = [] {
+    @Published var ownedBlueprints: Set<String> = GameSave.starterBlueprintIDs {
         didSet { persist() }
     }
     @Published var equipped: EquippedLoadout? {
@@ -174,7 +181,10 @@ final class GameSave: ObservableObject {
         if let data = UserDefaults.standard.data(forKey: Self.key),
            let saved = try? JSONDecoder().decode(SaveData.self, from: data) {
             stardust = saved.stardust
-            ownedBlueprints = saved.ownedBlueprints
+            // Older saves may not have the starter set. Grant it without
+            // taking away anything the player already pulled.
+            let needsStarterMoves = !Self.starterBlueprintIDs.isSubset(of: saved.ownedBlueprints)
+            ownedBlueprints = saved.ownedBlueprints.union(Self.starterBlueprintIDs)
             equipped = saved.equipped
             defeatedBosses = saved.defeatedBosses
             blueprintEdits = saved.blueprintEdits ?? [:]
@@ -182,6 +192,7 @@ final class GameSave: ObservableObject {
             username = saved.username ?? ""
             profileImageData = saved.profileImageData
             gachaHistory = saved.gachaHistory ?? []
+            if needsStarterMoves { persist() }
         }
     }
 
@@ -291,14 +302,15 @@ final class GameSave: ObservableObject {
         if first { defeatedBosses.insert(boss.id + "_rewarded") }
     }
 
-    /// Wipes progress back to a fresh save, keeping the fighter's name.
+    /// Wipes progress back to a fresh save, keeping the fighter's identity.
     func resetProgress() {
-        stardust = 150
-        ownedBlueprints = []
+        stardust = Self.startingStardust
+        ownedBlueprints = Self.starterBlueprintIDs
         equipped = nil
         defeatedBosses = []
         blueprintEdits = [:]
-        coins = 0
+        coins = 100
+        gachaHistory = []
     }
 
     func isUnlocked(_ boss: BossDefinition) -> Bool {

@@ -176,6 +176,7 @@ final class BattleEngine: ObservableObject {
 
     func startLoop() {
         guard simTimer == nil else { return }
+        lastDate = nil
         simTimer = Timer.scheduledTimer(withTimeInterval: 1.0 / 120.0, repeats: true) { [weak self] _ in
             self?.tick(Date())
         }
@@ -261,7 +262,7 @@ final class BattleEngine: ObservableObject {
             return
         }
 
-        if !phaseTwo && bossHP <= bossHPMax * 0.5 {
+        if !phaseTwo && bossHP <= bossHPMax * 0.6 {
             phaseTwo = true
             floaters.append(Floater(text: boss.bossName + " ENRAGES!",
                                     pos: CGPoint(x: bossX, y: groundY - 190),
@@ -526,7 +527,7 @@ final class BattleEngine: ObservableObject {
             return
         }
 
-        let speedMul: CGFloat = phaseTwo ? 1.35 : 1
+        let speedMul: CGFloat = phaseTwo ? 1.5 : 1
 
         switch bossState {
         case .idle:
@@ -598,7 +599,7 @@ final class BattleEngine: ObservableObject {
             bossTimer -= d
             if bossTimer <= 0 {
                 bossState = .idle
-                bossTimer = (phaseTwo ? 0.65 : 1.05)
+                bossTimer = (phaseTwo ? 0.5 : 0.85)
             }
         }
     }
@@ -621,7 +622,7 @@ final class BattleEngine: ObservableObject {
     private func punishWindow() {
         charging = false
         bossState = .recover
-        bossTimer = phaseTwo ? 0.85 : 1.1
+        bossTimer = phaseTwo ? 0.6 : 0.85
         floaters.append(Floater(text: "STRIKE NOW!",
                                 pos: CGPoint(x: bossX, y: groundY - 210),
                                 color: Color(hex: 0xF5C451), big: true))
@@ -687,7 +688,7 @@ final class BattleEngine: ObservableObject {
     private func endAttack() {
         charging = false
         bossState = .recover
-        bossTimer = phaseTwo ? 0.45 : 0.7
+        bossTimer = phaseTwo ? 0.32 : 0.55
     }
 
     private func facingSign() -> CGFloat { playerPos.x > bossX ? 1 : -1 }

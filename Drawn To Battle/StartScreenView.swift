@@ -27,20 +27,11 @@ struct StartScreenView: View {
                 LoadingBar(progress: loadingProgress)
                     .frame(maxWidth: 360)
 
-                VStack(spacing: 5) {
-                    Image(systemName: "hand.tap.fill")
-                        .font(.system(size: 14, weight: .bold))
-                    Text("TOUCH TO START")
-                        .font(.system(size: 14, weight: .black, design: .rounded))
-                        .tracking(3)
-                }
-                .foregroundStyle(.white.opacity(promptPulse ? 0.9 : 0.5))
-                .padding(.horizontal, 26)
-                .padding(.vertical, 11)
-                .background(Capsule().fill(Color.white.opacity(0.07)))
-                .overlay(Capsule().stroke(Color.white.opacity(0.2), lineWidth: 1))
-                .shadow(color: .black.opacity(0.5), radius: 8, y: 3)
-                .scaleEffect(promptPulse ? 1.06 : 0.96)
+                Text("TOUCH TO START")
+                    .font(.system(size: 15, weight: .black, design: .rounded))
+                    .tracking(3)
+                    .foregroundStyle(.white.opacity(promptPulse ? 0.75 : 0.3))
+                    .scaleEffect(promptPulse ? 1.06 : 0.96)
                 .animation(
                     .easeInOut(duration: 0.9).repeatForever(autoreverses: true),
                     value: promptPulse
