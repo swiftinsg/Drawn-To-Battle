@@ -19,14 +19,20 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
     case glowButterflies
     case driftingLeaves
     case pebbleOrbit
+    case leafCrown
+    case vineWreath
+    case mossCrest
     // Uranus gacha: ice and water.
     case iceWings
     case frostRing
     case tideOrbit
+    case crystalHalo
     // Sun gacha: angelic light and fire.
     case solarHalo
     case flameCrown
     case angelWings
+    case emberCrown
+    case flareWings
     // Level milestones
     case championCrown
     case meteorWings
@@ -40,12 +46,18 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         case .glowButterflies: return "Glow Butterflies"
         case .driftingLeaves: return "Drifting Leaves"
         case .pebbleOrbit: return "Pebble Orbit"
+        case .leafCrown: return "Leaf Crown"
+        case .vineWreath: return "Vine Wreath"
+        case .mossCrest: return "Moss Crest"
         case .iceWings: return "Ice Wings"
         case .frostRing: return "Frost Ring"
         case .tideOrbit: return "Tide Orbit"
+        case .crystalHalo: return "Crystal Halo"
         case .solarHalo: return "Solar Halo"
         case .flameCrown: return "Flame Crown"
         case .angelWings: return "Angel Wings"
+        case .emberCrown: return "Ember Crown"
+        case .flareWings: return "Flare Wings"
         case .championCrown: return "Champion Crown"
         case .meteorWings: return "Meteor Wings"
         case .galacticHalo: return "Galactic Halo"
@@ -56,9 +68,10 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
     /// Boss whose world gacha contains this accessory.
     var bossID: String? {
         switch self {
-        case .glowButterflies, .driftingLeaves, .pebbleOrbit: return "earth"
-        case .iceWings, .frostRing, .tideOrbit: return "mars"   // Uranus (save id)
-        case .solarHalo, .flameCrown, .angelWings: return "sun"
+        case .glowButterflies, .driftingLeaves, .pebbleOrbit,
+             .leafCrown, .vineWreath, .mossCrest: return "earth"
+        case .iceWings, .frostRing, .tideOrbit, .crystalHalo: return "mars"   // Uranus (save id)
+        case .solarHalo, .flameCrown, .angelWings, .emberCrown, .flareWings: return "sun"
         case .championCrown, .meteorWings, .galacticHalo, .legendStar: return nil
         }
     }
@@ -120,11 +133,12 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
 
     var render: AccessoryRender {
         switch self {
-        case .flameCrown, .championCrown:
+        case .leafCrown, .vineWreath, .mossCrest, .flameCrown,
+             .emberCrown, .championCrown:
             return .crown
-        case .iceWings, .angelWings, .meteorWings:
+        case .iceWings, .angelWings, .flareWings, .meteorWings:
             return .wings
-        case .frostRing, .solarHalo, .galacticHalo:
+        case .frostRing, .crystalHalo, .solarHalo, .galacticHalo:
             return .halo
         case .legendStar:
             return .star
@@ -143,12 +157,18 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         case .glowButterflies: return 0xA8F06A
         case .driftingLeaves: return 0x4ED36E
         case .pebbleOrbit: return 0xC49A6C
+        case .leafCrown: return 0x4ED36E
+        case .vineWreath: return 0x2E8B57
+        case .mossCrest: return 0x9ACD32
         case .iceWings: return 0x4FC3F7
         case .frostRing: return 0x81D4FA
         case .tideOrbit: return 0x29B6F6
+        case .crystalHalo: return 0xB3E5FC
         case .solarHalo: return 0xF5C451
         case .flameCrown: return 0xFF8A3C
         case .angelWings: return 0xFFE8A8
+        case .emberCrown: return 0xFF8A3C
+        case .flareWings: return 0xFF6B4A
         case .championCrown: return 0xFFD54F
         case .meteorWings: return 0xE86A6A
         case .galacticHalo: return 0xA86CFF

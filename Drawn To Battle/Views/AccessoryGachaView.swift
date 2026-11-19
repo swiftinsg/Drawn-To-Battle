@@ -156,22 +156,24 @@ struct AccessoryGachaView: View {
                 .tracking(2)
                 .foregroundStyle(.white.opacity(0.6))
 
-            HStack(spacing: 8) {
-                ForEach(pool) { accessory in
-                    VStack(spacing: 3) {
-                        FighterFigureView(accessory: accessory)
-                            .frame(width: 44, height: 56)
-                        Text(accessory.name.uppercased())
-                            .font(.system(size: 7, weight: .black, design: .rounded))
-                            .multilineTextAlignment(.center)
-                            .foregroundStyle(game.isAccessoryOwned(accessory)
-                                             ? tint : .white.opacity(0.55))
-                            .lineLimit(2)
+            ScrollView(.horizontal, showsIndicators: false) {
+                HStack(spacing: 8) {
+                    ForEach(pool) { accessory in
+                        VStack(spacing: 3) {
+                            FighterFigureView(accessory: accessory)
+                                .frame(width: 44, height: 56)
+                            Text(accessory.name.uppercased())
+                                .font(.system(size: 7, weight: .black, design: .rounded))
+                                .multilineTextAlignment(.center)
+                                .foregroundStyle(game.isAccessoryOwned(accessory)
+                                                 ? tint : .white.opacity(0.55))
+                                .lineLimit(2)
+                        }
+                        .frame(width: 58)
+                        .padding(.vertical, 8)
+                        .background(RoundedRectangle(cornerRadius: 12)
+                            .fill(Color.white.opacity(0.05)))
                     }
-                    .frame(maxWidth: .infinity)
-                    .padding(.vertical, 8)
-                    .background(RoundedRectangle(cornerRadius: 12)
-                        .fill(Color.white.opacity(0.05)))
                 }
             }
         }

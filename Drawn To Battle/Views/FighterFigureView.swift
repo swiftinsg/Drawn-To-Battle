@@ -30,23 +30,25 @@ struct FighterFigureView: View {
         let outlineColor = Color.black.opacity(0.72)
         let ink = Color.white.opacity(0.96)
 
-        let headCenter = CGPoint(x: cx, y: cy - 120 * scale)
-        let headRadius = 25 * scale
-        // Small gaps at the joints give the simple, disconnected stick look.
-        let torsoTop = CGPoint(x: cx, y: headCenter.y + headRadius + 4 * scale)
-        let shoulderY = torsoTop.y + 7 * scale
-        let shoulderL = CGPoint(x: cx - 5 * scale, y: shoulderY)
-        let shoulderR = CGPoint(x: cx + 5 * scale, y: shoulderY)
-        let hip = CGPoint(x: cx, y: cy + 20 * scale)
+        let headCenter = CGPoint(x: cx, y: cy - 118 * scale)
+        let headRadius = 24 * scale
+        // A calm A stance: head, shoulders and hips line up, limbs hang low.
+        let shoulder = CGPoint(x: cx, y: headCenter.y + headRadius + 5 * scale)
+        let hip = CGPoint(x: cx, y: cy + 18 * scale)
 
-        let elbowL = CGPoint(x: cx - 30 * scale, y: cy - 54 * scale)
-        let handL = CGPoint(x: cx - 36 * scale, y: cy - 20 * scale)
-        let elbowR = CGPoint(x: cx + 30 * scale, y: cy - 54 * scale)
-        let handR = CGPoint(x: cx + 36 * scale, y: cy - 20 * scale)
-        let kneeL = CGPoint(x: cx - 28 * scale, y: cy + 78 * scale)
-        let footL = CGPoint(x: cx - 34 * scale, y: cy + 110 * scale)
-        let kneeR = CGPoint(x: cx + 28 * scale, y: cy + 78 * scale)
-        let footR = CGPoint(x: cx + 34 * scale, y: cy + 110 * scale)
+        let shoulderL = CGPoint(x: cx - 7 * scale, y: shoulder.y + 3 * scale)
+        let elbowL = CGPoint(x: cx - 24 * scale, y: cy - 50 * scale)
+        let handL = CGPoint(x: cx - 28 * scale, y: cy - 14 * scale)
+        let shoulderR = CGPoint(x: cx + 7 * scale, y: shoulder.y + 3 * scale)
+        let elbowR = CGPoint(x: cx + 24 * scale, y: cy - 50 * scale)
+        let handR = CGPoint(x: cx + 28 * scale, y: cy - 14 * scale)
+
+        let hipL = CGPoint(x: cx - 3 * scale, y: hip.y)
+        let kneeL = CGPoint(x: cx - 16 * scale, y: cy + 64 * scale)
+        let footL = CGPoint(x: cx - 20 * scale, y: cy + 104 * scale)
+        let hipR = CGPoint(x: cx + 3 * scale, y: hip.y)
+        let kneeR = CGPoint(x: cx + 16 * scale, y: cy + 64 * scale)
+        let footR = CGPoint(x: cx + 20 * scale, y: cy + 104 * scale)
 
         // Spawn ring and shadow under the fighter.
         context.fill(
@@ -73,35 +75,37 @@ struct FighterFigureView: View {
                       tint: tint, water: accessory == .tideOrbit)
         }
 
-        let gap = 4 * scale
+        // Just a hair of separation at elbows and knees keeps the hand drawn
+        // look without making the body feel broken apart.
+        let joint = 1.5 * scale
         var torso = Path()
-        addSegment(&torso, from: torsoTop, to: hip, trimStart: gap, trimEnd: gap)
+        addSegment(&torso, from: shoulder, to: hip, trimStart: 0, trimEnd: 0)
 
         var arms = Path()
-        addSegment(&arms, from: shoulderL, to: elbowL,
-                   trimStart: gap * 0.7, trimEnd: gap * 0.8)
-        addSegment(&arms, from: elbowL, to: handL,
-                   trimStart: gap * 0.8, trimEnd: 0)
-        addSegment(&arms, from: shoulderR, to: elbowR,
-                   trimStart: gap * 0.7, trimEnd: gap * 0.8)
-        addSegment(&arms, from: elbowR, to: handR,
-                   trimStart: gap * 0.8, trimEnd: 0)
+        for (start, elbow, hand) in [
+            (shoulderL, elbowL, handL), (shoulderR, elbowR, handR)
+        ] {
+            addSegment(&arms, from: start, to: elbow, trimStart: 0, trimEnd: joint)
+            addSegment(&arms, from: elbow, to: hand, trimStart: joint, trimEnd: 0)
+        }
 
         var legs = Path()
-        addSegment(&legs, from: hip, to: kneeL, trimStart: gap, trimEnd: gap * 0.8)
-        addSegment(&legs, from: kneeL, to: footL, trimStart: gap * 0.8, trimEnd: 0)
-        addSegment(&legs, from: hip, to: kneeR, trimStart: gap, trimEnd: gap * 0.8)
-        addSegment(&legs, from: kneeR, to: footR, trimStart: gap * 0.8, trimEnd: 0)
+        for (start, knee, foot) in [
+            (hipL, kneeL, footL), (hipR, kneeR, footR)
+        ] {
+            addSegment(&legs, from: start, to: knee, trimStart: 0, trimEnd: joint)
+            addSegment(&legs, from: knee, to: foot, trimStart: joint, trimEnd: 0)
+        }
 
-        let outline = StrokeStyle(lineWidth: 15 * scale, lineCap: .round, lineJoin: .round)
-        let inner = StrokeStyle(lineWidth: 9 * scale, lineCap: .round, lineJoin: .round)
+        let outline = StrokeStyle(lineWidth: 12.5 * scale, lineCap: .round, lineJoin: .round)
+        let inner = StrokeStyle(lineWidth: 8 * scale, lineCap: .round, lineJoin: .round)
         for path in [torso, arms, legs] {
             context.stroke(path, with: .color(outlineColor), style: outline)
             context.stroke(path, with: .color(ink), style: inner)
         }
 
         // Plain head with a dark outline.
-        let outerR = headRadius + 3 * scale
+        let outerR = headRadius + 2.5 * scale
         context.fill(
             Path(ellipseIn: CGRect(x: headCenter.x - outerR, y: headCenter.y - outerR,
                                    width: outerR * 2, height: outerR * 2)),
