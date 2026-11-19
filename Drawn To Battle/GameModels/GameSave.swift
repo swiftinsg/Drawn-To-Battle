@@ -74,14 +74,15 @@ struct BossDefinition: Identifiable, Hashable {
         ),
         BossDefinition(
             id: "sun", planetName: "SUN", bossName: "SOLAR OVERLORD",
-            title: "The Burning Eye", hp: 170,
+            title: "The Burning Eye", hp: 240,
             requiredTechnique: .spin,
-            rewardFirstClear: 260, rewardRepeat: 70,
+            rewardFirstClear: 340, rewardRepeat: 95,
             bodyColor: 0xF5C451, accentColor: 0xFF8A3C,
             attacks: [
-                BossAttackDef(name: "SOLAR FLARE", kind: .flare, damage: 16, telegraph: 1.2),
-                BossAttackDef(name: "CORONA RING", kind: .fan, damage: 12, telegraph: 0.9),
-                BossAttackDef(name: "HEAT LUNGE", kind: .charge, damage: 18, telegraph: 0.8),
+                BossAttackDef(name: "SOLAR FLARE", kind: .flare, damage: 22, telegraph: 0.95),
+                BossAttackDef(name: "CORONA RING", kind: .fan, damage: 18, telegraph: 0.7),
+                BossAttackDef(name: "HEAT LUNGE", kind: .charge, damage: 24, telegraph: 0.6),
+                BossAttackDef(name: "SUNSPOT SLAM", kind: .groundShock, damage: 20, telegraph: 0.85),
             ],
             unlockAfter: "mars"
         ),
