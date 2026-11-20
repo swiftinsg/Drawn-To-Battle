@@ -295,8 +295,7 @@ final class StudioState: ObservableObject {
             Self.blueprintTutorialsShown = shown
             showBlueprintTutorial = true
         }
-        // The first pass starts from a blank pose so the tutorial teaches the
-        // move instead of copying a finished one. Later passes use the base.
+      
         project = edited ?? (unseen ? .blank() : blueprint.baseAnimation)
         editingBlueprintID = blueprint.id
         selectedIndex = 0
