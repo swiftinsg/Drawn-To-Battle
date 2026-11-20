@@ -23,40 +23,37 @@ struct AnimationStudioView: View {
     var onBack: (() -> Void)?
 
     var body: some View {
-        GeometryReader { geo in
-            ZStack {
-                // Canvas — the main zone: big paper canvas with the rig.
-                StickmanCanvasView(
-                    pose: studio.currentFrame?.pose ?? StickmanPose(),
-                    selectedBone: $selectedBone,
-                    onRotate: handleRotate,
-                    onMove: { newRoot in
-                        studio.updateCurrentPose { pose in
-                            pose.root = CGPoint(
-                                x: min(390, max(10, newRoot.x)),
-                                y: min(505, max(30, newRoot.y))
-                            )
-                        }
-                    },
-                    editingHandles: !studio.isPlaying,
-                    bottomInset: 0,
-                    ghostPoses: onionSkinGhosts,
-                    futureGhost: onionSkinFuture
-                )
-                .ignoresSafeArea()
+        // Fixed rows: top bar, canvas (all remaining space), bottom bar.
+        // No ZStack overlays / .position() — those let the panel size itself
+        // freely and overlap the canvas and other controls.
+        VStack(spacing: 0) {
+            topBar
+                .frame(height: topBarHeight)
 
-                // Bottom bar — buttons (left) + frames (right), pinned to
-                // the very bottom of the screen.
-                if mode == .animate {
-                    bottomPanel
-                        .position(x: geo.size.width / 2, y: geo.size.height - bottomPanelHeight / 2)
-                }
+            StickmanCanvasView(
+                pose: studio.currentFrame?.pose ?? StickmanPose(),
+                selectedBone: $selectedBone,
+                onRotate: handleRotate,
+                onMove: { newRoot in
+                    studio.updateCurrentPose { pose in
+                        pose.root = CGPoint(
+                            x: min(390, max(10, newRoot.x)),
+                            y: min(505, max(30, newRoot.y))
+                        )
+                    }
+                },
+                editingHandles: !studio.isPlaying,
+                bottomInset: 0,
+                ghostPoses: onionSkinGhosts,
+                futureGhost: onionSkinFuture
+            )
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-                // Top bar, pinned to the very top.
-                topBar
-                    .position(x: geo.size.width / 2, y: topBarHeight / 2)
+            if mode == .animate {
+                bottomPanel
             }
         }
+        .background(Color(hex: 0x0C0D12).ignoresSafeArea())
         .onAppear {
             if let game = studio.game, !game.hasSeenStudioTutorial {
                 showTutorial = true
@@ -93,7 +90,7 @@ struct AnimationStudioView: View {
     }
 
     private var topBarHeight: CGFloat { 48 }
-    private var bottomPanelHeight: CGFloat { 190 }
+    private var bottomPanelHeight: CGFloat { 155 }
 
     /// Top bar: BACK, project chip, quality readout, mode tabs, save.
     private var topBar: some View {
@@ -295,7 +292,7 @@ private struct BigPlayButton: View {
             Image(systemName: studio.isPlaying ? "stop.fill" : "play.fill")
                 .font(.system(size: 20, weight: .black))
                 .foregroundStyle(studio.isPlaying ? .black : .white)
-                .frame(width: 64, height: 64)
+                .frame(width: 40, height: 40)
                 .background(
                     Circle().fill(studio.isPlaying
                         ? Color.white.opacity(0.12)
