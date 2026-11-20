@@ -179,7 +179,7 @@ final class GameSave: ObservableObject {
     @Published var gachaHistory: [GachaPullRecord] = [] {
         didSet { persist() }
     }
-    /// Cosmetics owned from world gachas, the level road, and milestones.
+    /// Cosmetics owned from world gachas, the trophy road, and milestones.
     @Published var ownedAccessories: Set<String> = [] {
         didSet { persist() }
     }
@@ -306,14 +306,15 @@ final class GameSave: ObservableObject {
 
     var level: Int { Self.level(for: experience) }
 
-    /// The Level Road: one stop every five levels. Reaching a stop unlocks
-    /// its reward, but the player claims it by hand.
+    /// Trophy Road: one stop every five levels. Reaching a stop unlocks its
+    /// reward, but the player claims it by hand. Coins stay in the 30 to 60
+    /// range and are always worth more than the pens on the same stop.
     static let levelRoadSteps: [LevelRoadStep] = (1...20).map { tier in
         let level = tier * 5
         return LevelRoadStep(
             level: level,
-            rewardCoins: 90 * tier + 60,
-            rewardStardust: 10 * tier + 10,
+            rewardCoins: min(60, 30 + 5 * (tier - 1)),
+            rewardStardust: min(20, 5 + 2 * (tier - 1)),
             rewardCosmetic: level == 10 ? .sunRing : nil
         )
     }
@@ -349,7 +350,7 @@ final class GameSave: ObservableObject {
         grantMilestoneRewards()
     }
 
-    /// Claims one reached level road stop by hand.
+    /// Claims one reached trophy road stop by hand.
     func claimLevelRoadStep(_ level: Int) {
         guard let step = Self.levelRoadSteps.first(where: { $0.level == level }),
               !claimedLevelSteps.contains(level),

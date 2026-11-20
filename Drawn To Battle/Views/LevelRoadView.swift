@@ -1,99 +1,9 @@
 import SwiftUI
 
-// MARK: - Level Road
+// MARK: - Trophy road page
 //
-// A progression track with one stop every five levels. Reaching a stop unlocks
-// its reward, but the player claims it by hand. The compact bar stays on the
-// solar system; the full page is opened from the home hub.
-
-struct LevelRoadView: View {
-    @ObservedObject var game: GameSave
-
-    private var steps = GameSave.levelRoadSteps
-
-    /// The next stop ahead of the player's current level.
-    private var nextStep: LevelRoadStep? {
-        steps.first { !$0.isReached(by: game.experience) }
-    }
-
-    var body: some View {
-        HStack(spacing: 6) {
-            Text("LEVEL ROAD")
-                .font(.system(size: 9, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.5))
-                .padding(.horizontal, 10)
-                .padding(.vertical, 6)
-                .background(
-                    RoundedRectangle(cornerRadius: 6)
-                        .fill(Color.white.opacity(0.06))
-                )
-
-            ForEach(steps, id: \.level) { step in
-                LevelRoadStop(
-                    step: step,
-                    isReached: step.isReached(by: game.experience),
-                    isClaimed: game.claimedLevelSteps.contains(step.level)
-                )
-            }
-
-            Spacer()
-
-            if let pending = game.pendingLevelRoadSteps.first {
-                Text("CLAIM L\(pending.level)")
-                    .font(.system(size: 9, weight: .black, design: .rounded))
-                    .foregroundStyle(Color(hex: 0xF5C451))
-            } else if let next = nextStep {
-                Text(rewardText(next))
-                    .font(.system(size: 9, weight: .semibold))
-                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
-                    .lineLimit(1)
-            }
-        }
-        .padding(.horizontal, 20)
-        .padding(.top, 10)
-    }
-
-    private func rewardText(_ step: LevelRoadStep) -> String {
-        let bonus = step.rewardCosmetic.map { " + \($0.name)" } ?? ""
-        return "NEXT L\(step.level) +\(step.rewardCoins) coins +\(step.rewardStardust) pens\(bonus)"
-    }
-}
-
-/// One stop on the road: reached stops are gold, claimed stops get a check,
-/// and an unclaimed stop gets a question mark.
-private struct LevelRoadStop: View {
-    let step: LevelRoadStep
-    let isReached: Bool
-    let isClaimed: Bool
-
-    var body: some View {
-        ZStack {
-            Circle()
-                .fill(isReached ? Color(hex: 0xF5C451) : Color.white.opacity(0.06))
-                .stroke(isReached ? Color(hex: 0xF5C451) : Color.white.opacity(0.10), lineWidth: 2)
-                .frame(width: 28, height: 28)
-
-            if isClaimed {
-                Image(systemName: "checkmark")
-                    .font(.system(size: 10, weight: .black))
-                    .foregroundStyle(.black)
-            } else {
-                Text("L\(step.level)")
-                    .font(.system(size: 8, weight: .black, design: .rounded))
-                    .foregroundStyle(isReached ? .black : Color.white.opacity(0.6))
-            }
-
-            if isReached && !isClaimed {
-                Image(systemName: "questionmark.circle.fill")
-                    .font(.system(size: 10, weight: .bold))
-                    .foregroundStyle(Color(hex: 0xF5C451))
-                    .offset(x: 12, y: -12)
-            }
-        }
-    }
-}
-
-// MARK: - Full level road page
+// One stop every five levels. Reaching a stop unlocks its reward, but the
+// player claims it by hand from this page in the home hub.
 
 struct LevelRoadPageView: View {
     @ObservedObject var game: GameSave
@@ -108,7 +18,7 @@ struct LevelRoadPageView: View {
             VStack(spacing: 0) {
                 HStack {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("LEVEL ROAD")
+                        Text("TROPHY ROAD")
                             .font(DrawnToBattleTypography.display(26))
                             .foregroundStyle(.white)
                         Text("LEVEL \(game.level)  •  CLAIM EACH STOP BY HAND")
@@ -126,7 +36,7 @@ struct LevelRoadPageView: View {
                             .background(Circle().fill(Color.white.opacity(0.08)))
                     }
                     .buttonStyle(.plain)
-                    .accessibilityLabel("Close level road")
+                    .accessibilityLabel("Close trophy road")
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 14)
@@ -176,8 +86,8 @@ private struct LevelRoadCard: View {
                     .frame(width: 46, height: 46)
 
                 if claimable {
-                    Image(systemName: "questionmark")
-                        .font(.system(size: 20, weight: .black))
+                    Image(systemName: "exclamationmark")
+                        .font(.system(size: 22, weight: .black))
                         .foregroundStyle(.black)
                 } else if isClaimed {
                     Image(systemName: "checkmark")

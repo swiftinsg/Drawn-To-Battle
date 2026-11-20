@@ -35,70 +35,80 @@ struct HomeHubView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
 
             VStack(spacing: 0) {
-                // Top row: profile • coins, pens, settings.
-                HStack(spacing: 7) {
+                // Top row: profile • coins, pens, settings. Kept compact so
+                // small phones do not clip the profile or currency bubbles.
+                HStack(spacing: 5) {
                     Button {
                         showProfile = true
                     } label: {
-                        HStack(spacing: 7) {
-                            ProfileAvatarView(data: game.profileImageData, size: 22)
+                        HStack(spacing: 6) {
+                            ProfileAvatarView(data: game.profileImageData, size: 20)
                             VStack(alignment: .leading, spacing: 0) {
                                 Text("FIGHTER")
-                                    .font(.system(size: 8, weight: .heavy, design: .rounded))
+                                    .font(.system(size: 7, weight: .heavy, design: .rounded))
                                     .foregroundStyle(.white.opacity(0.45))
                                 Text(game.username.isEmpty ? "NO NAME" : game.username)
-                                    .font(.system(size: 13, weight: .black, design: .rounded))
+                                    .font(.system(size: 11, weight: .black, design: .rounded))
                                     .foregroundStyle(.white)
                                     .lineLimit(1)
+                                    .minimumScaleFactor(0.7)
+                                    .frame(maxWidth: 92, alignment: .leading)
                             }
                         }
-                        .bubbleChrome()
+                        .bubbleChrome(paddingX: 8, paddingY: 6)
                     }
                     .buttonStyle(.plain)
+                    .frame(maxWidth: 130, alignment: .leading)
                     .accessibilityLabel("Profile, \(game.username)")
 
-                    Spacer(minLength: 6)
+                    Spacer(minLength: 4)
 
                     Button {
                         activeCurrency = .coins
                     } label: {
-                        HStack(spacing: 5) {
+                        HStack(spacing: 4) {
                             Image(systemName: "circlebadge.fill")
-                                .font(.system(size: 12, weight: .bold))
+                                .font(.system(size: 11, weight: .bold))
                                 .foregroundStyle(Color(hex: 0xF5C451))
                             Text("\(game.coins)")
-                                .font(.system(size: 14, weight: .heavy, design: .rounded))
+                                .font(.system(size: 12, weight: .heavy, design: .rounded))
                                 .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
                         }
+                        .bubbleChrome(paddingX: 8, paddingY: 6)
                     }
                     .buttonStyle(.plain)
-                    .bubbleChrome(paddingX: 10)
+                    .layoutPriority(1)
                     .accessibilityLabel("Coins, tap for details")
 
                     Button {
                         activeCurrency = .pens
                     } label: {
-                        HStack(spacing: 5) {
+                        HStack(spacing: 4) {
                             Image("DrawnToBattleGachaToken")
                                 .resizable()
                                 .scaledToFit()
-                                .frame(height: 18)
+                                .frame(height: 16)
                             Text("\(game.stardust)")
-                                .font(.system(size: 14, weight: .heavy, design: .rounded))
+                                .font(.system(size: 12, weight: .heavy, design: .rounded))
                                 .foregroundStyle(.white)
+                                .lineLimit(1)
+                                .minimumScaleFactor(0.7)
                         }
+                        .bubbleChrome(paddingX: 8, paddingY: 6)
                     }
                     .buttonStyle(.plain)
-                    .bubbleChrome(paddingX: 10)
+                    .layoutPriority(1)
                     .accessibilityLabel("Pens, tap for details")
 
                     Button {
                         showSettings = true
                     } label: {
                         Image(systemName: "gearshape.fill")
-                            .font(.system(size: 14, weight: .bold))
+                            .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(.white.opacity(0.85))
-                            .padding(9)
+                            .padding(7)
                             .background(
                                 RoundedRectangle(cornerRadius: 12)
                                     .fill(Color.black.opacity(0.55))
@@ -109,16 +119,17 @@ struct HomeHubView: View {
                             )
                     }
                     .buttonStyle(.plain)
+                    .layoutPriority(1)
                     .accessibilityLabel("Settings")
                 }
-                .padding(.horizontal, 14)
-                .padding(.top, 10)
+                .padding(.horizontal, 10)
+                .padding(.top, 8)
 
                 // Left column: daily reward and the remaining menus.
                 VStack(alignment: .leading, spacing: 10) {
                     dailyBubble
-                    MenuBubble(title: "LEVEL ROAD", systemImage: "flag.fill",
-                               showQuestionBadge: game.hasPendingLevelRoadRewards) {
+                    MenuBubble(title: "TROPHY ROAD", systemImage: "flag.fill",
+                               showAlertBadge: game.hasPendingLevelRoadRewards) {
                         showLevelRoad = true
                     }
                     MenuBubble(title: "STUDIO", systemImage: "film") {
@@ -410,10 +421,10 @@ private struct StudioBackgroundRemoval: UIViewControllerRepresentable {
 
 extension View {
     /// Dark rounded-bubble styling used across the home screen.
-    func bubbleChrome(paddingX: CGFloat = 12) -> some View {
+    func bubbleChrome(paddingX: CGFloat = 12, paddingY: CGFloat = 9) -> some View {
         self
             .padding(.horizontal, paddingX)
-            .padding(.vertical, 9)
+            .padding(.vertical, paddingY)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(Color.black.opacity(0.55))
@@ -430,7 +441,7 @@ extension View {
 private struct MenuBubble: View {
     let title: String
     let systemImage: String
-    var showQuestionBadge = false
+    var showAlertBadge = false
     let action: () -> Void
 
     var body: some View {
@@ -442,8 +453,8 @@ private struct MenuBubble: View {
                 Text(title)
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
-                if showQuestionBadge {
-                    Image(systemName: "questionmark.circle.fill")
+                if showAlertBadge {
+                    Image(systemName: "exclamationmark.circle.fill")
                         .font(.system(size: 13, weight: .bold))
                         .foregroundStyle(Color(hex: 0xF5C451))
                 }
@@ -451,7 +462,7 @@ private struct MenuBubble: View {
             .bubbleChrome(paddingX: 16)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel(showQuestionBadge ? "\(title), reward ready" : title)
+        .accessibilityLabel(showAlertBadge ? "\(title), reward ready" : title)
     }
 }
 
