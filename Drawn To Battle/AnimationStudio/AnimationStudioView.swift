@@ -32,7 +32,8 @@ struct AnimationStudioView: View {
                 editingHandles: !studio.isPlaying,
                 bottomInset: bottomPanelHeight,
                 topInset: topBarHeight,
-                ghostPoses: onionSkinGhosts
+                ghostPoses: onionSkinGhosts,
+                futureGhost: onionSkinFuture
             )
             .ignoresSafeArea(edges: .bottom)
 
@@ -216,6 +217,13 @@ struct AnimationStudioView: View {
             ghosts.append(studio.project.frames[idx - 2].pose)
         }
         return ghosts
+    }
+
+    /// The next frame ghost, drawn in blue when onion skin is on.
+    private var onionSkinFuture: StickmanPose? {
+        guard studio.onionSkin,
+              studio.project.frames.indices.contains(studio.selectedIndex + 1) else { return nil }
+        return studio.project.frames[studio.selectedIndex + 1].pose
     }
 
     // MARK: Rotation conversion
