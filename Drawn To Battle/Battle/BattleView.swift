@@ -324,7 +324,23 @@ struct BattleView: View {
         }
 
         let mirror = engine.facing == -1
+
+        // Equipped cosmetics follow the battle pose, not just the hub fighter.
+        var figureTransform = CGAffineTransform(translationX: engine.playerPos.x,
+                                                y: engine.playerPos.y)
+        figureTransform = figureTransform.scaledBy(x: mirror ? -1 : 1, y: 1)
+        figureTransform = figureTransform.translatedBy(x: -pose.root.x, y: -pose.root.y)
+        let head = StickmanKinematics.headCircle(for: pose)
+        let headCenter = head.center.applying(figureTransform)
+        let headRadius = head.radius
+        let cosmetic = FighterFigureView(accessory: game.equippedAccessory)
+        cosmetic.drawBattleLayer(.back, in: &context, headCenter: headCenter,
+                                 headRadius: headRadius, hip: engine.playerPos)
+
         StickmanRenderer.draw(&context, pose: pose, hipAt: engine.playerPos, mirror: mirror, tint: tint)
+
+        cosmetic.drawBattleLayer(.front, in: &context, headCenter: headCenter,
+                                 headRadius: headRadius, hip: engine.playerPos)
 
         // Block shield arc.
         if engine.blockActive {
@@ -563,28 +579,67 @@ private struct BlockButton: View {
     @ObservedObject var engine: BattleEngine
     @State private var pressed = false
 
+    private var cooling: Bool { engine.blockCooldown > 0 }
+
+    private var cooldownProgress: CGFloat {
+        guard cooling else { return 0 }
+        return min(1, max(0, 1 - engine.blockCooldown / BattleEngine.blockCooldownDuration))
+    }
+
     private var parryGlow: Bool {
         engine.blockActive && (engine.time - engine.blockStart) <= 0.22
     }
 
     var body: some View {
-        Text("BLOCK")
-            .font(.system(size: 12, weight: .black, design: .rounded))
-            .foregroundStyle(pressed ? .black : Color(hex: 0x4C8DFF))
-            .frame(width: 62, height: 62)
-            .background(Circle().fill(pressed ? Color(hex: 0x4C8DFF) : Color.white.opacity(0.08)))
-            .overlay(Circle().stroke((parryGlow ? Color(hex: 0xF5C451) : Color(hex: 0x4C8DFF)).opacity(pressed ? 1 : 0.6), lineWidth: parryGlow ? 4 : 2))
-            .gesture(
-                DragGesture(minimumDistance: 0)
-                    .onChanged { _ in
-                        pressed = true
-                        engine.input.blockHeld = true
-                    }
-                    .onEnded { _ in
-                        pressed = false
-                        engine.input.blockHeld = false
-                    }
-            )
+        ZStack {
+            Circle()
+                .fill(pressed && !cooling
+                      ? Color(hex: 0x4C8DFF)
+                      : Color.white.opacity(0.08))
+
+            if cooling {
+                Circle()
+                    .fill(Color(hex: 0x4C8DFF).opacity(0.42 * (1 - cooldownProgress)))
+                Circle()
+                    .trim(from: 0, to: cooldownProgress)
+                    .stroke(Color(hex: 0x4C8DFF),
+                            style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+            }
+
+            Text("BLOCK")
+                .font(.system(size: 12, weight: .black, design: .rounded))
+                .foregroundStyle(pressed && !cooling
+                                 ? .black
+                                 : Color(hex: 0x4C8DFF).opacity(cooling ? 0.45 : 1))
+
+            Circle()
+                .stroke((parryGlow ? Color(hex: 0xF5C451) : Color(hex: 0x4C8DFF))
+                        .opacity(pressed && !cooling ? 1 : 0.6),
+                        lineWidth: parryGlow ? 4 : 2)
+        }
+        .frame(width: 70, height: 70)
+        .contentShape(Circle())
+        .gesture(
+            DragGesture(minimumDistance: 0)
+                .onChanged { _ in
+                    guard !cooling else { return }
+                    pressed = true
+                    engine.input.blockHeld = true
+                }
+                .onEnded { _ in
+                    pressed = false
+                    engine.input.blockHeld = false
+                }
+        )
+        .onTapGesture {
+            guard !cooling else { return }
+            pressed = true
+            engine.tapBlock()
+            DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
+                pressed = false
+            }
+        }
     }
 }
 

@@ -50,13 +50,13 @@ struct BossDefinition: Identifiable, Hashable {
     static let all: [BossDefinition] = [
         BossDefinition(
             id: "earth", planetName: "EARTH", bossName: "TERRA COLOSSUS",
-            title: "The Sleeping Mountain", hp: 140,
+            title: "The Sleeping Mountain", hp: 240,
             requiredTechnique: .smear,
-            rewardFirstClear: 120, rewardRepeat: 40,
+            rewardFirstClear: 70, rewardRepeat: 25,
             bodyColor: 0x3FA65C, accentColor: 0x4C8DFF,
             attacks: [
-                BossAttackDef(name: "BOULDER TOSS", kind: .projectileLob, damage: 16, telegraph: 0.9),
-                BossAttackDef(name: "QUAKE WAVE", kind: .groundShock, damage: 18, telegraph: 0.9),
+                BossAttackDef(name: "BOULDER TOSS", kind: .projectileLob, damage: 18, telegraph: 0.9),
+                BossAttackDef(name: "QUAKE WAVE", kind: .groundShock, damage: 20, telegraph: 0.9),
             ],
             unlockAfter: nil
         ),
@@ -65,7 +65,7 @@ struct BossDefinition: Identifiable, Hashable {
             id: "mars", planetName: "URANUS", bossName: "AZURE WARLOCK",
             title: "The Ice Duelist", hp: 210,
             requiredTechnique: .kick,
-            rewardFirstClear: 180, rewardRepeat: 55,
+            rewardFirstClear: 110, rewardRepeat: 40,
             bodyColor: 0x4FC3F7, accentColor: 0xB3E5FC,
             attacks: [
                 BossAttackDef(name: "FROST RAM", kind: .charge, damage: 22, telegraph: 0.8),
@@ -78,7 +78,7 @@ struct BossDefinition: Identifiable, Hashable {
             id: "sun", planetName: "SUN", bossName: "SOLAR OVERLORD",
             title: "The Burning Eye", hp: 380,
             requiredTechnique: .spin,
-            rewardFirstClear: 340, rewardRepeat: 95,
+            rewardFirstClear: 190, rewardRepeat: 60,
             bodyColor: 0xF5C451, accentColor: 0xFF8A3C,
             attacks: [
                 BossAttackDef(name: "SOLAR FLARE", kind: .flare, damage: 28, telegraph: 0.85),
@@ -179,7 +179,7 @@ final class GameSave: ObservableObject {
     @Published var gachaHistory: [GachaPullRecord] = [] {
         didSet { persist() }
     }
-    /// Cosmetics owned from world gachas, the level road, and milestones.
+    /// Cosmetics owned from world gachas, the trophy road, and milestones.
     @Published var ownedAccessories: Set<String> = [] {
         didSet { persist() }
     }
@@ -212,8 +212,7 @@ final class GameSave: ObservableObject {
     @Published var hasSeenStudioTutorial: Bool = false {
         didSet { persist() }
     }
-    /// Level-road steps whose rewards have been claimed. Each level's
-    /// reward is granted once, when XP first reaches the step's threshold.
+    /// Level-road steps whose rewards have been claimed by hand.
     @Published var claimedLevelSteps: Set<Int> = [] {
         didSet { persist() }
     }
@@ -285,6 +284,19 @@ final class GameSave: ObservableObject {
             hasAnimated = saved.hasAnimated ?? false
             hasSeenStudioTutorial = saved.hasSeenStudioTutorial ?? false
             claimedLevelSteps = saved.claimedLevelSteps ?? []
+
+            // Old builds auto-claimed level 8 without granting its new Sun Ring.
+            // Restore it once for saves that already passed that old stop.
+            if claimedLevelSteps.contains(8) && !ownedAccessories.contains(Accessory.sunRing.rawValue) {
+                ownedAccessories.insert(Accessory.sunRing.rawValue)
+            }
+            for step in Self.levelRoadSteps
+            where claimedLevelSteps.contains(step.level) && step.rewardCosmetic != nil {
+                if let cosmetic = step.rewardCosmetic, !ownedAccessories.contains(cosmetic.rawValue) {
+                    ownedAccessories.insert(cosmetic.rawValue)
+                }
+            }
+
             if needsStarterMoves { persist() }
             grantMilestoneRewards()
         }
@@ -294,24 +306,25 @@ final class GameSave: ObservableObject {
 
     var level: Int { Self.level(for: experience) }
 
-    /// The Level Road: stops whose XP thresholds define rewards for
-    /// reaching levels (see `claimReachedLevelRoadSteps`).
-    static let levelRoadSteps: [LevelRoadStep] = [
-        LevelRoadStep(level: 2, rewardCoins: 60, rewardStardust: 8),
-        LevelRoadStep(level: 3, rewardCoins: 100, rewardStardust: 12),
-        LevelRoadStep(level: 4, rewardCoins: 160, rewardStardust: 16),
-        LevelRoadStep(level: 5, rewardCoins: 240, rewardStardust: 20),
-        LevelRoadStep(level: 6, rewardCoins: 340, rewardStardust: 25),
-        LevelRoadStep(level: 7, rewardCoins: 480, rewardStardust: 30),
-        LevelRoadStep(level: 8, rewardCoins: 680, rewardStardust: 40,
-                      rewardCosmetic: .sunRing),
-        LevelRoadStep(level: 9, rewardCoins: 960, rewardStardust: 50),
-    ]
+    /// Trophy Road: one stop every five levels. Reaching a stop unlocks its
+    /// reward, but the player claims it by hand. Coins stay in the 30 to 60
+    /// range and are always worth more than the pens on the same stop.
+    static let levelRoadSteps: [LevelRoadStep] = (1...20).map { tier in
+        let level = tier * 5
+        return LevelRoadStep(
+            level: level,
+            rewardCoins: min(60, 30 + 5 * (tier - 1)),
+            rewardStardust: min(20, 5 + 2 * (tier - 1)),
+            rewardCosmetic: level == 10 ? .sunRing : nil
+        )
+    }
 
-    /// Levels whose road reward is still reachable but not yet claimed.
+    /// Levels whose road reward is reachable but not yet claimed.
     var pendingLevelRoadSteps: [LevelRoadStep] {
         Self.levelRoadSteps.filter { !claimedLevelSteps.contains($0.level) && $0.isReached(by: experience) }
     }
+
+    var hasPendingLevelRoadRewards: Bool { !pendingLevelRoadSteps.isEmpty }
 
     /// XP needed to enter a given level, measured from level 1.
     static func cumulativeXP(for level: Int) -> Int {
@@ -335,19 +348,19 @@ final class GameSave: ObservableObject {
     func addExperience(_ amount: Int) {
         experience += max(0, amount)
         grantMilestoneRewards()
-        claimReachedLevelRoadSteps()
     }
 
-    /// Grants the rewards of any level road step the player has reached.
-    func claimReachedLevelRoadSteps() {
-        for step in Self.levelRoadSteps
-        where !claimedLevelSteps.contains(step.level) && step.isReached(by: experience) {
-            claimedLevelSteps.insert(step.level)
-            coins += step.rewardCoins
-            stardust += step.rewardStardust
-            if let cosmetic = step.rewardCosmetic {
-                ownedAccessories.insert(cosmetic.rawValue)
-            }
+    /// Claims one reached trophy road stop by hand.
+    func claimLevelRoadStep(_ level: Int) {
+        guard let step = Self.levelRoadSteps.first(where: { $0.level == level }),
+              !claimedLevelSteps.contains(level),
+              step.isReached(by: experience) else { return }
+
+        claimedLevelSteps.insert(level)
+        coins += step.rewardCoins
+        stardust += step.rewardStardust
+        if let cosmetic = step.rewardCosmetic {
+            ownedAccessories.insert(cosmetic.rawValue)
         }
     }
 

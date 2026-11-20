@@ -158,7 +158,12 @@ enum BlueprintCatalog {
                       blurb: "Cross the arena in a single step."),
         MoveBlueprint(id: "asteroid_drop", name: "Asteroid Drop", rarity: .legendary, technique: .slam,
                       blurb: "Call it down from orbit, then mind the crater."),
-        // --- Elite / Transcendent: reserved for future blueprints ---
+        // --- Elite ---
+        MoveBlueprint(id: "skybreak_edge", name: "Skybreak Edge", rarity: .elite, technique: .dash,
+                      blurb: "A step so sharp the sky splits behind it."),
+        // --- Transcendent ---
+        MoveBlueprint(id: "starlit_pivot", name: "Starlit Pivot", rarity: .transcendent, technique: .spin,
+                      blurb: "A turn borrowed from a spinning constellation."),
         // --- Omniscient ---
         MoveBlueprint(id: "smear_ghost", name: "SMEAR: Ghost Fist", rarity: .omniscient, technique: .smear,
                       blurb: "The arm exists in two places at once."),

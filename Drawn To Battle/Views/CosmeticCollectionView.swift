@@ -1,24 +1,33 @@
 import SwiftUI
 
-/// Browse every cosmetic, equip the ones you own, and see how to earn the rest.
+/// Browse every cosmetic in two-column sections, equip the ones you own, and
+/// see how to earn the rest.
 struct CosmeticCollectionView: View {
     @ObservedObject var game: GameSave
 
+    private let columns = [
+        GridItem(.flexible(), spacing: 10),
+        GridItem(.flexible(), spacing: 10)
+    ]
+
     var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
+        VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("COSMETICS")
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .tracking(2)
                     .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
-                Text("World drops and level rewards. Equip one to dress your fighter.")
+                Text("World drops and trophy rewards. Tap one to dress your fighter.")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.5))
             }
             .frame(maxWidth: .infinity, alignment: .leading)
 
-            ForEach(Accessory.allCases) { accessory in
-                accessoryRow(accessory)
+            ForEach(CosmeticSection.allCases) { section in
+                let items = Accessory.allCases.filter { $0.collectionSection == section }
+                if !items.isEmpty {
+                    sectionBlock(section: section, items: items)
+                }
             }
 
             Button {
@@ -44,82 +53,128 @@ struct CosmeticCollectionView: View {
         }
     }
 
-    private func accessoryRow(_ accessory: Accessory) -> some View {
+    private func sectionBlock(section: CosmeticSection, items: [Accessory]) -> some View {
+        let owned = items.filter { game.isAccessoryOwned($0) }.count
+        let tint = sectionTint(section)
+
+        return VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                Text(section.rawValue)
+                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .tracking(1.5)
+                    .foregroundStyle(tint)
+
+                Rectangle()
+                    .fill(tint.opacity(0.35))
+                    .frame(height: 1)
+
+                Text("\(owned)/\(items.count)")
+                    .font(.system(size: 10, weight: .black, design: .monospaced))
+                    .foregroundStyle(.white.opacity(0.45))
+            }
+
+            LazyVGrid(columns: columns, spacing: 10) {
+                ForEach(items) { accessory in
+                    cosmeticCell(accessory)
+                }
+            }
+        }
+    }
+
+    private func cosmeticCell(_ accessory: Accessory) -> some View {
         let owned = game.isAccessoryOwned(accessory)
         let equipped = game.equippedAccessory == accessory
 
-        return HStack(spacing: 12) {
-            ZStack {
-                FighterFigureView(accessory: accessory)
-                    .frame(width: 66, height: 88)
-                    .opacity(owned ? 1 : 0.12)
+        return Button {
+            guard owned else { return }
+            if equipped {
+                game.clearAccessory()
+            } else {
+                game.equip(accessory: accessory)
+            }
+            Haptics.light()
+        } label: {
+            ZStack(alignment: .topTrailing) {
+                VStack(spacing: 5) {
+                    FighterFigureView(accessory: accessory)
+                        .frame(width: 112, height: 132)
+                        .opacity(owned ? 1 : 0.14)
+
+                    Text(accessory.name.uppercased())
+                        .font(.system(size: 9, weight: .black, design: .rounded))
+                        .foregroundStyle(owned ? .white : .white.opacity(0.5))
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.7)
+                        .multilineTextAlignment(.center)
+
+                    Text(unlockHint(accessory))
+                        .font(.system(size: 8, weight: .heavy, design: .rounded))
+                        .foregroundStyle(owned
+                                         ? .white.opacity(0.5)
+                                         : accessory.tint.opacity(0.8))
+                        .lineLimit(2)
+                        .minimumScaleFactor(0.75)
+                        .multilineTextAlignment(.center)
+                }
+                .frame(maxWidth: .infinity)
+                .padding(.horizontal, 4)
+                .padding(.vertical, 8)
+
                 if !owned {
                     Image(systemName: "lock.fill")
-                        .font(.system(size: 18, weight: .bold))
-                        .foregroundStyle(.white.opacity(0.75))
+                        .font(.system(size: 11, weight: .bold))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .padding(6)
+                        .background(Circle().fill(Color.black.opacity(0.6)))
+                        .padding(6)
+                } else if equipped {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 14, weight: .black))
+                        .foregroundStyle(Color(hex: 0xF5C451))
+                        .padding(4)
                 }
             }
-            .frame(width: 66, height: 88)
+            .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 12)
-                    .fill(Color.white.opacity(owned ? 0.06 : 0.02))
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(Color(hex: equipped ? 0x201D14 : 0x15171F))
             )
-
-            VStack(alignment: .leading, spacing: 5) {
-                Text(accessory.name.uppercased())
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-                    .foregroundStyle(owned ? .white : .white.opacity(0.45))
-
-                Text(unlockHint(accessory))
-                    .font(.system(size: 10, weight: .semibold, design: .rounded))
-                    .foregroundStyle(owned ? .white.opacity(0.6) : accessory.tint.opacity(0.75))
-                    .fixedSize(horizontal: false, vertical: true)
-
-                if owned {
-                    Button {
-                        game.equip(accessory: accessory)
-                        Haptics.light()
-                    } label: {
-                        Text(equipped ? "EQUIPPED" : "EQUIP")
-                            .font(.system(size: 10, weight: .black, design: .rounded))
-                            .tracking(1)
-                            .foregroundStyle(equipped ? Color.black : Color(hex: 0xF5C451))
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 5)
-                            .background(
-                                Capsule().fill(equipped
-                                               ? Color(hex: 0xF5C451)
-                                               : Color(hex: 0xF5C451).opacity(0.12))
-                            )
-                    }
-                    .buttonStyle(.plain)
-                    .disabled(equipped)
-                }
-            }
-
-            Spacer(minLength: 0)
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(equipped
+                            ? Color(hex: 0xF5C451)
+                            : Color.white.opacity(owned ? 0.1 : 0.05),
+                            lineWidth: equipped ? 2 : 1)
+            )
         }
-        .padding(12)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color(hex: 0x15171F)))
-        .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(equipped ? Color(hex: 0xF5C451) : Color.white.opacity(0.1),
-                        lineWidth: equipped ? 2 : 1)
-        )
-        .opacity(owned ? 1 : 0.8)
+        .buttonStyle(.plain)
+        .disabled(!owned)
+        .accessibilityLabel(accessory.name + ", " +
+                            (owned ? (equipped ? "equipped, tap to remove" : "equip")
+                                   : unlockHint(accessory)))
     }
 
     private func unlockHint(_ accessory: Accessory) -> String {
         if game.isAccessoryOwned(accessory) { return accessory.subtitle }
         if let planet = accessory.planetName {
-            return "Win the \(planet) boss or draw in its cosmetic gacha."
+            return "\(planet) GACHA"
         }
         if let level = accessory.levelRoadLevel {
-            return "Reach level \(level) on the level road to unlock."
+            return "TROPHY ROAD L\(level)"
         }
         if let level = accessory.milestoneLevel {
-            return "Reach level \(level) to unlock."
+            return "LEVEL \(level) MILESTONE"
         }
-        return "Keep playing to unlock."
+        return "KEEP PLAYING"
+    }
+
+    private func sectionTint(_ section: CosmeticSection) -> Color {
+        switch section {
+        case .earth: return Color(hex: 0x7BD77A)
+        case .uranus: return Color(hex: 0x7AD7F0)
+        case .sun: return Color(hex: 0xFFB35C)
+        case .trophy: return Color(hex: 0xF5C451)
+        case .others: return Color.white.opacity(0.7)
+        }
     }
 }

@@ -208,8 +208,9 @@ struct GachaView: View {
     }
 
     private var machine: some View {
-        let enabled = availableDraws >= 1 && !rolling
-        let allCost = availableDraws * Gacha.pullCost
+        let canDrawOne = availableDraws >= 1 && !rolling
+        let canDrawTen = availableDraws >= 10 && !rolling
+        let tenCost = 10 * Gacha.pullCost
 
         return VStack(spacing: 10) {
             ZStack {
@@ -239,39 +240,44 @@ struct GachaView: View {
 
             HStack(spacing: 10) {
                 drawButton(
-                    title: "DRAW \(Gacha.pullCost)",
-                    enabled: enabled,
-                    accessibility: "Draw one move for \(Gacha.pullCost) pens"
+                    title: "DRAW 1",
+                    cost: Gacha.pullCost,
+                    enabled: canDrawOne
                 ) { pull(1) }
 
                 drawButton(
-                    title: "DRAW ALL \(availableDraws)",
-                    enabled: enabled,
-                    accessibility: "Draw all \(availableDraws) moves for \(allCost) pens"
-                ) { pull(availableDraws) }
+                    title: "DRAW 10",
+                    cost: tenCost,
+                    enabled: canDrawTen
+                ) { pull(10) }
             }
         }
     }
 
     private func drawButton(
         title: String,
+        cost: Int,
         enabled: Bool,
-        accessibility: String,
         action: @escaping () -> Void
     ) -> some View {
         Button(action: action) {
-            HStack(spacing: 6) {
-                Image("DrawnToBattleGachaToken")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 20)
-                Text(title)
-                    .font(.system(size: 13, weight: .black, design: .rounded))
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.75)
+            VStack(spacing: 0) {
+                HStack(spacing: 5) {
+                    Image("DrawnToBattleGachaToken")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 18)
+                    Text(title)
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                }
+                Text("\(cost) PENS")
+                    .font(.system(size: 9, weight: .black, design: .rounded))
+                    .opacity(0.75)
             }
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
+            .padding(.vertical, 10)
             .background(
                 RoundedRectangle(cornerRadius: 14)
                     .fill(enabled ? Color(hex: 0xF5C451) : Color.white.opacity(0.12))
@@ -284,7 +290,7 @@ struct GachaView: View {
         }
         .buttonStyle(.plain)
         .disabled(!enabled)
-        .accessibilityLabel(accessibility)
+        .accessibilityLabel("\(title), \(cost) pens")
     }
 
     private var collectionProgress: some View {

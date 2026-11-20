@@ -21,7 +21,18 @@ enum AccessoryRender: String, Codable {
     case sunRing
 }
 
-/// Gear available from world gachas, the level road, and level milestones.
+/// Sections used by the cosmetics collection.
+enum CosmeticSection: String, CaseIterable, Identifiable {
+    case earth = "EARTH"
+    case uranus = "URANUS"
+    case sun = "SUN"
+    case trophy = "TROPHY"
+    case others = "OTHERS"
+
+    var id: String { rawValue }
+}
+
+/// Gear available from world gachas, the trophy road, and level milestones.
 /// Raw values stay stable so existing saves keep their earned pieces.
 enum Accessory: String, Codable, CaseIterable, Identifiable {
     // Earth gacha: nature, growth and glowing creatures.
@@ -119,6 +130,16 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// Header used when grouping cosmetics in the collection.
+    var collectionSection: CosmeticSection {
+        switch bossID {
+        case "earth": return .earth
+        case "mars": return .uranus
+        case "sun": return .sun
+        default: return levelRoadLevel != nil || milestoneLevel != nil ? .trophy : .others
+        }
+    }
+
     /// Level that awards this cosmetic outright.
     var milestoneLevel: Int? {
         switch self {
@@ -132,7 +153,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
 
     /// Level road step that awards this cosmetic.
     var levelRoadLevel: Int? {
-        self == .sunRing ? 8 : nil
+        self == .sunRing ? 10 : nil
     }
 
     static let milestoneLevels = [5, 10, 15, 20]
@@ -248,7 +269,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
             return "Dropped by the \(planet) cosmetic gacha."
         }
         if let level = levelRoadLevel {
-            return "Reached at level \(level) on the level road."
+            return "Reached at level \(level) on the trophy road."
         }
         return "Reached at level \(milestoneLevel ?? 0)."
     }
@@ -262,11 +283,11 @@ struct DailyReward {
     let xp: Int
 }
 
-// MARK: - Level road
+// MARK: - Trophy road
 
-/// One stop on the Level Road, reached at the given XP threshold.
-/// Reaching a level grants its rewards automatically (see
-/// `GameSave.claimReachedLevelRoadSteps`).
+/// One stop on the trophy road, reached at the given XP threshold.
+/// Reaching a level unlocks its reward, which the player claims by hand
+/// (see `GameSave.claimLevelRoadStep`).
 struct LevelRoadStep {
     let level: Int
     let rewardCoins: Int
