@@ -22,10 +22,11 @@ struct FrameTimelineView: View {
                     ForEach(Array(studio.project.frames.enumerated()), id: \.element.id) { index, frame in
                         FrameThumbnail(
                             pose: frame.pose,
-                            isSelected: index == studio.selectedIndex
+                            isSelected: index == studio.selectedIndex,
+                            isMultiSelected: studio.selectedFrameIDs.contains(frame.id)
                         )
                         .overlay(alignment: .top) {
-                            if draggingIndex == nil && index == studio.selectedIndex {
+                            if !studio.isMultiSelecting && draggingIndex == nil && index == studio.selectedIndex {
                                 Triangle()
                                     .fill(Color(hex: 0xF5C451))
                                     .frame(width: 12, height: 8)
@@ -43,11 +44,16 @@ struct FrameTimelineView: View {
                         .offset(x: draggingIndex == index ? dragOffset : 0)
                         .zIndex(draggingIndex == index ? 10 : 0)
                         .onTapGesture {
-                            if draggingIndex == nil { studio.selectFrame(index) }
+                            if studio.isMultiSelecting {
+                                studio.toggleFrameSelection(frame.id)
+                            } else if draggingIndex == nil {
+                                studio.selectFrame(index)
+                            }
                         }
                         .simultaneousGesture(
                             LongPressGesture(minimumDuration: 0.35)
                                 .onEnded { _ in
+                                    guard !studio.isMultiSelecting else { return }
                                     draggingIndex = index
                                     dropIndex = index
                                     Haptics.light()
@@ -56,7 +62,7 @@ struct FrameTimelineView: View {
                         .simultaneousGesture(
                             DragGesture(minimumDistance: 0)
                                 .onChanged { value in
-                                    guard draggingIndex == index else { return }
+                                    guard !studio.isMultiSelecting, draggingIndex == index else { return }
                                     dragOffset = value.translation.width
                                     let steps = Int((value.translation.width / cellWidth).rounded())
                                     let target = max(0,
@@ -127,6 +133,7 @@ struct Triangle: Shape {
 private struct FrameThumbnail: View {
     let pose: StickmanPose
     let isSelected: Bool
+    let isMultiSelected: Bool
 
     var body: some View {
         ZStack {
@@ -154,15 +161,21 @@ private struct FrameThumbnail: View {
             .frame(width: 32, height: 34)
             .background(
                 RoundedRectangle(cornerRadius: 7)
-                    .fill(Color.white.opacity(isSelected ? 0.16 : 0.06))
+                    .fill(
+                        isMultiSelected
+                            ? Color(hex: 0x4C8DFF).opacity(0.3)
+                            : Color.white.opacity(isSelected ? 0.16 : 0.06)
+                    )
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 7)
                     .stroke(
-                        isSelected
-                            ? Color(hex: 0xF5C451).opacity(0.9)
-                            : Color.white.opacity(0.12),
-                        lineWidth: isSelected ? 2.2 : 1
+                        isMultiSelected
+                            ? Color(hex: 0x4C8DFF)
+                            : (isSelected
+                                ? Color(hex: 0xF5C451).opacity(0.9)
+                                : Color.white.opacity(0.12)),
+                        lineWidth: (isMultiSelected || isSelected) ? 2.2 : 1
                     )
             )
         }

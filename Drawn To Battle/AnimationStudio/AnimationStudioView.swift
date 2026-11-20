@@ -269,11 +269,23 @@ private struct StudioButtonsRow: View {
                 PlaySpeedToggle(studio: studio)
                 OnionToggleButton(studio: studio)
                 FilmChipButton(studio: studio)
+                StudioIconButton(
+                    systemImage: studio.isMultiSelecting
+                        ? "checkmark.circle.fill"
+                        : "checkmark.circle"
+                ) {
+                    studio.setMultiSelecting(!studio.isMultiSelecting)
+                }
+                .accessibilityLabel("Select multiple frames")
                 StudioIconButton(systemImage: "doc.on.doc") {
                     studio.duplicateFrame(at: studio.selectedIndex)
                 }
                 StudioIconButton(systemImage: "trash", tinted: Color(hex: 0xE86A6A)) {
-                    studio.deleteFrame(at: studio.selectedIndex)
+                    if studio.isMultiSelecting, !studio.selectedFrameIDs.isEmpty {
+                        studio.deleteSelectedFrames()
+                    } else {
+                        studio.deleteFrame(at: studio.selectedIndex)
+                    }
                 }
                 Spacer(minLength: 0)
             }

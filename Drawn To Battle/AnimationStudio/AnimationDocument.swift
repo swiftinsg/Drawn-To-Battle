@@ -84,6 +84,10 @@ final class StudioState: ObservableObject {
         didSet { clampSelection() }
     }
 
+    /// Multi-select state for deleting a group of frames at once.
+    @Published var isMultiSelecting = false
+    @Published var selectedFrameIDs: Set<UUID> = []
+
     @Published var isPlaying = false
 
     @Published var hasUnsavedChanges = false
@@ -152,8 +156,40 @@ final class StudioState: ObservableObject {
 
     func deleteFrame(at index: Int) {
         guard project.frames.count > 1, project.frames.indices.contains(index) else { return }
+        let id = project.frames[index].id
         project.frames.remove(at: index)
+        selectedFrameIDs.remove(id)
         clampSelection()
+        markAnimatedChange()
+    }
+
+    /// Enter or leave multi-select. Leaving clears the checked frames.
+    func setMultiSelecting(_ enabled: Bool) {
+        isMultiSelecting = enabled
+        if !enabled { selectedFrameIDs.removeAll() }
+    }
+
+    /// Toggle a frame's checkmark while multi-select is active.
+    func toggleFrameSelection(_ id: UUID) {
+        guard isMultiSelecting else { return }
+        if selectedFrameIDs.contains(id) {
+            selectedFrameIDs.remove(id)
+        } else {
+            selectedFrameIDs.insert(id)
+        }
+    }
+
+    /// Delete every checked frame, always keeping at least one frame left.
+    func deleteSelectedFrames() {
+        guard isMultiSelecting, !selectedFrameIDs.isEmpty else { return }
+        let ids = selectedFrameIDs
+        let remaining = project.frames.filter { !ids.contains($0.id) }
+        guard !remaining.isEmpty else { return }
+        project.frames = remaining
+        if !remaining.indices.contains(selectedIndex) {
+            selectedIndex = min(selectedIndex, remaining.count - 1)
+        }
+        selectedFrameIDs.removeAll()
         markAnimatedChange()
     }
 
@@ -169,12 +205,15 @@ final class StudioState: ObservableObject {
     func selectFrame(_ index: Int) {
         guard project.frames.indices.contains(index) else { return }
         selectedIndex = index
+        if !isMultiSelecting { selectedFrameIDs.removeAll() }
     }
 
     private func clampSelection() {
         if !project.frames.indices.contains(selectedIndex) {
             selectedIndex = max(0, project.frames.count - 1)
         }
+        let validIDs = Set(project.frames.map(\.id))
+        selectedFrameIDs = selectedFrameIDs.filter { validIDs.contains($0) }
     }
 
     // MARK: Playback
