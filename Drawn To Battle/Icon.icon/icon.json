@@ -1,0 +1,42 @@
+{
+  "fill" : {
+    "solid" : "srgb:0.00000,0.95368,1.00000,1.00000"
+  },
+  "groups" : [
+    {
+      "layers" : [
+        {
+          "glass" : false,
+          "image-name" : "Vector.svg",
+          "name" : "Vector",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              -140,
+              198
+            ]
+          }
+        },
+        {
+          "glass" : false,
+          "image-name" : "icon(nobg).svg",
+          "name" : "icon(nobg)"
+        }
+      ],
+      "shadow" : {
+        "kind" : "neutral",
+        "opacity" : 0.5
+      },
+      "translucency" : {
+        "enabled" : true,
+        "value" : 0.3
+      }
+    }
+  ],
+  "supported-platforms" : {
+    "circles" : [
+      "watchOS"
+    ],
+    "squares" : "shared"
+  }
+}
