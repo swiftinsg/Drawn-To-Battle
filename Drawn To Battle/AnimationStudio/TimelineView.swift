@@ -22,8 +22,7 @@ struct FrameTimelineView: View {
                     ForEach(Array(studio.project.frames.enumerated()), id: \.element.id) { index, frame in
                         FrameThumbnail(
                             pose: frame.pose,
-                            isSelected: index == studio.selectedIndex,
-                            index: index
+                            isSelected: index == studio.selectedIndex
                         )
                         .overlay(alignment: .top) {
                             if draggingIndex == nil && index == studio.selectedIndex {
@@ -88,17 +87,6 @@ struct FrameTimelineView: View {
 
             Spacer()
 
-            // Frame counter + hold time, like the reference's "Frame n of m holds 0.42 s".
-            Text("FRAME \(studio.selectedIndex + 1) OF \(studio.project.frames.count) · HOLDS \(String(format: "%.2f", studio.currentFrameDuration)) S")
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.55))
-                .lineLimit(1)
-
-            // Timecode from the start of the project through the selected frame.
-            Text(timecodeString(studio.currentFrameStartTime))
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.55))
-
             // FPS stepper.
             Stepper("FPS \(studio.project.fps)", value: Binding(
                 get: { studio.project.fps },
@@ -136,33 +124,12 @@ struct Triangle: Shape {
     }
 }
 
-/// HH:MM:SS timecode.
-private func timecodeString(_ seconds: TimeInterval) -> String {
-    let s = Int(seconds.rounded())
-    return String(format: "%02d:%02d:%02d", s / 3600, (s / 60) % 60, s % 60)
-}
-
 private struct FrameThumbnail: View {
     let pose: StickmanPose
     let isSelected: Bool
-    let index: Int
 
     var body: some View {
         ZStack {
-            // Frame number badge.
-            Text("\(index + 1)")
-                .font(.system(size: 7, weight: .black, design: .monospaced))
-                .foregroundStyle(isSelected ? .black : .white.opacity(0.7))
-                .frame(width: 16, height: 14)
-                .background(
-                    isSelected
-                        ? Color(hex: 0xF5C451)
-                        : Color.white.opacity(0.08)
-                )
-                .clipShape(Capsule())
-                .position(x: 5, y: 4)
-                .allowsHitTesting(false)
-
             Canvas { context, size in
                 var scaled = pose
                 let thumbScale: CGFloat = 0.34

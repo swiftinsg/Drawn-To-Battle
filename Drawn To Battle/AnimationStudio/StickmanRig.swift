@@ -145,7 +145,11 @@ enum StickmanRenderer {
 /// Maps pose-space coordinates (a fixed 400×520 design space) onto any canvas size,
 /// keeping the figure visible regardless of aspect ratio.
 struct PoseViewTransform {
-    static let space = CGSize(width: 400, height: 520)
+    /// Tight bounds of the default figure in pose-space (hip at 200,430).
+    /// Fitting these instead of the old 400×520 design space makes the
+    /// stickman fill the canvas like the earlier builds, instead of floating
+    /// tiny in the middle of a much larger coordinate space.
+    static let figureBounds = CGRect(x: 140, y: 325, width: 120, height: 210)
 
     let scale: CGFloat
     let offsetX: CGFloat
@@ -166,12 +170,11 @@ struct PoseViewTransform {
         let bottom = bottomMargin + 14
         let usableWidth = max(1, canvasSize.width - left - right)
         let usableHeight = max(1, canvasSize.height - top - bottom)
-        let s = min(usableWidth / Self.space.width, usableHeight / Self.space.height)
-        // Grow the figure a little inside the fitted canvas so the rig reads
-        // clearly while the bottom controls stay compact.
-        scale = s * 1.22
-        offsetX = left + (usableWidth - Self.space.width * s) / 2
-        offsetY = top + (usableHeight - Self.space.height * s * 1.22) / 2
+        scale = min(usableWidth / Self.figureBounds.width, usableHeight / Self.figureBounds.height)
+        // Center the figure itself, not the old design-space origin, so the
+        // bigger rig stays between the two bars instead of dropping below them.
+        offsetX = left + usableWidth / 2 - Self.figureBounds.midX * scale
+        offsetY = top + usableHeight / 2 - Self.figureBounds.midY * scale
     }
 
     func toCanvas(_ p: CGPoint) -> CGPoint {
