@@ -90,7 +90,7 @@ struct AnimationStudioView: View {
     }
 
     private var topBarHeight: CGFloat { 48 }
-    private var bottomPanelHeight: CGFloat { 155 }
+    private var bottomPanelHeight: CGFloat { 130 }
 
     /// Top bar: BACK, project chip, quality readout, mode tabs, save.
     private var topBar: some View {
@@ -292,7 +292,7 @@ private struct BigPlayButton: View {
             Image(systemName: studio.isPlaying ? "stop.fill" : "play.fill")
                 .font(.system(size: 20, weight: .black))
                 .foregroundStyle(studio.isPlaying ? .black : .white)
-                .frame(width: 40, height: 40)
+                .frame(width: 34, height: 34)
                 .background(
                     Circle().fill(studio.isPlaying
                         ? Color.white.opacity(0.12)

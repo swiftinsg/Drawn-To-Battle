@@ -184,7 +184,7 @@ private struct FrameThumbnail: View {
                 )
                 context.fill(Path(ellipseIn: headRect), with: .color(scaled.color))
             }
-            .frame(width: 40, height: 42)
+            .frame(width: 32, height: 34)
             .background(
                 RoundedRectangle(cornerRadius: 7)
                     .fill(Color.white.opacity(isSelected ? 0.16 : 0.06))

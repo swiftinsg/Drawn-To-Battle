@@ -167,9 +167,11 @@ struct PoseViewTransform {
         let usableWidth = max(1, canvasSize.width - left - right)
         let usableHeight = max(1, canvasSize.height - top - bottom)
         let s = min(usableWidth / Self.space.width, usableHeight / Self.space.height)
-        scale = s
+        // Grow the figure a little inside the fitted canvas so the rig reads
+        // clearly while the bottom controls stay compact.
+        scale = s * 1.22
         offsetX = left + (usableWidth - Self.space.width * s) / 2
-        offsetY = top + (usableHeight - Self.space.height * s) / 2
+        offsetY = top + (usableHeight - Self.space.height * s * 1.22) / 2
     }
 
     func toCanvas(_ p: CGPoint) -> CGPoint {
