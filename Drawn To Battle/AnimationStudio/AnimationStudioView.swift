@@ -70,6 +70,15 @@ struct AnimationStudioView: View {
                 StudioTutorialView(game: game)
             }
         }
+        // Blueprint tutorial — "how to animate" for the blueprint you opened.
+        .sheet(
+            isPresented: Binding(
+                get: { studio.showBlueprintTutorial },
+                set: { studio.showBlueprintTutorial = $0 }
+            )
+        ) {
+            BlueprintTutorialView { studio.showBlueprintTutorial = false }
+        }
         .onDisappear { studio.stop() }
         .sheet(isPresented: $projectsBrowserShown) {
             ProjectBrowserSheet(studio: studio)

@@ -92,7 +92,17 @@ final class StudioState: ObservableObject {
     @Published var playbackSpeed: Double = 1
   
     @Published var editingBlueprintID: String?
- 
+  
+    /// Per-blueprint "how to animate" tutorials — shown when a blueprint is
+    /// opened for the first time instead of a pre-made base animation.
+    @Published var showBlueprintTutorial = false
+
+    /// Blueprints whose "how to animate" tutorial has been shown.
+    static var blueprintTutorialsShown: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: "DrawnToBattle.blueprintTutorialsShown") ?? []) }
+        set { UserDefaults.standard.set(Array(newValue), forKey: "DrawnToBattle.blueprintTutorialsShown") }
+    }
+
     var game: GameSave?
 
     private var playbackTimer: Timer?
@@ -234,7 +244,18 @@ final class StudioState: ObservableObject {
 
     func editBlueprint(_ blueprint: MoveBlueprint, edited: AnimationProject?) {
         stop()
-        project = edited ?? blueprint.baseAnimation
+        var shown = Self.blueprintTutorialsShown
+        let unseen = !shown.contains(blueprint.id)
+        if unseen {
+            shown.insert(blueprint.id)
+            Self.blueprintTutorialsShown = shown
+            showBlueprintTutorial = true
+        }
+        // On the tutorial pass you start from the blank starter pose — there
+        // is no pre-made animation to copy; the tutorial teaches you to build
+        // one. After the tutorial has been seen, you get the blueprint's base
+        // animation as usual.
+        project = edited ?? (unseen ? .blank() : blueprint.baseAnimation)
         editingBlueprintID = blueprint.id
         selectedIndex = 0
         hasUnsavedChanges = false
