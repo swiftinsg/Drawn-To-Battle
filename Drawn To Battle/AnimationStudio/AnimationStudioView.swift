@@ -33,7 +33,8 @@ struct AnimationStudioView: View {
                     },
                     editingHandles: !studio.isPlaying,
                     bottomInset: mode == .animate ? bottomPanelHeight : 0,
-                    ghostPoses: onionSkinGhosts
+                    ghostPoses: onionSkinGhosts,
+                    futureGhost: onionSkinFuture
                 )
                 .ignoresSafeArea(edges: .bottom)
 
@@ -45,16 +46,6 @@ struct AnimationStudioView: View {
 
                 // Top bar.
                 topBar
-
-                // Right-hand inspector panel (floats over the canvas).
-                if mode == .animate {
-                    StudioInspectorPanel(studio: studio, selectedBone: $selectedBone)
-                        .frame(width: inspectorWidth, height: zoneHeight(geo))
-                        .position(
-                            x: geo.size.width - inspectorWidth / 2,
-                            y: zoneTop(geo) + zoneHeight(geo) / 2
-                        )
-                }
             }
         }
         .onAppear {
@@ -267,7 +258,7 @@ struct AnimationStudioView: View {
         }
     }
 
-    /// Up to two previous frames for onion skinning, nearest first.
+    /// Previous frames for onion skinning, nearest first.
     private var onionSkinGhosts: [StickmanPose] {
         guard studio.onionSkin else { return [] }
         let idx = studio.selectedIndex
@@ -279,6 +270,13 @@ struct AnimationStudioView: View {
             ghosts.append(studio.project.frames[idx - 2].pose)
         }
         return ghosts
+    }
+
+    /// The onion-skin "future" frame ghost — the frame after the selected one.
+    private var onionSkinFuture: StickmanPose? {
+        guard studio.onionSkin,
+              studio.project.frames.indices.contains(studio.selectedIndex + 1) else { return nil }
+        return studio.project.frames[studio.selectedIndex + 1].pose
     }
 
     // MARK: Rotation conversion
@@ -666,160 +664,6 @@ private struct FrameMgmtStrip: View {
     }
 }
 
-// MARK: - Right inspector panel (reference: Properties)
-
-/// Floating panel on the right of the canvas in ANIMATE mode:
-/// the selected bone's transform and appearance.
-private struct StudioInspectorPanel: View {
-    @ObservedObject var studio: StudioState
-    @Binding var selectedBone: Bone?
-    @State private var colorPickerShown = false
-
-    private var pose: StickmanPose { studio.currentFrame?.pose ?? StickmanPose() }
-    private var bone: Bone { selectedBone ?? .torso }
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("PROPERTIES")
-                .font(.system(size: 9, weight: .black, design: .rounded))
-                .foregroundStyle(.white.opacity(0.4))
-                .padding(.horizontal, 12)
-
-            InspectorSection(title: "TRANSFORM") {
-                InspectorRow(label: "X", binding: rootXBinding, range: 0...420,
-                             display: "\(Int(pose.root.x.rounded()))")
-                InspectorRow(label: "Y", binding: rootYBinding, range: 0...520,
-                             display: "\(Int(pose.root.y.rounded()))")
-                InspectorRow(label: "ANGLE", binding: angleBinding, range: -3.15...3.15,
-                             display: String(format: "%.0f°", degrees(pose.angles[bone] ?? 0)))
-                InspectorRow(label: "SCALE", binding: scaleBinding, range: 0.5...2.0,
-                             display: String(format: "%.1f", pose.scale))
-            }
-            .padding(.horizontal, 12)
-
-            InspectorSection(title: "APPEARANCE") {
-                HStack(spacing: 8) {
-                    Circle()
-                        .fill(pose.color)
-                        .frame(width: 20, height: 20)
-                        .overlay(Circle().stroke(Color.white.opacity(0.45), lineWidth: 1))
-                        .onTapGesture { colorPickerShown = true }
-                    Text(hexText)
-                        .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                        .foregroundStyle(.white.opacity(0.85))
-                }
-                .onTapGesture { colorPickerShown = true }
-            }
-            .padding(.horizontal, 12)
-
-            Spacer()
-        }
-        .padding(.top, 8)
-        .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color(hex: 0x121420))
-                .shadow(color: Color.black.opacity(0.4), radius: 8, y: 4)
-                .overlay(RoundedRectangle(cornerRadius: 14).stroke(Color.white.opacity(0.07), lineWidth: 1))
-        )
-        .popover(isPresented: $colorPickerShown) {
-            ColorPicker("Stickman color", selection: Binding(
-                get: { pose.color },
-                set: { color in studio.updateCurrentPose { $0.colorARGB = rgbaToARGB(color) } }
-            ))
-            .padding()
-        }
-    }
-
-    // MARK: Bindings
-
-    private var rootXBinding: Binding<Double> {
-        Binding(
-            get: { Double(pose.root.x) },
-            set: { x in studio.updateCurrentPose { $0.root.x = CGFloat(x).clamped(10...390) } }
-        )
-    }
-
-    private var rootYBinding: Binding<Double> {
-        Binding(
-            get: { Double(pose.root.y) },
-            set: { y in studio.updateCurrentPose { $0.root.y = CGFloat(y).clamped(30...505) } }
-        )
-    }
-
-    private var angleBinding: Binding<Double> {
-        Binding(
-            get: { Double(pose.angles[bone] ?? 0) },
-            set: { angle in studio.updateCurrentPose { $0.angles[bone] = CGFloat(angle) } }
-        )
-    }
-
-    private var scaleBinding: Binding<Double> {
-        Binding(
-            get: { Double(pose.scale) },
-            set: { scale in studio.updateCurrentPose { $0.scale = CGFloat(scale).clamped(0.5...2.0) } }
-        )
-    }
-
-    private func degrees(_ radians: CGFloat) -> CGFloat {
-        radians * 57.2958
-    }
-
-    private var hexText: String {
-        var r: CGFloat = 0, g: CGFloat = 0, b: CGFloat = 0, a: CGFloat = 0
-        UIColor(pose.color).getRed(&r, green: &g, blue: &b, alpha: &a)
-        func hex(_ v: CGFloat) -> String {
-            String(format: "%02X", Int(max(0, min(1, v)) * 255))
-        }
-        return "#\(hex(r))\(hex(g))\(hex(b))"
-    }
-}
-
-private struct InspectorSection<Content: View>: View {
-    let title: String
-    @ViewBuilder let content: () -> Content
-
-    var body: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            Text(title)
-                .font(.system(size: 9, weight: .black, design: .rounded))
-                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.7))
-                .tracking(0.8)
-            content()
-        }
-    }
-}
-
-private struct InspectorRow: View {
-    let label: String
-    let binding: Binding<Double>
-    let range: ClosedRange<Double>
-    let display: String
-
-    var body: some View {
-        HStack(spacing: 8) {
-            Text(label)
-                .font(.system(size: 11, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.6))
-                .frame(width: 30, alignment: .leading)
-            Slider(value: binding, in: range)
-                .tint(Color(hex: 0xF5C451))
-                .controlSize(.small)
-            Text(display)
-                .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                .foregroundStyle(.white.opacity(0.8))
-                .frame(width: 44, alignment: .trailing)
-        }
-    }
-}
-
-extension CGFloat {
-    fileprivate func clamped(_ range: ClosedRange<CGFloat>) -> CGFloat {
-        var result = self
-        if result < range.lowerBound { result = range.lowerBound }
-        if result > range.upperBound { result = range.upperBound }
-        return result
-    }
-}
 
 // MARK: - Shared UI bits
 

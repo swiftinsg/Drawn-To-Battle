@@ -17,6 +17,8 @@ struct StickmanCanvasView: View {
     var bottomInset: CGFloat = 0
     /// Faded ghosts of previous frames (onion skinning), nearest first.
     var ghostPoses: [StickmanPose] = []
+    /// The "future" frame ghost — the frame after the selected one.
+    var futureGhost: StickmanPose? = nil
 
     @State private var dragBone: Bone?
 
@@ -39,14 +41,15 @@ struct StickmanCanvasView: View {
                         style: StrokeStyle(lineWidth: 1.5, dash: [6, 6])
                     )
 
-                    // Onion-skin ghosts of previous frames.
+                    // Onion skin: previous frames in red, the future frame in blue.
                     for (ghostIndex, ghost) in ghostPoses.enumerated() {
-                        let alpha = 0.22 - Double(ghostIndex) * 0.09
+                        let alpha = 0.6 - Double(ghostIndex) * 0.12
                         guard alpha > 0 else { continue }
+                        let red = Color(hex: 0xE84040)
                         let ghostPath = t.transformedPath(StickmanKinematics.skeletonPath(for: ghost))
                         context.stroke(
                             ghostPath,
-                            with: .color(Color(hex: 0x1A1A1E).opacity(alpha)),
+                            with: .color(red.opacity(alpha)),
                             style: StrokeStyle(lineWidth: ghost.thickness * t.scale, lineCap: .round, lineJoin: .round)
                         )
                         let ghostHead = StickmanKinematics.headCircle(for: ghost)
@@ -54,7 +57,25 @@ struct StickmanCanvasView: View {
                         let ghr = ghostHead.radius * t.scale
                         context.fill(
                             Path(ellipseIn: CGRect(x: ghc.x - ghr, y: ghc.y - ghr, width: ghr * 2, height: ghr * 2)),
-                            with: .color(Color(hex: 0x1A1A1E).opacity(alpha))
+                            with: .color(red.opacity(alpha))
+                        )
+                    }
+
+                    if let futureGhost {
+                        let blue = Color(hex: 0x4070FF)
+                        let alpha: Double = 0.55
+                        let futurePath = t.transformedPath(StickmanKinematics.skeletonPath(for: futureGhost))
+                        context.stroke(
+                            futurePath,
+                            with: .color(blue.opacity(alpha)),
+                            style: StrokeStyle(lineWidth: futureGhost.thickness * t.scale, lineCap: .round, lineJoin: .round)
+                        )
+                        let futureHead = StickmanKinematics.headCircle(for: futureGhost)
+                        let fc = t.toCanvas(futureHead.center)
+                        let fr = futureHead.radius * t.scale
+                        context.fill(
+                            Path(ellipseIn: CGRect(x: fc.x - fr, y: fc.y - fr, width: fr * 2, height: fr * 2)),
+                            with: .color(blue.opacity(alpha))
                         )
                     }
 
