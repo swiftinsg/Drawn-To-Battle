@@ -17,6 +17,18 @@ struct AnimationStudioView: View {
     var body: some View {
         GeometryReader { geo in
             ZStack {
+                // Paper sheet behind the whole studio area (light canvas
+                // with a dark sketch border).
+                Color(hex: 0xF7F7F7)
+                    .ignoresSafeArea()
+                    .overlay(
+                        GeometryReader { geo in
+                            Rectangle()
+                                .stroke(Color.black.opacity(0.10), lineWidth: 2)
+                                .frame(width: geo.size.width, height: geo.size.height)
+                        }
+                    )
+
                 // Full-screen paper canvas, inset to keep the figure and floor
                 // above the bottom panel when animating.
                 StickmanCanvasView(

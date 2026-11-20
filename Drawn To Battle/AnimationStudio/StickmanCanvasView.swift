@@ -26,11 +26,15 @@ struct StickmanCanvasView: View {
         GeometryReader { geo in
             let t = PoseViewTransform(canvasSize: geo.size, bottomMargin: bottomInset + 26)
             ZStack {
-                // Paper surface: the canvas is a light "sheet of paper" with a
-                // dark sketch border, surrounded by dark studio chrome.
-                PaperSurface()
-
                 Canvas { context, size in
+                    // Paper sheet behind the stickman (F7F7F7, with a dark
+                    // sketch border so it reads as a paper page).
+                    var paper = Path()
+                    paper.addRect(CGRect(origin: .zero, size: size))
+                    context.fill(paper, with: .color(Color(hex: 0xF7F7F7)))
+                    context.stroke(paper, with: .color(Color.black.opacity(0.10)),
+                                   style: StrokeStyle(lineWidth: 2))
+
                     // Floor line for readability.
                     var floor = Path()
                     floor.move(to: CGPoint(x: 20, y: size.height - bottomInset - 14))
@@ -189,23 +193,6 @@ struct StickmanCanvasView: View {
         case .leftShin: return joints[.leftKnee]
         case .rightShin: return joints[.rightKnee]
         }
-    }
-}
-
-// MARK: - Paper surface
-
-/// The canvas zone: a light paper sheet with a dark sketch border,
-/// sitting on dark studio chrome around it.
-private struct PaperSurface: View {
-    var body: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(Color(hex: 0xF7F7F7))
-            .shadow(color: Color.black.opacity(0.18), radius: 12, y: 2)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.black.opacity(0.10), lineWidth: 2)
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 }
 
