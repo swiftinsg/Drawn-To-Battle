@@ -248,7 +248,7 @@ final class StudioState: ObservableObject {
         autosaveWorkItem?.cancel()
         let work = DispatchWorkItem { [weak self] in
             guard let self else { return }
-            try? self.persistProject()
+            _ = try? self.persistProject()
             self.hasUnsavedChanges = false
         }
         autosaveWorkItem = work
@@ -272,7 +272,7 @@ final class StudioState: ObservableObject {
     func flushAutosave() {
         guard hasUnsavedChanges else { return }
         cancelAutosave()
-        try? persistProject()
+        _ = try? persistProject()
         hasUnsavedChanges = false
     }
 
