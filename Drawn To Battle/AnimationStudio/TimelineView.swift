@@ -110,8 +110,8 @@ struct FrameTimelineView: View {
                 .fixedSize()
         }
         .padding(.horizontal, 12)
-        .padding(.top, 1)
-        .padding(.bottom, 3)
+        .padding(.top, 4)
+        .padding(.bottom, 8)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color(hex: 0x14161E))
@@ -184,7 +184,7 @@ private struct FrameThumbnail: View {
                 )
                 context.fill(Path(ellipseIn: headRect), with: .color(scaled.color))
             }
-            .frame(width: 40, height: 42)
+            .frame(width: 42, height: 48)
             .background(
                 RoundedRectangle(cornerRadius: 7)
                     .fill(Color.white.opacity(isSelected ? 0.16 : 0.06))
