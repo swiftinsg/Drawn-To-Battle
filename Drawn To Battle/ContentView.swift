@@ -32,6 +32,7 @@ struct ContentView: View {
                         game.ownedBlueprints.insert(id)
                     }
                     if let bp = BlueprintCatalog.blueprint(id: "smear_speedline") {
+                        game.markBlueprintLearned(bp.id)
                         game.equip(blueprint: bp)
                     }
                 }

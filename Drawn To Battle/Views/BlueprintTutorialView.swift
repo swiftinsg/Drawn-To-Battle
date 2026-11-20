@@ -2,35 +2,82 @@ import SwiftUI
 
 // MARK: - Blueprint tutorial
 //
-// "How to animate" walkthrough, shown when a blueprint is opened for the
-// first time, instead of a pre-made base animation. The studio starts blank
-// and you build the move yourself.
+// An "how to animate" lesson for one specific move. Shown when a blueprint is
+// opened before it has been learned — the studio starts blank and the player
+// builds the move themselves. Only finishing the lesson unlocks the move.
 
 struct BlueprintTutorialView: View {
     @Environment(\.dismiss) private var dismiss
+    let blueprint: MoveBlueprint
     var onFinish: () -> Void
 
     @State private var step = 0
 
-    private let steps: [(title: String, body: String)] = [
-        ("YOUR BLUEPRINT",
-         "Blueprints are the moves you animate and equip in battle. Here you learn to make your own from a blank canvas."),
+    /// Move-specific coaching for each combat technique. The player is taught
+    /// the poses that make the move, not just the studio's buttons.
+    private var techniqueLesson: (title: String, poses: [String]) {
+        switch blueprint.technique {
+        case .punch:
+            return ("HOW A PUNCH WORKS", [
+                "GUARD — elbows bent, both fists up near the chin.",
+                "WIND-UP — pull the striking arm back and turn the shoulder.",
+                "IMPACT — snap the arm straight out, fist extended toward the target."
+            ])
+        case .kick:
+            return ("HOW A KICK WORKS", [
+                "SET — shift your weight onto the standing leg.",
+                "CHAMBER — lift the striking knee up toward the chest.",
+                "EXTEND — drive the leg out and snap the foot forward."
+            ])
+        case .slam:
+            return ("HOW A SLAM WORKS", [
+                "RAISE — swing both arms high above the head.",
+                "HOLD — stretch tall at the top of the motion.",
+                "CRASH — bring both fists down hard in a single snap."
+            ])
+        case .spin:
+            return ("HOW A SPIN WORKS", [
+                "WIND — coil the torso and arms to one side.",
+                "TURN — rotate the whole body through the arc on one foot.",
+                "LAND — stop facing forward and settle into your stance."
+            ])
+        case .dash:
+            return ("HOW A DASH WORKS", [
+                "CROUCH — lean the torso low and load the back leg.",
+                "PUSH — drive forward, stretching the lead leg out.",
+                "ARRIVE — snap upright as the figure reaches its new spot."
+            ])
+        case .smear:
+            return ("HOW A SMEAR WORKS", [
+                "EXTREME POSE — push the striking limb to its furthest reach.",
+                "STRETCH IT — lengthen the limb and thin the stroke into a streak.",
+                "ONE FRAME — a smear lives in a single, blistering frame."
+            ])
+        }
+    }
 
-        ("MOVE THE JOINTS",
-         "Drag any joint handle on the stickman to rotate that part. Drag the whole figure to move it. Every change updates your frame live."),
+    private var steps: [(title: String, body: String)] {
+        [
+            ("YOU UNLOCKED \(blueprint.name.uppercased())",
+             "\(blueprint.blurb)\n\nThis is a \(blueprint.technique.label) move. It's yours to animate — but you can't use it in battle until you've built it yourself."),
 
-        ("ADD FRAMES",
-         "Tap the film-strip button to key a new pose. String poses together and you've got your animation."),
+            (techniqueLesson.title,
+             "A good \(blueprint.technique.label) is made from key poses. Build these three frames:\n\n"
+                + techniqueLesson.poses.enumerated().map { "\($0.offset + 1). \($0.element)" }.joined(separator: "\n")),
 
-        ("PLAY IT BACK",
-         "Hit the play button to preview your move at the speed you choose. The ghost toggle shows red past frames and a blue next frame."),
+            ("MOVE THE JOINTS",
+             "Drag the gold joint handles on the stickman to rotate each body part. Drag the whole figure to move it. Start from the first pose above, then key a frame for the next."),
 
-        ("THE POWER METER",
-         "Animation quality drives damage. The POWER readout in the studio tells you how good your move is right now."),
+            ("ADD FRAMES",
+             "Tap the film-strip button to key each new pose. Your three poses become a sequence — the animation plays from one frame to the next."),
 
-        ("SAVE YOUR MOVE",
-         "Your animation saves automatically. It becomes the equipped move in battle, and you can animate again anytime to improve it."),
-    ]
+            ("PLAY & POLISH",
+             "Hit play to preview the move. Use the ghost toggle to see your previous and next frames so the poses flow together. Bigger, cleaner motion means more POWER and more damage."),
+
+            ("SAVE YOUR MOVE",
+             "Your animation saves automatically as YOUR version of \(blueprint.name). Finish the lesson to unlock it — then equip it from your Collection and take it into battle."),
+        ]
+    }
 
     var body: some View {
         ZStack {

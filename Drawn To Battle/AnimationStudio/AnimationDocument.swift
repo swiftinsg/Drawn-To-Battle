@@ -94,14 +94,13 @@ final class StudioState: ObservableObject {
 
     @Published var editingBlueprintID: String?
 
-    /// Per-blueprint "how to animate" tutorials, shown when a blueprint is
-    /// opened for the first time instead of a pre-made base animation.
+    /// Per-blueprint "how to animate" lesson, shown when an unlearned move is
+    /// opened. The blueprint is only marked learned when the lesson is finished.
     @Published var showBlueprintTutorial = false
 
-    /// Blueprints whose "how to animate" tutorial has been shown.
-    static var blueprintTutorialsShown: Set<String> {
-        get { Set(UserDefaults.standard.stringArray(forKey: "DrawnToBattle.blueprintTutorialsShown") ?? []) }
-        set { UserDefaults.standard.set(Array(newValue), forKey: "DrawnToBattle.blueprintTutorialsShown") }
+    /// The blueprint currently open in the studio, if any.
+    var editingBlueprint: MoveBlueprint? {
+        editingBlueprintID.flatMap { BlueprintCatalog.blueprint(id: $0) }
     }
 
     var game: GameSave?
@@ -288,15 +287,12 @@ final class StudioState: ObservableObject {
     func editBlueprint(_ blueprint: MoveBlueprint, edited: AnimationProject?) {
         stop()
         cancelAutosave()
-        var shown = Self.blueprintTutorialsShown
-        let unseen = !shown.contains(blueprint.id)
-        if unseen {
-            shown.insert(blueprint.id)
-            Self.blueprintTutorialsShown = shown
-            showBlueprintTutorial = true
-        }
-      
-        project = edited ?? (unseen ? .blank() : blueprint.baseAnimation)
+        // A move you haven't learned opens as a blank canvas with its lesson.
+        // Finishing the lesson marks it learned; closing early leaves it locked.
+        let unlearned = !(game?.isBlueprintLearned(blueprint.id) ?? true)
+        showBlueprintTutorial = unlearned
+
+        project = edited ?? (unlearned ? .blank() : blueprint.baseAnimation)
         editingBlueprintID = blueprint.id
         selectedIndex = 0
         hasUnsavedChanges = false

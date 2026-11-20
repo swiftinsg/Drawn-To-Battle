@@ -64,14 +64,20 @@ struct AnimationStudioView: View {
                 StudioTutorialView(game: game)
             }
         }
-        // Blueprint tutorial, shown the first time a blueprint is opened.
+        // Blueprint lesson — shown for an unlearned move. Only finishing it
+        // unlocks the move for equipping in battle.
         .sheet(
             isPresented: Binding(
                 get: { studio.showBlueprintTutorial },
                 set: { studio.showBlueprintTutorial = $0 }
             )
         ) {
-            BlueprintTutorialView { studio.showBlueprintTutorial = false }
+            if let blueprint = studio.editingBlueprint {
+                BlueprintTutorialView(blueprint: blueprint) {
+                    studio.game?.markBlueprintLearned(blueprint.id)
+                    studio.showBlueprintTutorial = false
+                }
+            }
         }
         .onDisappear {
             studio.stop()

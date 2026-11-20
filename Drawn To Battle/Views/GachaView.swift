@@ -47,6 +47,8 @@ private enum GachaTab: Hashable {
 struct GachaView: View {
     @ObservedObject var game: GameSave
     @Environment(\.dismiss) private var dismiss
+    /// Opens the studio lesson for a newly unlocked move.
+    var onLearn: ((MoveBlueprint) -> Void)? = nil
 
     @State private var results: [GachaDrawResult] = []
     @State private var rolling = false
@@ -96,12 +98,12 @@ struct GachaView: View {
         }
         .overlay {
             if results.count == 1, let first = results.first {
-                GachaResultCard(blueprint: first.blueprint, isNew: first.isNew) {
+                GachaResultCard(blueprint: first.blueprint, isNew: first.isNew, onLearn: onLearn) {
                     results = []
                 }
                 .transition(.scale(scale: 0.8).combined(with: .opacity))
             } else if !results.isEmpty {
-                GachaBatchResultView(results: results) {
+                GachaBatchResultView(results: results, onLearn: onLearn) {
                     results = []
                 }
                 .transition(.scale(scale: 0.9).combined(with: .opacity))
@@ -407,6 +409,7 @@ struct GachaView: View {
 private struct GachaResultCard: View {
     let blueprint: MoveBlueprint
     let isNew: Bool
+    var onLearn: ((MoveBlueprint) -> Void)? = nil
     let onClose: () -> Void
 
     var body: some View {
@@ -465,15 +468,34 @@ private struct GachaResultCard: View {
                             .shadow(color: blueprint.rarity.color.opacity(0.4), radius: 20)
                     )
 
+                    if isNew, let onLearn {
+                        Button {
+                            onLearn(blueprint)
+                        } label: {
+                            Text("LEARN THIS MOVE")
+                                .font(.system(size: 14, weight: .black, design: .rounded))
+                                .foregroundStyle(.black)
+                                .frame(maxWidth: 200)
+                                .padding(.vertical, 11)
+                                .background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: 0xF5C451)))
+                        }
+                        .buttonStyle(.plain)
+
+                        Text("New moves can't be equipped until you animate them in the studio.")
+                            .font(.system(size: 10, weight: .semibold, design: .rounded))
+                            .foregroundStyle(.white.opacity(0.5))
+                            .multilineTextAlignment(.center)
+                    }
+
                     Button {
                         onClose()
                     } label: {
-                        Text("CONTINUE")
+                        Text(isNew && onLearn != nil ? "MAYBE LATER" : "CONTINUE")
                             .font(.system(size: 14, weight: .black, design: .rounded))
-                            .foregroundStyle(.black)
+                            .foregroundStyle(.white.opacity(0.8))
                             .frame(maxWidth: 200)
                             .padding(.vertical, 11)
-                            .background(RoundedRectangle(cornerRadius: 12).fill(Color(hex: 0xF5C451)))
+                            .background(RoundedRectangle(cornerRadius: 12).stroke(Color.white.opacity(0.25), lineWidth: 1.5))
                     }
                     .buttonStyle(.plain)
                 }
@@ -488,6 +510,7 @@ private struct GachaResultCard: View {
 
 private struct GachaBatchResultView: View {
     let results: [GachaDrawResult]
+    var onLearn: ((MoveBlueprint) -> Void)? = nil
     let onClose: () -> Void
 
     private var newCount: Int { results.filter { $0.isNew }.count }
@@ -507,6 +530,13 @@ private struct GachaBatchResultView: View {
                     Text("\(newCount) NEW  •  \(results.count - newCount) DUPLICATES")
                         .font(.system(size: 11, weight: .black, design: .rounded))
                         .foregroundStyle(.white.opacity(0.65))
+
+                    if newCount > 0, onLearn != nil {
+                        Text("NEW MOVES ARE LESSONS — TAP LEARN ON A CARD TO ANIMATE IT")
+                            .font(.system(size: 9, weight: .black, design: .rounded))
+                            .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+                            .multilineTextAlignment(.center)
+                    }
 
                     LazyVGrid(
                         columns: [GridItem(.adaptive(minimum: 92), spacing: 10)],
@@ -558,6 +588,20 @@ private struct GachaBatchResultView: View {
             Text(result.isNew ? "NEW" : "+\(Gacha.duplicateRefund) COINS")
                 .font(.system(size: 8, weight: .black, design: .rounded))
                 .foregroundStyle(result.isNew ? Color(hex: 0xF5C451) : .white.opacity(0.45))
+
+            if result.isNew, let onLearn {
+                Button {
+                    onLearn(blueprint)
+                } label: {
+                    Text("LEARN")
+                        .font(.system(size: 8, weight: .black, design: .rounded))
+                        .foregroundStyle(.black)
+                        .padding(.horizontal, 10)
+                        .padding(.vertical, 3)
+                        .background(Capsule().fill(Color(hex: 0xF5C451)))
+                }
+                .buttonStyle(.plain)
+            }
         }
         .padding(10)
         .frame(maxWidth: .infinity, minHeight: 96)

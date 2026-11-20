@@ -57,6 +57,10 @@ struct CollectionView: View {
                             // Equipped.
                             equippedSection
 
+                            Text("NEW MOVES START AS LESSONS — TAP LEARN TO ANIMATE THEM YOURSELF")
+                                .font(.system(size: 9, weight: .black, design: .rounded))
+                                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.7))
+
                             // Blueprints by rarity.
                             ForEach(Rarity.allCases.reversed(), id: \.self) { rarity in
                                 let bps = BlueprintCatalog.blueprints(in: rarity)
@@ -74,13 +78,18 @@ struct CollectionView: View {
                                                 BlueprintCell(
                                                     bp: bp,
                                                     owned: game.ownedBlueprints.contains(bp.id),
+                                                    learned: game.isBlueprintLearned(bp.id),
                                                     equipped: isEquipped(bp),
                                                     edited: game.blueprintEdit(id: bp.id) != nil,
                                                     onEdit: { editingBlueprint = bp },
                                                     onReset: { game.clearBlueprintEdit(bp.id) }
                                                 ) {
-                                                    if game.ownedBlueprints.contains(bp.id) {
+                                                    guard game.ownedBlueprints.contains(bp.id) else { return }
+                                                    if game.isBlueprintLearned(bp.id) {
                                                         game.equip(blueprint: bp)
+                                                    } else {
+                                                        // Open the studio lesson for this move.
+                                                        editingBlueprint = bp
                                                     }
                                                 }
                                             }
@@ -235,6 +244,7 @@ struct CollectionView: View {
 private struct BlueprintCell: View {
     let bp: MoveBlueprint
     let owned: Bool
+    let learned: Bool
     let equipped: Bool
     let edited: Bool
     let onEdit: () -> Void
@@ -253,6 +263,10 @@ private struct BlueprintCell: View {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 11))
                             .foregroundStyle(Color(hex: 0xF5C451))
+                    } else if owned && !learned {
+                        Image(systemName: "lock.fill")
+                            .font(.system(size: 9))
+                            .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
                     }
                 }
                 Text(owned ? bp.name : "???")
@@ -276,12 +290,14 @@ private struct BlueprintCell: View {
                 if owned {
                     HStack(spacing: 4) {
                         Button(action: onEdit) {
-                            Label("EDIT", systemImage: "pencil")
+                            Label(learned ? "EDIT" : "LEARN", systemImage: learned ? "pencil" : "graduationcap")
                                 .font(.system(size: 8, weight: .black, design: .rounded))
-                                .foregroundStyle(Color(hex: 0xF5C451))
+                                .foregroundStyle(learned ? Color(hex: 0xF5C451) : Color(hex: 0x0C0D12))
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
-                                .background(Capsule().fill(Color(hex: 0xF5C451).opacity(0.16)))
+                                .background(Capsule().fill(learned
+                                    ? Color(hex: 0xF5C451).opacity(0.16)
+                                    : Color(hex: 0xF5C451)))
                         }
                         .buttonStyle(.plain)
                         if edited {

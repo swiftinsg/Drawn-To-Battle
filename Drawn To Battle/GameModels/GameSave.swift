@@ -153,6 +153,12 @@ final class GameSave: ObservableObject {
     @Published var ownedBlueprints: Set<String> = GameSave.starterBlueprintIDs {
         didSet { persist() }
     }
+    /// Blueprints whose "how to animate" tutorial has been completed.
+    /// Owning a move is not enough — it only becomes usable after you learn
+    /// it in the studio. Owned-but-unlearned moves are shown as tutorials.
+    @Published var learnedBlueprints: Set<String> = [] {
+        didSet { persist() }
+    }
     @Published var equipped: EquippedLoadout? {
         didSet { persist() }
     }
@@ -260,6 +266,9 @@ final class GameSave: ObservableObject {
             // taking away anything the player already pulled.
             let needsStarterMoves = !Self.starterBlueprintIDs.isSubset(of: saved.ownedBlueprints)
             ownedBlueprints = saved.ownedBlueprints.union(Self.starterBlueprintIDs)
+            // Existing saves keep using the moves they already owned; fresh
+            // saves start with nothing learned so tutorials are required.
+            learnedBlueprints = saved.learnedBlueprints ?? saved.ownedBlueprints
             equipped = saved.equipped
             defeatedBosses = saved.defeatedBosses
             blueprintEdits = saved.blueprintEdits ?? [:]
@@ -536,7 +545,19 @@ final class GameSave: ObservableObject {
         if gachaHistory.count > 20 { gachaHistory.removeLast() }
     }
 
+    /// A blueprint is only usable after its studio tutorial is completed.
+    func isBlueprintLearned(_ id: String) -> Bool {
+        learnedBlueprints.contains(id)
+    }
+
+    /// Called when the player finishes a blueprint's "how to animate" lesson.
+    func markBlueprintLearned(_ id: String) {
+        learnedBlueprints.insert(id)
+    }
+
     func equip(blueprint: MoveBlueprint) {
+        // Unlearned moves must be studied in the studio first.
+        guard isBlueprintLearned(blueprint.id) else { return }
         // Use the player's customized version if they've edited this blueprint.
         let project = blueprintEdits[blueprint.id] ?? blueprint.baseAnimation
         equipped = EquippedLoadout(source: .blueprint(blueprint.id), project: project)
@@ -587,6 +608,7 @@ final class GameSave: ObservableObject {
         stardust = Self.startingStardust
         experience = 0
         ownedBlueprints = Self.starterBlueprintIDs
+        learnedBlueprints = []
         equipped = nil
         defeatedBosses = []
         blueprintEdits = [:]
@@ -612,6 +634,7 @@ final class GameSave: ObservableObject {
         var stardust: Int
         var experience: Int?
         var ownedBlueprints: Set<String>
+        var learnedBlueprints: Set<String>?
         var equipped: EquippedLoadout?
         var defeatedBosses: Set<String>
         var blueprintEdits: [String: AnimationProject]?
@@ -635,6 +658,7 @@ final class GameSave: ObservableObject {
             stardust: stardust,
             experience: experience,
             ownedBlueprints: ownedBlueprints,
+            learnedBlueprints: learnedBlueprints,
             equipped: equipped,
             defeatedBosses: defeatedBosses,
             blueprintEdits: blueprintEdits,

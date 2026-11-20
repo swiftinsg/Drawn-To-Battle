@@ -186,7 +186,15 @@ struct HomeHubView: View {
                 .onAppear { studio.game = game }
         }
         .fullScreenCover(isPresented: $showGacha) {
-            GachaView(game: game)
+            GachaView(game: game) { blueprint in
+                // Unlocking starts the lesson: set up the studio on that move,
+                // close the gacha, then open the studio.
+                studio.editBlueprint(blueprint, edited: game.blueprintEdit(id: blueprint.id))
+                showGacha = false
+                DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
+                    showStudio = true
+                }
+            }
         }
         .fullScreenCover(isPresented: $showCollection) {
             CollectionView(game: game)
