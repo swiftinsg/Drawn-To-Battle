@@ -181,7 +181,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
 
     /// Old cosmetic ids mapped to their new themed equivalents so existing
     /// TestFlight saves keep what they earned.
-    static func migratedID(_ id: String) -> String {
+    nonisolated static func migratedID(_ id: String) -> String {
         switch id {
         case "leafCrown": return "glowButterflies"
         case "vineWreath": return "driftingLeaves"

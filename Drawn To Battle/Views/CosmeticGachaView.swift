@@ -211,7 +211,7 @@ struct CosmeticGachaView: View {
     private func draw(_ count: Int) {
         let total = cost(count)
         guard unlocked, !pool.isEmpty, !rolling, game.coins >= total else { return }
-        game.spendCoins(total)
+        _ = game.spendCoins(total)
         rolling = true
         result = nil
         batchResults = []
