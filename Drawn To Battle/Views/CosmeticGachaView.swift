@@ -14,6 +14,7 @@ struct CosmeticGachaView: View {
 
     @State private var rolling = false
     @State private var result: CosmeticDrawResult?
+    @State private var batchResults: [CosmeticDrawResult] = []
 
     private var planetName: String {
         switch bossID {
@@ -37,7 +38,11 @@ struct CosmeticGachaView: View {
 
     private var unlocked: Bool { game.isAccessoryGachaUnlocked(bossID: bossID) }
 
-    private var canDraw: Bool { unlocked && game.coins >= Gacha.accessoryPullCost && !rolling }
+    private func cost(_ count: Int) -> Int { Gacha.accessoryPullCost * count }
+
+    private var canDraw: Bool { unlocked && game.coins >= cost(1) && !rolling }
+
+    private var canDrawFive: Bool { unlocked && game.coins >= cost(5) && !rolling }
 
     var body: some View {
         VStack(spacing: 12) {
@@ -66,6 +71,11 @@ struct CosmeticGachaView: View {
                 CosmeticResultCard(accessory: result.accessory, isNew: result.isNew,
                                     game: game) { self.result = nil }
                     .transition(.scale(scale: 0.85).combined(with: .opacity))
+            } else if !batchResults.isEmpty {
+                CosmeticBatchResultView(results: batchResults, game: game) {
+                    batchResults = []
+                }
+                .transition(.scale(scale: 0.9).combined(with: .opacity))
             }
         }
     }
@@ -113,28 +123,14 @@ struct CosmeticGachaView: View {
                 }
             }
 
-            HStack(spacing: 6) {
-                Image(systemName: "circlebadge.fill")
-                    .font(.system(size: 13, weight: .bold))
-                    .foregroundStyle(Color(hex: 0xF5C451))
-                Text("DRAW \(Gacha.accessoryPullCost)")
-                    .font(.system(size: 14, weight: .black, design: .rounded))
+            HStack(spacing: 8) {
+                cosmeticDrawButton(title: "DRAW 1", price: cost(1), enabled: canDraw) {
+                    draw(1)
+                }
+                cosmeticDrawButton(title: "DRAW 5", price: cost(5), enabled: canDrawFive) {
+                    draw(5)
+                }
             }
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 12)
-            .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(canDraw ? Color(hex: 0xF5C451) : Color.white.opacity(0.12))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(tint.opacity(canDraw ? 0.9 : 0.25), lineWidth: 2)
-            )
-            .foregroundStyle(canDraw ? Color.black : Color.white.opacity(0.5))
-            .contentShape(Rectangle())
-            .onTapGesture(perform: draw)
-            .disabled(!canDraw)
-            .accessibilityLabel("Draw a cosmetic for \(Gacha.accessoryPullCost) coins")
 
             HStack {
                 Text("COLLECTED \(ownedCount)/\(pool.count)")
@@ -179,20 +175,62 @@ struct CosmeticGachaView: View {
         }
     }
 
-    private func draw() {
-        guard canDraw, let drawn = pool.randomElement() else { return }
-        game.spendCoins(Gacha.accessoryPullCost)
+    private func cosmeticDrawButton(title: String, price: Int, enabled: Bool,
+                                    action: @escaping () -> Void) -> some View {
+        Button(action: action) {
+            HStack(spacing: 5) {
+                Image(systemName: "circlebadge.fill")
+                    .font(.system(size: 12, weight: .bold))
+                VStack(spacing: 0) {
+                    Text(title)
+                        .font(.system(size: 13, weight: .black, design: .rounded))
+                    Text("\(price) COINS")
+                        .font(.system(size: 8, weight: .heavy, design: .rounded))
+                        .opacity(0.75)
+                }
+            }
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 10)
+            .background(
+                RoundedRectangle(cornerRadius: 14)
+                    .fill(enabled ? Color(hex: 0xF5C451) : Color.white.opacity(0.12))
+            )
+            .overlay(
+                RoundedRectangle(cornerRadius: 14)
+                    .stroke(tint.opacity(enabled ? 0.9 : 0.25), lineWidth: 2)
+            )
+            .foregroundStyle(enabled ? Color.black : Color.white.opacity(0.5))
+        }
+        .buttonStyle(.plain)
+        .disabled(!enabled)
+        .accessibilityLabel("\(title), \(price) coins")
+    }
+
+    private func draw(_ count: Int) {
+        let total = cost(count)
+        guard unlocked, !pool.isEmpty, !rolling, game.coins >= total else { return }
+        game.spendCoins(total)
         rolling = true
         result = nil
+        batchResults = []
         Haptics.light()
 
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
-            let isNew = game.addAccessory(drawn)
+            var drawn: [CosmeticDrawResult] = []
+            for _ in 0..<count {
+                guard let item = pool.randomElement() else { continue }
+                let isNew = game.addAccessory(item)
+                drawn.append(CosmeticDrawResult(accessory: item, isNew: isNew))
+            }
             withAnimation(.spring(response: 0.42, dampingFraction: 0.75)) {
-                result = CosmeticDrawResult(accessory: drawn, isNew: isNew)
+                if count == 1 {
+                    result = drawn.first
+                } else {
+                    batchResults = drawn
+                }
                 rolling = false
             }
-            if isNew { Haptics.success() }
+            if drawn.contains(where: { $0.isNew }) { Haptics.success() }
         }
     }
 }
@@ -262,6 +300,82 @@ private struct CosmeticResultCard: View {
                     .overlay(
                         RoundedRectangle(cornerRadius: 18)
                             .stroke(accessory.tint, lineWidth: 2)
+                    )
+            )
+        }
+    }
+}
+
+private struct CosmeticBatchResultView: View {
+    let results: [CosmeticDrawResult]
+    @ObservedObject var game: GameSave
+    let onClose: () -> Void
+
+    var body: some View {
+        ZStack {
+            Color.black.opacity(0.78)
+                .ignoresSafeArea()
+                .onTapGesture(perform: onClose)
+
+            VStack(spacing: 10) {
+                Text("\(results.count) COSMETIC DRAWS")
+                    .font(DrawnToBattleTypography.display(20))
+                    .foregroundStyle(.white)
+
+                Text("\(results.filter { $0.isNew }.count) NEW  •  \(results.filter { !$0.isNew }.count) DUPLICATES")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
+
+                ScrollView(.vertical, showsIndicators: false) {
+                    VStack(spacing: 6) {
+                        ForEach(results) { result in
+                            HStack(spacing: 10) {
+                                FighterFigureView(accessory: result.accessory)
+                                    .frame(width: 36, height: 46)
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(result.accessory.name.uppercased())
+                                        .font(.system(size: 11, weight: .black, design: .rounded))
+                                        .foregroundStyle(game.isAccessoryOwned(result.accessory)
+                                                         ? result.accessory.tint
+                                                         : .white.opacity(0.7))
+                                    Text(result.isNew
+                                         ? "NEW COSMETIC"
+                                         : "DUPLICATE  +\(Gacha.accessoryDuplicateRefund) COINS")
+                                        .font(.system(size: 8, weight: .heavy, design: .rounded))
+                                        .foregroundStyle(result.isNew
+                                                         ? Color(hex: 0xA8F06A)
+                                                         : .white.opacity(0.45))
+                                }
+                                Spacer()
+                            }
+                            .padding(.horizontal, 10)
+                            .padding(.vertical, 6)
+                            .background(RoundedRectangle(cornerRadius: 10)
+                                .fill(Color.white.opacity(0.05)))
+                        }
+                    }
+                }
+                .frame(maxHeight: 320)
+
+                Button(action: onClose) {
+                    Text("CONTINUE")
+                        .font(.system(size: 12, weight: .black, design: .rounded))
+                        .foregroundStyle(.white.opacity(0.8))
+                        .frame(maxWidth: 160)
+                        .padding(.vertical, 9)
+                        .background(RoundedRectangle(cornerRadius: 10)
+                            .fill(Color.white.opacity(0.1)))
+                }
+                .buttonStyle(.plain)
+            }
+            .padding(20)
+            .frame(maxWidth: 320)
+            .background(
+                RoundedRectangle(cornerRadius: 18)
+                    .fill(Color(hex: 0x14161E))
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(Color(hex: 0xF5C451), lineWidth: 2)
                     )
             )
         }

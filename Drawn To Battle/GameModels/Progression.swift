@@ -132,7 +132,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
 
     /// Level road step that awards this cosmetic.
     var levelRoadLevel: Int? {
-        self == .sunRing ? 8 : nil
+        self == .sunRing ? 10 : nil
     }
 
     static let milestoneLevels = [5, 10, 15, 20]
@@ -265,8 +265,8 @@ struct DailyReward {
 // MARK: - Level road
 
 /// One stop on the Level Road, reached at the given XP threshold.
-/// Reaching a level grants its rewards automatically (see
-/// `GameSave.claimReachedLevelRoadSteps`).
+/// Reaching a level unlocks its reward, which the player claims by hand
+/// (see `GameSave.claimLevelRoadStep`).
 struct LevelRoadStep {
     let level: Int
     let rewardCoins: Int

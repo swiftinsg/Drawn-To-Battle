@@ -208,8 +208,9 @@ struct GachaView: View {
     }
 
     private var machine: some View {
-        let enabled = availableDraws >= 1 && !rolling
-        let allCost = availableDraws * Gacha.pullCost
+        let canDrawOne = availableDraws >= 1 && !rolling
+        let canDrawTen = availableDraws >= 10 && !rolling
+        let tenCost = 10 * Gacha.pullCost
 
         return VStack(spacing: 10) {
             ZStack {
@@ -239,16 +240,16 @@ struct GachaView: View {
 
             HStack(spacing: 10) {
                 drawButton(
-                    title: "DRAW \(Gacha.pullCost)",
-                    enabled: enabled,
-                    accessibility: "Draw one move for \(Gacha.pullCost) pens"
+                    title: "DRAW 1",
+                    enabled: canDrawOne,
+                    accessibility: "Draw 1 move for \(Gacha.pullCost) pens"
                 ) { pull(1) }
 
                 drawButton(
-                    title: "DRAW ALL \(availableDraws)",
-                    enabled: enabled,
-                    accessibility: "Draw all \(availableDraws) moves for \(allCost) pens"
-                ) { pull(availableDraws) }
+                    title: "DRAW 10",
+                    enabled: canDrawTen,
+                    accessibility: "Draw 10 moves for \(tenCost) pens"
+                ) { pull(10) }
             }
         }
     }

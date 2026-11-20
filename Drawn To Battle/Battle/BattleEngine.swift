@@ -74,6 +74,9 @@ struct Afterimage {
 /// BattleView; HUD-relevant values are published. All mutating work happens
 /// here, never during view rendering.
 final class BattleEngine: ObservableObject {
+    /// Block goes on cooldown as soon as it absorbs or parries a hit.
+    static let blockCooldownDuration: CGFloat = 1.2
+
     // Config
     let boss: BossDefinition
     let project: AnimationProject
@@ -304,10 +307,6 @@ final class BattleEngine: ObservableObject {
         attackCooldown = max(0, attackCooldown - d)
         blockCooldown = max(0, blockCooldown - d)
 
-        // Block fatigue: after holding the block for 5 seconds, you can't
-        // hold it again until a 1.2-second cooldown has elapsed.
-        if blockTime >= 5 && blockCooldown <= 0 { blockCooldown = 1.2 }
-
         // Once the strike has landed the player can move, block and dodge again,
         // even while the rest of a long animation finishes playing.
         let canControl = (!attackActive || attackDamageDone) && hurtTimer <= 0
@@ -482,6 +481,9 @@ final class BattleEngine: ObservableObject {
         dmg *= 1 + min(Double(comboCount), 10) * 0.04
         if bossStunTimer > 0 { dmg *= 1.5 }
         if ultimate { dmg *= 2.3 }
+        // Earth is the tutorial boss. A rare move should not end the fight
+        // in one hit, so its strikes are capped until the Colossus is learned.
+        if boss.id == "earth" { dmg = min(dmg, 55) }
 
         bossHP = max(0, bossHP - dmg)
         damageDealt += dmg
@@ -726,6 +728,26 @@ final class BattleEngine: ObservableObject {
 
     private func facingSign() -> CGFloat { playerPos.x > bossX ? 1 : -1 }
 
+    /// Short tap fallback. Some taps end between simulation ticks, so latch
+    /// the shield briefly instead of relying only on the hold gesture.
+    func tapBlock() {
+        guard blockCooldown <= 0, hurtTimer <= 0, !dodgeActive else { return }
+        input.blockHeld = true
+        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
+            guard let self else { return }
+            if self.blockCooldown <= 0 { self.input.blockHeld = false }
+        }
+    }
+
+    /// Drops the shield after it has been hit and starts the cooldown.
+    private func consumeBlock() {
+        blockCooldown = Self.blockCooldownDuration
+        blockTime = 0
+        blockStart = -10
+        blockActive = false
+        input.blockHeld = false
+    }
+
     // MARK: Damage to player
 
     /// Central damage entry point. Handles dodge i-frames, blocking,
@@ -735,6 +757,9 @@ final class BattleEngine: ObservableObject {
 
         if blockActive {
             let blockAge = time - blockStart
+            // One successful block is enough. The shield drops and cannot be
+            // held again until the cooldown finishes, even with the finger down.
+            consumeBlock()
             if blockAge <= 0.22 {
                 parry()
                 return

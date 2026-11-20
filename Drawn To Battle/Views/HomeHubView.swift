@@ -16,6 +16,7 @@ struct HomeHubView: View {
     @State private var showSettings = false
     @State private var showProfile = false
     @State private var showDaily = false
+    @State private var showLevelRoad = false
     @State private var activeCurrency: Currency?
     /// Blocked until the fighter has animated their own move.
     @State private var showPlayLock = false
@@ -116,6 +117,10 @@ struct HomeHubView: View {
                 // Left column: daily reward and the remaining menus.
                 VStack(alignment: .leading, spacing: 10) {
                     dailyBubble
+                    MenuBubble(title: "LEVEL ROAD", systemImage: "flag.fill",
+                               showQuestionBadge: game.hasPendingLevelRoadRewards) {
+                        showLevelRoad = true
+                    }
                     MenuBubble(title: "STUDIO", systemImage: "film") {
                         showStudio = true
                     }
@@ -188,6 +193,9 @@ struct HomeHubView: View {
         .sheet(isPresented: $showDaily) {
             DailyRewardView(game: game)
                 .presentationBackground(Color(hex: 0x0C0D12))
+        }
+        .fullScreenCover(isPresented: $showLevelRoad) {
+            LevelRoadPageView(game: game)
         }
         // Play lock, you can't fight until you've animated your own move.
         .overlay {
@@ -422,6 +430,7 @@ extension View {
 private struct MenuBubble: View {
     let title: String
     let systemImage: String
+    var showQuestionBadge = false
     let action: () -> Void
 
     var body: some View {
@@ -433,10 +442,16 @@ private struct MenuBubble: View {
                 Text(title)
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
+                if showQuestionBadge {
+                    Image(systemName: "questionmark.circle.fill")
+                        .font(.system(size: 13, weight: .bold))
+                        .foregroundStyle(Color(hex: 0xF5C451))
+                }
             }
             .bubbleChrome(paddingX: 16)
         }
         .buttonStyle(.plain)
+        .accessibilityLabel(showQuestionBadge ? "\(title), reward ready" : title)
     }
 }
 

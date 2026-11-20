@@ -233,9 +233,11 @@ struct FighterFigureView: View {
     private func drawOrbit(in context: inout GraphicsContext, cx: CGFloat,
                            cy: CGFloat, scale: CGFloat, tint: Color,
                            style: OrbitStyle) {
-        let count = style == .soul ? 6 : 5
-        for index in 0..<count {
-            let angle = CGFloat(index) / CGFloat(count) * 2 * .pi - .pi / 2
+        // Soul fire has five flames with the bottom slot left empty.
+        let positions = style == .soul ? [0, 1, 2, 4, 5] : [0, 1, 2, 3, 4]
+        let divisor: CGFloat = style == .soul ? 6 : 5
+        for index in positions {
+            let angle = CGFloat(index) / divisor * 2 * .pi - .pi / 2
             let center = CGPoint(x: cx + cos(angle) * 70 * scale,
                                  y: cy - 34 * scale + sin(angle) * 78 * scale)
             let r = (style == .water ? 7 : 6) * scale
@@ -705,6 +707,83 @@ struct FighterFigureView: View {
                                        width: r * 0.9, height: r * 0.9)),
                 with: .color(Color(hex: 0xFFD54F))
             )
+        }
+    }
+
+    // MARK: Battle overlay
+
+    enum BattleLayer {
+        case back
+        case front
+    }
+
+    /// Draws only the equipped cosmetic around a battle stickman. The battle
+    /// figure keeps its own pose; this reuses the hub art at the head's scale.
+    func drawBattleLayer(_ layer: BattleLayer, in context: inout GraphicsContext,
+                         headCenter: CGPoint, headRadius: CGFloat, hip: CGPoint) {
+        guard let accessory else { return }
+        let scale = max(0.28, headRadius / 24)
+        let cx = hip.x
+        let cy = hip.y - 18 * scale
+        let tint = accessory.tint
+        let render = accessory.render
+
+        if layer == .back {
+            if render == .wings {
+                drawWings(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+            }
+            if render == .fairyWings {
+                drawFairyWings(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+            }
+            if render == .fireWings {
+                drawFireWings(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+            }
+            if render == .fireHalo {
+                drawFireHalo(in: &context, headCenter: headCenter,
+                             headRadius: headRadius, scale: scale, tint: tint)
+            }
+            if render == .sunRing {
+                drawSunRing(in: &context, headCenter: headCenter,
+                            headRadius: headRadius, scale: scale, tint: tint)
+            }
+            if render == .orbit {
+                drawOrbit(in: &context, cx: cx, cy: cy, scale: scale,
+                          tint: tint, style: accessory == .tideOrbit ? .water : .pebble)
+            }
+            if render == .fireOrbit {
+                drawOrbit(in: &context, cx: cx, cy: cy, scale: scale,
+                          tint: tint, style: .fire)
+            }
+            if render == .soulOrbit {
+                drawOrbit(in: &context, cx: cx, cy: cy, scale: scale,
+                          tint: tint, style: .soul)
+            }
+            return
+        }
+
+        switch render {
+        case .crown:
+            drawLeafCrown(in: &context, headCenter: headCenter,
+                          headRadius: headRadius, scale: scale, tint: tint)
+        case .halo:
+            drawHalo(in: &context, headCenter: headCenter,
+                     headRadius: headRadius, scale: scale, tint: tint)
+        case .star:
+            drawStar(in: &context, headCenter: headCenter,
+                     headRadius: headRadius, scale: scale, tint: tint)
+        case .butterflies:
+            drawButterflies(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+        case .leaves:
+            drawLeaves(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+        case .crystalCrown:
+            drawCrystalCrown(in: &context, headCenter: headCenter,
+                             headRadius: headRadius, scale: scale, tint: tint)
+        case .flowerCrown:
+            drawFlowerCrown(in: &context, headCenter: headCenter,
+                            headRadius: headRadius, scale: scale, tint: tint)
+        case .wings, .orbit, .fireOrbit, .soulOrbit, .fairyWings,
+             .fireWings, .fireHalo, .sunRing:
+            break
         }
     }
 }
