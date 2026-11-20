@@ -35,7 +35,7 @@ struct LevelRoadView: View {
             Spacer()
 
             if let next = nextStep {
-                Text("NEXT L\(next.level) +\(next.rewardCoins) coins +\(next.rewardStardust) pens")
+                Text(rewardText(next))
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
                     .lineLimit(1)
@@ -43,6 +43,11 @@ struct LevelRoadView: View {
         }
         .padding(.horizontal, 20)
         .padding(.top, 10)
+    }
+
+    private func rewardText(_ step: LevelRoadStep) -> String {
+        let bonus = step.rewardCosmetic.map { " + \($0.name)" } ?? ""
+        return "NEXT L\(step.level) +\(step.rewardCoins) coins +\(step.rewardStardust) pens\(bonus)"
     }
 }
 

@@ -84,7 +84,7 @@ struct GachaView: View {
                             collectionProgress
                             secondaryButtons
                         } else if let bossID = tab.bossID {
-                            AccessoryGachaView(game: game, bossID: bossID)
+                            CosmeticGachaView(game: game, bossID: bossID)
                                 .id(bossID)
                         }
                     }

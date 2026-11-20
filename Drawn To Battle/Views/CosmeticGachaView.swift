@@ -1,19 +1,19 @@
 import SwiftUI
 
-private struct AccessoryDrawResult: Identifiable {
+private struct CosmeticDrawResult: Identifiable {
     let id = UUID()
     let accessory: Accessory
     let isNew: Bool
 }
 
-/// One world's accessory gacha. Beating the world's boss opens it; draws cost
-/// coins and can return any accessory from that planet's themed pool.
-struct AccessoryGachaView: View {
+/// One world's cosmetic gacha. Beating the world's boss opens it; draws cost
+/// coins and can return any cosmetic from that planet's themed pool.
+struct CosmeticGachaView: View {
     @ObservedObject var game: GameSave
     let bossID: String
 
     @State private var rolling = false
-    @State private var result: AccessoryDrawResult?
+    @State private var result: CosmeticDrawResult?
 
     private var planetName: String {
         switch bossID {
@@ -42,7 +42,7 @@ struct AccessoryGachaView: View {
     var body: some View {
         VStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("\(planetName) ACCESSORY DRAW")
+                Text("\(planetName) COSMETIC DRAW")
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .tracking(2)
                     .foregroundStyle(tint)
@@ -63,7 +63,7 @@ struct AccessoryGachaView: View {
         }
         .overlay {
             if let result {
-                AccessoryResultCard(accessory: result.accessory, isNew: result.isNew,
+                CosmeticResultCard(accessory: result.accessory, isNew: result.isNew,
                                     game: game) { self.result = nil }
                     .transition(.scale(scale: 0.85).combined(with: .opacity))
             }
@@ -134,7 +134,7 @@ struct AccessoryGachaView: View {
             .contentShape(Rectangle())
             .onTapGesture(perform: draw)
             .disabled(!canDraw)
-            .accessibilityLabel("Draw an accessory for \(Gacha.accessoryPullCost) coins")
+            .accessibilityLabel("Draw a cosmetic for \(Gacha.accessoryPullCost) coins")
 
             HStack {
                 Text("COLLECTED \(ownedCount)/\(pool.count)")
@@ -189,7 +189,7 @@ struct AccessoryGachaView: View {
         DispatchQueue.main.asyncAfter(deadline: .now() + 0.45) {
             let isNew = game.addAccessory(drawn)
             withAnimation(.spring(response: 0.42, dampingFraction: 0.75)) {
-                result = AccessoryDrawResult(accessory: drawn, isNew: isNew)
+                result = CosmeticDrawResult(accessory: drawn, isNew: isNew)
                 rolling = false
             }
             if isNew { Haptics.success() }
@@ -199,7 +199,7 @@ struct AccessoryGachaView: View {
 
 // MARK: - Result
 
-private struct AccessoryResultCard: View {
+private struct CosmeticResultCard: View {
     let accessory: Accessory
     let isNew: Bool
     @ObservedObject var game: GameSave
@@ -212,7 +212,7 @@ private struct AccessoryResultCard: View {
                 .onTapGesture(perform: onClose)
 
             VStack(spacing: 10) {
-                Text(isNew ? "NEW ACCESSORY" : "DUPLICATE  +\(Gacha.accessoryDuplicateRefund) COINS")
+                Text(isNew ? "NEW COSMETIC" : "DUPLICATE  +\(Gacha.accessoryDuplicateRefund) COINS")
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundStyle(isNew ? accessory.tint : .white.opacity(0.6))
 
