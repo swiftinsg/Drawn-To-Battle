@@ -3,9 +3,16 @@ import SwiftUI
 // MARK: - Home fighter
 
 /// The hero figure shown in the middle of the hub. It stays a hand-drawn
-/// stickman, but with a bold outline and any unlocked world accessory.
+/// stickman, but with a bold outline and any unlocked world cosmetic.
 struct FighterFigureView: View {
     let accessory: Accessory?
+
+    private enum OrbitStyle {
+        case pebble
+        case water
+        case fire
+        case soul
+    }
 
     var body: some View {
         GeometryReader { _ in
@@ -19,7 +26,7 @@ struct FighterFigureView: View {
 
     private func draw(in context: inout GraphicsContext, size: CGSize) {
         // Extra headroom keeps tall headgear, halos and butterflies on screen,
-        // and the whole fighter sits lower so accessories never clip the top.
+        // and the whole fighter sits lower so cosmetics never clip the top.
         let scale = min(size.width / 220, size.height / 400)
         guard scale > 0 else { return }
 
@@ -66,13 +73,35 @@ struct FighterFigureView: View {
         let tint = accessory?.tint ?? gold
         let render = accessory?.render
 
-        // Back accessories sit behind the body.
+        // Back cosmetics sit behind the body and head.
         if render == .wings {
             drawWings(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
         }
+        if render == .fairyWings {
+            drawFairyWings(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+        }
+        if render == .fireWings {
+            drawFireWings(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
+        }
+        if render == .fireHalo {
+            drawFireHalo(in: &context, headCenter: headCenter,
+                         headRadius: headRadius, scale: scale, tint: tint)
+        }
+        if render == .sunRing {
+            drawSunRing(in: &context, headCenter: headCenter,
+                        headRadius: headRadius, scale: scale, tint: tint)
+        }
         if render == .orbit {
             drawOrbit(in: &context, cx: cx, cy: cy, scale: scale,
-                      tint: tint, water: accessory == .tideOrbit)
+                      tint: tint, style: accessory == .tideOrbit ? .water : .pebble)
+        }
+        if render == .fireOrbit {
+            drawOrbit(in: &context, cx: cx, cy: cy, scale: scale,
+                      tint: tint, style: .fire)
+        }
+        if render == .soulOrbit {
+            drawOrbit(in: &context, cx: cx, cy: cy, scale: scale,
+                      tint: tint, style: .soul)
         }
 
         // Just a hair of separation at elbows and knees keeps the hand drawn
@@ -117,7 +146,7 @@ struct FighterFigureView: View {
             with: .color(ink)
         )
 
-        // Front accessories.
+        // Front cosmetics.
         switch render {
         case .some(.crown):
             drawLeafCrown(in: &context, headCenter: headCenter,
@@ -132,7 +161,15 @@ struct FighterFigureView: View {
             drawButterflies(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
         case .some(.leaves):
             drawLeaves(in: &context, cx: cx, cy: cy, scale: scale, tint: tint)
-        case .some(.wings), .some(.orbit), nil:
+        case .some(.crystalCrown):
+            drawCrystalCrown(in: &context, headCenter: headCenter,
+                             headRadius: headRadius, scale: scale, tint: tint)
+        case .some(.flowerCrown):
+            drawFlowerCrown(in: &context, headCenter: headCenter,
+                            headRadius: headRadius, scale: scale, tint: tint)
+        case .some(.wings), .some(.orbit), .some(.fireOrbit), .some(.soulOrbit),
+             .some(.fairyWings), .some(.fireWings), .some(.fireHalo),
+             .some(.sunRing), nil:
             break
         }
     }
@@ -152,7 +189,7 @@ struct FighterFigureView: View {
         path.addLine(to: end)
     }
 
-    // MARK: Accessories
+    // MARK: Cosmetics
 
     private func drawWings(in context: inout GraphicsContext, cx: CGFloat,
                            cy: CGFloat, scale: CGFloat, tint: Color) {
@@ -194,12 +231,14 @@ struct FighterFigureView: View {
     }
 
     private func drawOrbit(in context: inout GraphicsContext, cx: CGFloat,
-                           cy: CGFloat, scale: CGFloat, tint: Color, water: Bool) {
-        for index in 0..<5 {
-            let angle = CGFloat(index) / 5 * 2 * .pi - .pi / 2
+                           cy: CGFloat, scale: CGFloat, tint: Color,
+                           style: OrbitStyle) {
+        let count = style == .soul ? 6 : 5
+        for index in 0..<count {
+            let angle = CGFloat(index) / CGFloat(count) * 2 * .pi - .pi / 2
             let center = CGPoint(x: cx + cos(angle) * 70 * scale,
                                  y: cy - 34 * scale + sin(angle) * 78 * scale)
-            let r = (water ? 7 : 6) * scale
+            let r = (style == .water ? 7 : 6) * scale
 
             context.fill(
                 Path(ellipseIn: CGRect(x: center.x - r * 2, y: center.y - r * 2,
@@ -207,7 +246,8 @@ struct FighterFigureView: View {
                 with: .color(tint.opacity(0.18))
             )
 
-            if water {
+            switch style {
+            case .water:
                 var drop = Path()
                 drop.move(to: CGPoint(x: center.x, y: center.y - r * 1.7))
                 drop.addQuadCurve(
@@ -223,7 +263,13 @@ struct FighterFigureView: View {
                     control: CGPoint(x: center.x, y: center.y + r * 1.4)
                 )
                 context.fill(drop, with: .color(tint.opacity(0.9)))
-            } else {
+            case .fire:
+                drawFlame(in: &context, center: center, radius: r,
+                          color: tint, core: Color(hex: 0xFFE08A))
+            case .soul:
+                drawFlame(in: &context, center: center, radius: r,
+                          color: tint, core: Color(hex: 0x9FF6FF))
+            case .pebble:
                 context.fill(
                     Path(ellipseIn: CGRect(x: center.x - r, y: center.y - r,
                                            width: r * 2, height: r * 2)),
@@ -237,6 +283,51 @@ struct FighterFigureView: View {
                 with: .color(Color.white.opacity(0.75))
             )
         }
+    }
+
+    private func drawFlame(in context: inout GraphicsContext, center: CGPoint,
+                           radius: CGFloat, color: Color, core: Color) {
+        var flame = Path()
+        flame.move(to: CGPoint(x: center.x, y: center.y - radius * 1.9))
+        flame.addQuadCurve(
+            to: CGPoint(x: center.x + radius, y: center.y + radius * 0.7),
+            control: CGPoint(x: center.x + radius * 1.25, y: center.y - radius * 0.35)
+        )
+        flame.addQuadCurve(
+            to: CGPoint(x: center.x, y: center.y + radius * 1.25),
+            control: CGPoint(x: center.x + radius * 0.35, y: center.y + radius * 1.15)
+        )
+        flame.addQuadCurve(
+            to: CGPoint(x: center.x - radius, y: center.y + radius * 0.7),
+            control: CGPoint(x: center.x - radius * 0.35, y: center.y + radius * 1.15)
+        )
+        flame.addQuadCurve(
+            to: CGPoint(x: center.x, y: center.y - radius * 1.9),
+            control: CGPoint(x: center.x - radius * 1.25, y: center.y - radius * 0.35)
+        )
+        context.fill(flame, with: .color(color.opacity(0.95)))
+        context.stroke(flame, with: .color(Color.white.opacity(0.55)),
+                       style: StrokeStyle(lineWidth: max(0.6, radius * 0.12)))
+
+        var inner = Path()
+        inner.move(to: CGPoint(x: center.x, y: center.y - radius * 0.9))
+        inner.addQuadCurve(
+            to: CGPoint(x: center.x + radius * 0.45, y: center.y + radius * 0.5),
+            control: CGPoint(x: center.x + radius * 0.65, y: center.y)
+        )
+        inner.addQuadCurve(
+            to: CGPoint(x: center.x, y: center.y + radius * 0.85),
+            control: CGPoint(x: center.x + radius * 0.2, y: center.y + radius * 0.8)
+        )
+        inner.addQuadCurve(
+            to: CGPoint(x: center.x - radius * 0.45, y: center.y + radius * 0.5),
+            control: CGPoint(x: center.x - radius * 0.2, y: center.y + radius * 0.8)
+        )
+        inner.addQuadCurve(
+            to: CGPoint(x: center.x, y: center.y - radius * 0.9),
+            control: CGPoint(x: center.x - radius * 0.65, y: center.y)
+        )
+        context.fill(inner, with: .color(core.opacity(0.9)))
     }
 
     private func drawButterflies(in context: inout GraphicsContext, cx: CGFloat,
@@ -408,5 +499,212 @@ struct FighterFigureView: View {
         context.fill(star, with: .color(tint))
         context.stroke(star, with: .color(Color.white.opacity(0.9)),
                        style: StrokeStyle(lineWidth: 1.5 * scale))
+    }
+
+    private func drawFairyWings(in context: inout GraphicsContext, cx: CGFloat,
+                                cy: CGFloat, scale: CGFloat, tint: Color) {
+        for side in [CGFloat(-1), CGFloat(1)] {
+            let root = CGPoint(x: cx + side * 12 * scale, y: cy - 72 * scale)
+            for factor in [CGFloat(1), CGFloat(0.72)] {
+                var wing = Path()
+                wing.move(to: root)
+                wing.addQuadCurve(
+                    to: CGPoint(x: cx + side * 92 * scale * factor,
+                                y: cy - 152 * scale * factor),
+                    control: CGPoint(x: cx + side * 62 * scale * factor,
+                                     y: cy - 160 * scale * factor)
+                )
+                wing.addQuadCurve(
+                    to: root,
+                    control: CGPoint(x: cx + side * 104 * scale * factor,
+                                     y: cy - 82 * scale * factor)
+                )
+                context.fill(wing, with: .color(tint.opacity(factor == 1 ? 0.32 : 0.2)))
+                context.stroke(wing, with: .color(tint.opacity(0.9)),
+                               style: StrokeStyle(lineWidth: 1.6 * scale))
+            }
+
+            for index in 0..<3 {
+                let dot = CGPoint(x: cx + side * CGFloat(58 + index * 16) * scale,
+                                  y: cy - CGFloat(138 - index * 22) * scale)
+                context.fill(
+                    Path(ellipseIn: CGRect(x: dot.x - 2.5 * scale,
+                                           y: dot.y - 2.5 * scale,
+                                           width: 5 * scale, height: 5 * scale)),
+                    with: .color(Color.white.opacity(0.9))
+                )
+            }
+        }
+    }
+
+    private func drawFireWings(in context: inout GraphicsContext, cx: CGFloat,
+                               cy: CGFloat, scale: CGFloat, tint: Color) {
+        for side in [CGFloat(-1), CGFloat(1)] {
+            let root = CGPoint(x: cx + side * 14 * scale, y: cy - 74 * scale)
+            var wing = Path()
+            wing.move(to: root)
+            wing.addQuadCurve(
+                to: CGPoint(x: cx + side * 118 * scale, y: cy - 168 * scale),
+                control: CGPoint(x: cx + side * 70 * scale, y: cy - 160 * scale)
+            )
+            wing.addLine(to: CGPoint(x: cx + side * 100 * scale, y: cy - 132 * scale))
+            wing.addLine(to: CGPoint(x: cx + side * 126 * scale, y: cy - 118 * scale))
+            wing.addLine(to: CGPoint(x: cx + side * 92 * scale, y: cy - 96 * scale))
+            wing.addQuadCurve(
+                to: root,
+                control: CGPoint(x: cx + side * 48 * scale, y: cy - 58 * scale)
+            )
+            context.fill(wing, with: .color(tint.opacity(0.42)))
+            context.stroke(wing, with: .color(tint.opacity(0.95)),
+                           style: StrokeStyle(lineWidth: 2 * scale))
+
+            for index in 0..<3 {
+                let tip = CGPoint(x: cx + side * CGFloat(60 + index * 20) * scale,
+                                  y: cy - CGFloat(150 - index * 16) * scale)
+                drawFlame(in: &context, center: tip, radius: 7 * scale,
+                          color: tint, core: Color(hex: 0xFFE08A))
+            }
+        }
+    }
+
+    private func drawFireHalo(in context: inout GraphicsContext,
+                              headCenter: CGPoint, headRadius: CGFloat,
+                              scale: CGFloat, tint: Color) {
+        let center = CGPoint(x: headCenter.x, y: headCenter.y - headRadius - 12 * scale)
+        let radiusX = headRadius + 30 * scale
+        let radiusY = headRadius * 0.55 + 10 * scale
+        let glowX = radiusX + 8 * scale
+        let glowY = radiusY + 8 * scale
+
+        context.fill(
+            Path(ellipseIn: CGRect(x: center.x - glowX, y: center.y - glowY,
+                                   width: glowX * 2, height: glowY * 2)),
+            with: .color(tint.opacity(0.12))
+        )
+        context.stroke(
+            Path(ellipseIn: CGRect(x: center.x - radiusX, y: center.y - radiusY,
+                                   width: radiusX * 2, height: radiusY * 2)),
+            with: .color(tint.opacity(0.8)),
+            style: StrokeStyle(lineWidth: 3 * scale)
+        )
+
+        for index in 0..<12 {
+            let angle = CGFloat(index) / 12 * 2 * .pi
+            let point = CGPoint(x: center.x + cos(angle) * radiusX,
+                                y: center.y + sin(angle) * radiusY)
+            drawFlame(in: &context, center: point, radius: 6 * scale,
+                      color: tint, core: Color(hex: 0xFFE08A))
+        }
+    }
+
+    private func drawSunRing(in context: inout GraphicsContext,
+                             headCenter: CGPoint, headRadius: CGFloat,
+                             scale: CGFloat, tint: Color) {
+        let radius = headRadius + 26 * scale
+        let glow = radius + 10 * scale
+
+        context.fill(
+            Path(ellipseIn: CGRect(x: headCenter.x - glow, y: headCenter.y - glow,
+                                   width: glow * 2, height: glow * 2)),
+            with: .color(tint.opacity(0.12))
+        )
+        context.stroke(
+            Path(ellipseIn: CGRect(x: headCenter.x - radius, y: headCenter.y - radius,
+                                   width: radius * 2, height: radius * 2)),
+            with: .color(tint.opacity(0.85)),
+            style: StrokeStyle(lineWidth: 5 * scale)
+        )
+        context.stroke(
+            Path(ellipseIn: CGRect(x: headCenter.x - radius, y: headCenter.y - radius,
+                                   width: radius * 2, height: radius * 2)),
+            with: .color(Color.white.opacity(0.85)),
+            style: StrokeStyle(lineWidth: 1.5 * scale)
+        )
+
+        for index in 0..<16 {
+            let angle = CGFloat(index) / 16 * 2 * .pi
+            let inner = radius + 6 * scale
+            let outer = radius + (index.isMultiple(of: 2) ? 20 : 13) * scale
+            var ray = Path()
+            ray.move(to: CGPoint(x: headCenter.x + cos(angle) * inner,
+                                 y: headCenter.y + sin(angle) * inner))
+            ray.addLine(to: CGPoint(x: headCenter.x + cos(angle) * outer,
+                                    y: headCenter.y + sin(angle) * outer))
+            context.stroke(ray, with: .color(tint.opacity(0.8)),
+                           style: StrokeStyle(lineWidth: 2 * scale))
+        }
+    }
+
+    private func drawCrystalCrown(in context: inout GraphicsContext,
+                                  headCenter: CGPoint, headRadius: CGFloat,
+                                  scale: CGFloat, tint: Color) {
+        let baseY = headCenter.y - headRadius + 3 * scale
+        let spikes: [(CGFloat, CGFloat)] = [
+            (-0.85, 24), (-0.42, 34), (0, 42), (0.42, 34), (0.85, 24)
+        ]
+
+        for (angle, length) in spikes {
+            let base = CGPoint(x: headCenter.x + sin(angle) * headRadius * 0.72,
+                               y: baseY + (1 - cos(angle)) * 3 * scale)
+            let tip = CGPoint(x: base.x + sin(angle) * length * scale,
+                              y: base.y - cos(angle) * length * scale)
+            let half = 6 * scale
+
+            var crystal = Path()
+            crystal.move(to: base)
+            crystal.addLine(to: CGPoint(x: tip.x - half * 0.5, y: tip.y + half))
+            crystal.addLine(to: tip)
+            crystal.addLine(to: CGPoint(x: tip.x + half * 0.5, y: tip.y + half))
+            crystal.addLine(to: base)
+            context.fill(crystal, with: .color(tint.opacity(0.85)))
+            context.stroke(crystal, with: .color(Color.white.opacity(0.85)),
+                           style: StrokeStyle(lineWidth: 1.2 * scale))
+
+            var shine = Path()
+            shine.move(to: base)
+            shine.addLine(to: tip)
+            context.stroke(shine, with: .color(Color.white.opacity(0.5)),
+                           style: StrokeStyle(lineWidth: scale))
+        }
+
+        context.fill(
+            Path(ellipseIn: CGRect(x: headCenter.x - headRadius, y: baseY - 3 * scale,
+                                   width: headRadius * 2, height: 8 * scale)),
+            with: .color(tint.opacity(0.75))
+        )
+    }
+
+    private func drawFlowerCrown(in context: inout GraphicsContext,
+                                 headCenter: CGPoint, headRadius: CGFloat,
+                                 scale: CGFloat, tint: Color) {
+        let spots: [(CGFloat, CGFloat, CGFloat)] = [
+            (-0.9, 0.05, 0.85), (-0.45, -0.35, 1), (0, -0.55, 1.1),
+            (0.45, -0.35, 1), (0.9, 0.05, 0.85)
+        ]
+
+        for (dx, dy, factor) in spots {
+            let center = CGPoint(x: headCenter.x + dx * headRadius * 1.05,
+                                 y: headCenter.y - headRadius + dy * headRadius * 0.8)
+            let r = 7 * scale * factor
+
+            for petal in 0..<5 {
+                let angle = CGFloat(petal) / 5 * 2 * .pi - .pi / 2
+                let petalCenter = CGPoint(x: center.x + cos(angle) * r,
+                                          y: center.y + sin(angle) * r)
+                context.fill(
+                    Path(ellipseIn: CGRect(x: petalCenter.x - r * 0.6,
+                                           y: petalCenter.y - r * 0.6,
+                                           width: r * 1.2, height: r * 1.2)),
+                    with: .color(tint.opacity(0.9))
+                )
+            }
+
+            context.fill(
+                Path(ellipseIn: CGRect(x: center.x - r * 0.45,
+                                       y: center.y - r * 0.45,
+                                       width: r * 0.9, height: r * 0.9)),
+                with: .color(Color(hex: 0xFFD54F))
+            )
+        }
     }
 }

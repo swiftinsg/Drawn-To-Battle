@@ -3,7 +3,7 @@ import SwiftUI
 // MARK: - Home hub (template layout)
 //
 // Profile top-left • coins/pens/settings top-right • centered fighter with
-// world accessories • daily/studio/collection left • gacha + play along the bottom.
+// world cosmetics • daily/studio/collection left • gacha + play along the bottom.
 
 struct HomeHubView: View {
     @ObservedObject var game: GameSave
@@ -251,7 +251,7 @@ struct HomeHubView: View {
             .shadow(color: Color(hex: 0xF5C451).opacity(0.25), radius: 14, y: 5)
         }
         .buttonStyle(.plain)
-        .accessibilityLabel("Gacha, move and accessory draws")
+        .accessibilityLabel("Gacha, move and cosmetic draws")
     }
 
     private var loadoutChip: some View {
@@ -458,7 +458,7 @@ private enum Currency: String, Identifiable {
     var description: String {
         switch self {
         case .coins:
-            return "Earned from battles. Spend them on accessory draws or changing your fighter's name."
+            return "Earned from battles. Spend them on cosmetic draws or changing your fighter's name."
         case .pens:
             return "Earned from battles. Spend them on gacha draws."
         }

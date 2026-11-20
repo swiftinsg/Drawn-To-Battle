@@ -180,7 +180,7 @@ enum BlueprintCatalog {
 enum Gacha {
     static let pullCost = 100
     static let duplicateRefund = 30
-    /// Accessory gachas run on coins instead of pens.
+    /// Cosmetic gachas run on coins instead of pens.
     static let accessoryPullCost = 250
     static let accessoryDuplicateRefund = 50
     /// Coin → pen exchange (battles pay coins; the gacha runs on pens).

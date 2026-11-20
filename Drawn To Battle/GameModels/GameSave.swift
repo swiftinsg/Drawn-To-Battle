@@ -179,7 +179,7 @@ final class GameSave: ObservableObject {
     @Published var gachaHistory: [GachaPullRecord] = [] {
         didSet { persist() }
     }
-    /// Accessories owned from world gachas and level milestones.
+    /// Cosmetics owned from world gachas, the level road, and milestones.
     @Published var ownedAccessories: Set<String> = [] {
         didSet { persist() }
     }
@@ -269,7 +269,7 @@ final class GameSave: ObservableObject {
             profileImageData = saved.profileImageData
             gachaHistory = saved.gachaHistory ?? []
             // Older saves already have signature gear for worlds they beat.
-            // Legacy ids are mapped so the themed accessory swap keeps progress.
+            // Legacy ids are mapped so the themed cosmetic swap keeps progress.
             var startingAccessories = Set(
                 saved.defeatedBosses.compactMap { Accessory.signature(forBoss: $0)?.rawValue }
             )
@@ -303,7 +303,8 @@ final class GameSave: ObservableObject {
         LevelRoadStep(level: 5, rewardCoins: 240, rewardStardust: 20),
         LevelRoadStep(level: 6, rewardCoins: 340, rewardStardust: 25),
         LevelRoadStep(level: 7, rewardCoins: 480, rewardStardust: 30),
-        LevelRoadStep(level: 8, rewardCoins: 680, rewardStardust: 40),
+        LevelRoadStep(level: 8, rewardCoins: 680, rewardStardust: 40,
+                      rewardCosmetic: .sunRing),
         LevelRoadStep(level: 9, rewardCoins: 960, rewardStardust: 50),
     ]
 
@@ -344,6 +345,9 @@ final class GameSave: ObservableObject {
             claimedLevelSteps.insert(step.level)
             coins += step.rewardCoins
             stardust += step.rewardStardust
+            if let cosmetic = step.rewardCosmetic {
+                ownedAccessories.insert(cosmetic.rawValue)
+            }
         }
     }
 
@@ -366,7 +370,7 @@ final class GameSave: ObservableObject {
         }
     }
 
-    // MARK: Accessories
+    // MARK: Cosmetics
 
     func isAccessoryOwned(_ accessory: Accessory) -> Bool {
         ownedAccessories.contains(accessory.rawValue)
@@ -381,7 +385,7 @@ final class GameSave: ObservableObject {
         testUnlockAll || defeatedBosses.contains(bossID)
     }
 
-    /// Draws an accessory. Returns false for a duplicate, which pays coins.
+    /// Draws a cosmetic. Returns false for a duplicate, which pays coins.
     @discardableResult
     func addAccessory(_ accessory: Accessory) -> Bool {
         if isAccessoryOwned(accessory) {
@@ -544,7 +548,7 @@ final class GameSave: ObservableObject {
 
     func registerVictory(boss: BossDefinition) {
         defeatedBosses.insert(boss.id)
-        // Conquering a world grants its signature accessory and opens its gacha.
+        // Conquering a world grants its signature cosmetic and opens its gacha.
         if let signature = Accessory.signature(forBoss: boss.id) {
             ownedAccessories.insert(signature.rawValue)
         }

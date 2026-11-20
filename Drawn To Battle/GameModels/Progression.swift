@@ -1,8 +1,8 @@
 import SwiftUI
 
-// MARK: - Accessories
+// MARK: - Cosmetics
 
-/// How an accessory is painted onto the home fighter.
+/// How a cosmetic is painted onto the home fighter.
 enum AccessoryRender: String, Codable {
     case crown
     case wings
@@ -11,9 +11,18 @@ enum AccessoryRender: String, Codable {
     case butterflies
     case leaves
     case orbit
+    case fireOrbit
+    case soulOrbit
+    case fairyWings
+    case crystalCrown
+    case flowerCrown
+    case fireWings
+    case fireHalo
+    case sunRing
 }
 
-/// Gear available from world gachas and level milestones.
+/// Gear available from world gachas, the level road, and level milestones.
+/// Raw values stay stable so existing saves keep their earned pieces.
 enum Accessory: String, Codable, CaseIterable, Identifiable {
     // Earth gacha: nature, growth and glowing creatures.
     case glowButterflies
@@ -22,17 +31,28 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
     case leafCrown
     case vineWreath
     case mossCrest
-    // Uranus gacha: ice and water.
+    case fairyWings
+    case flowerCrown
+    case mapleCrown
+    // Uranus gacha: ice, water and cold flame.
     case iceWings
     case frostRing
     case tideOrbit
     case crystalHalo
+    case crystalCrown
+    case iceCrown
+    case soulFire
     // Sun gacha: angelic light and fire.
     case solarHalo
     case flameCrown
     case angelWings
     case emberCrown
     case flareWings
+    case fireOrbit
+    case fireWings
+    case fireHalo
+    // Level road
+    case sunRing
     // Level milestones
     case championCrown
     case meteorWings
@@ -47,17 +67,27 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         case .driftingLeaves: return "Drifting Leaves"
         case .pebbleOrbit: return "Pebble Orbit"
         case .leafCrown: return "Leaf Crown"
-        case .vineWreath: return "Vine Wreath"
+        case .vineWreath: return "Forest Wreath"
         case .mossCrest: return "Moss Crest"
+        case .fairyWings: return "Fairy Wings"
+        case .flowerCrown: return "Flower Crown"
+        case .mapleCrown: return "Maple Crown"
         case .iceWings: return "Ice Wings"
         case .frostRing: return "Frost Ring"
         case .tideOrbit: return "Tide Orbit"
         case .crystalHalo: return "Crystal Halo"
+        case .crystalCrown: return "Crystal Crown"
+        case .iceCrown: return "Ice Crown"
+        case .soulFire: return "Soul Fire"
         case .solarHalo: return "Solar Halo"
         case .flameCrown: return "Flame Crown"
         case .angelWings: return "Angel Wings"
         case .emberCrown: return "Ember Crown"
         case .flareWings: return "Flare Wings"
+        case .fireOrbit: return "Fire Orbit"
+        case .fireWings: return "Fire Wings"
+        case .fireHalo: return "Fire Halo"
+        case .sunRing: return "Sun Ring"
         case .championCrown: return "Champion Crown"
         case .meteorWings: return "Meteor Wings"
         case .galacticHalo: return "Galactic Halo"
@@ -65,14 +95,18 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// Boss whose world gacha contains this accessory.
+    /// Boss whose world gacha contains this cosmetic.
     var bossID: String? {
         switch self {
         case .glowButterflies, .driftingLeaves, .pebbleOrbit,
-             .leafCrown, .vineWreath, .mossCrest: return "earth"
-        case .iceWings, .frostRing, .tideOrbit, .crystalHalo: return "mars"   // Uranus (save id)
-        case .solarHalo, .flameCrown, .angelWings, .emberCrown, .flareWings: return "sun"
-        case .championCrown, .meteorWings, .galacticHalo, .legendStar: return nil
+             .leafCrown, .vineWreath, .mossCrest,
+             .fairyWings, .flowerCrown, .mapleCrown: return "earth"
+        case .iceWings, .frostRing, .tideOrbit, .crystalHalo,
+             .crystalCrown, .iceCrown, .soulFire: return "mars"   // Uranus (save id)
+        case .solarHalo, .flameCrown, .angelWings, .emberCrown, .flareWings,
+             .fireOrbit, .fireWings, .fireHalo: return "sun"
+        case .sunRing, .championCrown, .meteorWings, .galacticHalo,
+             .legendStar: return nil
         }
     }
 
@@ -85,7 +119,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// Level that awards this accessory outright.
+    /// Level that awards this cosmetic outright.
     var milestoneLevel: Int? {
         switch self {
         case .championCrown: return 5
@@ -96,13 +130,18 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         }
     }
 
+    /// Level road step that awards this cosmetic.
+    var levelRoadLevel: Int? {
+        self == .sunRing ? 8 : nil
+    }
+
     static let milestoneLevels = [5, 10, 15, 20]
 
     static func accessory(forMilestone level: Int) -> Accessory? {
         allCases.first { $0.milestoneLevel == level }
     }
 
-    /// The accessory granted free when a world is first conquered.
+    /// The cosmetic granted free when a world is first conquered.
     static func signature(forBoss id: String) -> Accessory? {
         switch id {
         case "earth": return .glowButterflies
@@ -117,7 +156,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         allCases.filter { $0.bossID == id }
     }
 
-    /// Old accessory ids mapped to their new themed equivalents so existing
+    /// Old cosmetic ids mapped to their new themed equivalents so existing
     /// TestFlight saves keep what they earned.
     static func migratedID(_ id: String) -> String {
         switch id {
@@ -133,7 +172,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
 
     var render: AccessoryRender {
         switch self {
-        case .leafCrown, .vineWreath, .mossCrest, .flameCrown,
+        case .leafCrown, .vineWreath, .mossCrest, .mapleCrown, .flameCrown,
              .emberCrown, .championCrown:
             return .crown
         case .iceWings, .angelWings, .flareWings, .meteorWings:
@@ -148,10 +187,26 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
             return .leaves
         case .pebbleOrbit, .tideOrbit:
             return .orbit
+        case .fireOrbit:
+            return .fireOrbit
+        case .soulFire:
+            return .soulOrbit
+        case .fairyWings:
+            return .fairyWings
+        case .crystalCrown, .iceCrown:
+            return .crystalCrown
+        case .flowerCrown:
+            return .flowerCrown
+        case .fireWings:
+            return .fireWings
+        case .fireHalo:
+            return .fireHalo
+        case .sunRing:
+            return .sunRing
         }
     }
 
-    /// Tint used for the accessory itself and for collection chips.
+    /// Tint used for the cosmetic itself and for collection chips.
     var tintHex: UInt32 {
         switch self {
         case .glowButterflies: return 0xA8F06A
@@ -160,15 +215,25 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         case .leafCrown: return 0x4ED36E
         case .vineWreath: return 0x2E8B57
         case .mossCrest: return 0x9ACD32
+        case .fairyWings: return 0x9BE870
+        case .flowerCrown: return 0xFF8FC0
+        case .mapleCrown: return 0xE8873C
         case .iceWings: return 0x4FC3F7
         case .frostRing: return 0x81D4FA
         case .tideOrbit: return 0x29B6F6
         case .crystalHalo: return 0xB3E5FC
+        case .crystalCrown: return 0x81D4FA
+        case .iceCrown: return 0x4FC3F7
+        case .soulFire: return 0x8C7BFF
         case .solarHalo: return 0xF5C451
         case .flameCrown: return 0xFF8A3C
         case .angelWings: return 0xFFE8A8
         case .emberCrown: return 0xFF8A3C
         case .flareWings: return 0xFF6B4A
+        case .fireOrbit: return 0xFF6B2C
+        case .fireWings: return 0xFF7A2F
+        case .fireHalo: return 0xFF9A3C
+        case .sunRing: return 0xF5C451
         case .championCrown: return 0xFFD54F
         case .meteorWings: return 0xE86A6A
         case .galacticHalo: return 0xA86CFF
@@ -180,7 +245,10 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
 
     var subtitle: String {
         if let planet = planetName {
-            return "Dropped by the \(planet) accessory gacha."
+            return "Dropped by the \(planet) cosmetic gacha."
+        }
+        if let level = levelRoadLevel {
+            return "Reached at level \(level) on the level road."
         }
         return "Reached at level \(milestoneLevel ?? 0)."
     }
@@ -203,6 +271,7 @@ struct LevelRoadStep {
     let level: Int
     let rewardCoins: Int
     let rewardStardust: Int
+    var rewardCosmetic: Accessory? = nil
 
     /// XP needed to reach this level (reusing the leveling curve).
     var xpNeeded: Int { GameSave.cumulativeXP(for: level) }

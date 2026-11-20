@@ -1,13 +1,13 @@
 import SwiftUI
 
-/// Browse every accessory, equip the ones you own, and see how to earn the rest.
-struct AccessoryCollectionView: View {
+/// Browse every cosmetic, equip the ones you own, and see how to earn the rest.
+struct CosmeticCollectionView: View {
     @ObservedObject var game: GameSave
 
     var body: some View {
         VStack(alignment: .leading, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text("ACCESSORIES")
+                Text("COSMETICS")
                     .font(.system(size: 10, weight: .heavy, design: .rounded))
                     .tracking(2)
                     .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
@@ -25,7 +25,7 @@ struct AccessoryCollectionView: View {
                 game.clearAccessory()
                 Haptics.light()
             } label: {
-                Text("REMOVE ACCESSORY")
+                Text("REMOVE COSMETIC")
                     .font(.system(size: 11, weight: .black, design: .rounded))
                     .tracking(1)
                     .foregroundStyle(game.equippedAccessory == nil
@@ -112,7 +112,10 @@ struct AccessoryCollectionView: View {
     private func unlockHint(_ accessory: Accessory) -> String {
         if game.isAccessoryOwned(accessory) { return accessory.subtitle }
         if let planet = accessory.planetName {
-            return "Win the \(planet) boss or draw in its accessory gacha."
+            return "Win the \(planet) boss or draw in its cosmetic gacha."
+        }
+        if let level = accessory.levelRoadLevel {
+            return "Reach level \(level) on the level road to unlock."
         }
         if let level = accessory.milestoneLevel {
             return "Reach level \(level) to unlock."

@@ -4,7 +4,7 @@ import SwiftUI
 
 private enum CollectionTab: Hashable {
     case moves
-    case accessories
+    case cosmetics
 }
 
 struct CollectionView: View {
@@ -46,7 +46,7 @@ struct CollectionView: View {
 
                 HStack(spacing: 8) {
                     tabButton("MOVES", tab: .moves)
-                    tabButton("ACCESSORIES", tab: .accessories)
+                    tabButton("COSMETICS", tab: .cosmetics)
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 10)
@@ -92,7 +92,7 @@ struct CollectionView: View {
                             // Studio animations.
                             studioSection
                         } else {
-                            AccessoryCollectionView(game: game)
+                            CosmeticCollectionView(game: game)
                         }
                     }
                     .padding(.horizontal, 16)
