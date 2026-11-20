@@ -153,7 +153,7 @@ struct DailyRewardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(18)
-        .background(RoundedRectangle(cornerRadius: 18).fill(Color(hex: 0x15171F)))
+        .background(RoundedRectangle(cornerRadius: 18).fill(Color(hex: 0x14161E)))
         .overlay(
             RoundedRectangle(cornerRadius: 18)
                 .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1)

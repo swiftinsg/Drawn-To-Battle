@@ -217,7 +217,7 @@ struct GachaView: View {
         return VStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(hex: 0x15171F))
+                    .fill(Color(hex: 0x14161E))
                     .frame(width: 190, height: 170)
                     .overlay(
                         RoundedRectangle(cornerRadius: 20)
@@ -532,7 +532,7 @@ private struct GachaBatchResultView: View {
                         .foregroundStyle(.white.opacity(0.65))
 
                     if newCount > 0, onLearn != nil {
-                        Text("NEW MOVES ARE LESSONS — TAP LEARN ON A CARD TO ANIMATE IT")
+                        Text("TAP LEARN ON NEW CARDS")
                             .font(.system(size: 9, weight: .black, design: .rounded))
                             .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
                             .multilineTextAlignment(.center)

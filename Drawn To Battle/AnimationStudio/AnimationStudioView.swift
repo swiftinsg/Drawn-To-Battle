@@ -151,7 +151,7 @@ struct AnimationStudioView: View {
         HStack(alignment: .bottom, spacing: 12) {
             // Left — the buttons.
             StudioButtonsRow(studio: studio, selectedBone: $selectedBone)
-                .frame(width: 205)
+                .frame(width: 270)
 
             // Middle to right — the frames (timeline with gold playhead).
             FrameTimelineView(studio: studio)
@@ -261,18 +261,13 @@ private struct StudioButtonsRow: View {
     @Binding var selectedBone: Bone?
 
     var body: some View {
-        VStack(alignment: .leading, spacing: 10) {
-            // Playback + speed + onion.
-            HStack(alignment: .center, spacing: 8) {
+        VStack(alignment: .leading, spacing: 8) {
+            // One tidy row: playback, speed, ghosts, frame edits.
+            HStack(alignment: .center, spacing: 6) {
                 StudioIconButton(systemImage: "backward.end.fill") { studio.selectFrame(0) }
                 BigPlayButton(studio: studio)
                 PlaySpeedToggle(studio: studio)
                 OnionToggleButton(studio: studio)
-                Spacer()
-            }
-
-            // Frame management + pose controls.
-            HStack(spacing: 8) {
                 FilmChipButton(studio: studio)
                 StudioIconButton(systemImage: "doc.on.doc") {
                     studio.duplicateFrame(at: studio.selectedIndex)
@@ -280,12 +275,14 @@ private struct StudioButtonsRow: View {
                 StudioIconButton(systemImage: "trash", tinted: Color(hex: 0xE86A6A)) {
                     studio.deleteFrame(at: studio.selectedIndex)
                 }
+                Spacer(minLength: 0)
             }
 
+            // Rig controls: which part, thickness, colour.
             PoseControlsRow(studio: studio, selectedBone: $selectedBone)
         }
         .padding(.horizontal, 8)
-        .padding(.vertical, 8)
+        .padding(.vertical, 6)
     }
 }
 

@@ -16,7 +16,7 @@ struct GachaMachineIcon: View {
 
             // Machine body.
             let body = Path(roundedRect: CGRect(x: 16, y: 26, width: 48, height: 46), cornerRadius: 12)
-            context.fill(body, with: .color(Color(hex: 0x15171F)))
+            context.fill(body, with: .color(Color(hex: 0x14161E)))
             context.stroke(body, with: .color(gold.opacity(0.9)),
                            style: StrokeStyle(lineWidth: 2.5))
 

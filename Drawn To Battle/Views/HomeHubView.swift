@@ -269,7 +269,7 @@ struct HomeHubView: View {
             .frame(width: bottomButtonSize.width, height: bottomButtonSize.height)
             .background(
                 RoundedRectangle(cornerRadius: 18)
-                    .fill(Color(hex: 0x15171F).opacity(0.92))
+                    .fill(Color(hex: 0x14161E).opacity(0.92))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 18)
@@ -297,7 +297,7 @@ struct HomeHubView: View {
                         .lineLimit(1)
                 }
             } else {
-                Text("No move equipped. Open COLLECTION")
+                Text("No move equipped. Learn one in COLLECTION")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.5))
             }

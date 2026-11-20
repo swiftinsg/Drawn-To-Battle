@@ -137,7 +137,7 @@ struct CosmeticCollectionView: View {
             .frame(maxWidth: .infinity)
             .background(
                 RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(hex: equipped ? 0x201D14 : 0x15171F))
+                    .fill(Color(hex: equipped ? 0x201D14 : 0x14161E))
             )
             .overlay(
                 RoundedRectangle(cornerRadius: 14)

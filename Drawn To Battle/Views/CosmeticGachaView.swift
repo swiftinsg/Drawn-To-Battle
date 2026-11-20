@@ -95,7 +95,7 @@ struct CosmeticGachaView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
-        .background(RoundedRectangle(cornerRadius: 18).fill(Color(hex: 0x15171F)))
+        .background(RoundedRectangle(cornerRadius: 18).fill(Color(hex: 0x14161E)))
         .overlay(
             RoundedRectangle(cornerRadius: 18)
                 .stroke(tint.opacity(0.3), lineWidth: 1)
@@ -106,7 +106,7 @@ struct CosmeticGachaView: View {
         VStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(hex: 0x15171F))
+                    .fill(Color(hex: 0x14161E))
                     .frame(width: 190, height: 170)
                     .overlay(
                         RoundedRectangle(cornerRadius: 20)

@@ -57,7 +57,7 @@ struct CollectionView: View {
                             // Equipped.
                             equippedSection
 
-                            Text("NEW MOVES START AS LESSONS — TAP LEARN TO ANIMATE THEM YOURSELF")
+                            Text("NEW MOVES: TAP LEARN TO ANIMATE")
                                 .font(.system(size: 9, weight: .black, design: .rounded))
                                 .foregroundStyle(Color(hex: 0xF5C451).opacity(0.7))
 
@@ -175,7 +175,7 @@ struct CollectionView: View {
                 .padding(12)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.06)))
             } else {
-                Text("No move equipped. Draw a blueprint or equip a Studio animation")
+                Text("No move equipped. Tap LEARN on a blueprint, or equip a Studio animation")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.45))
                     .frame(maxWidth: .infinity, alignment: .leading)
