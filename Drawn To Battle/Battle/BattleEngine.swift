@@ -111,6 +111,8 @@ final class BattleEngine: ObservableObject {
     var flashBoss: CGFloat = 0
     var blockActive = false
     var blockStart: CGFloat = -10     // time the current block began (parry window)
+    var blockTime: CGFloat = 0        // seconds the current block has been held
+    var blockCooldown: CGFloat = 0    // seconds until block can be held again
     var dodgeActive = false
     var dodgeTimer: CGFloat = 0
     var dodgeDir: CGFloat = -1
@@ -217,6 +219,8 @@ final class BattleEngine: ObservableObject {
         flashBoss = 0
         blockActive = false
         blockStart = -10
+        blockTime = 0
+        blockCooldown = 0
         dodgeActive = false
         dodgeTimer = 0
         dodgeCooldown = 0
@@ -291,11 +295,17 @@ final class BattleEngine: ObservableObject {
         hurtTimer = max(0, hurtTimer - d)
         dodgeCooldown = max(0, dodgeCooldown - d)
         attackCooldown = max(0, attackCooldown - d)
+        blockCooldown = max(0, blockCooldown - d)
+
+        // Block fatigue: after holding the block for 5 seconds, you can't
+        // hold it again until a 1.2-second cooldown has elapsed.
+        if blockTime >= 5 && blockCooldown <= 0 { blockCooldown = 1.2 }
 
         // Once the strike has landed the player can move, block and dodge again,
         // even while the rest of a long animation finishes playing.
         let canControl = (!attackActive || attackDamageDone) && hurtTimer <= 0
-        blockActive = input.blockHeld && canControl && !dodgeActive
+        blockActive = input.blockHeld && canControl && !dodgeActive && blockCooldown <= 0
+        if blockActive { blockTime += d } else { blockTime = 0 }
         if blockActive && blockStart < 0 { blockStart = time }
         if !input.blockHeld { blockStart = -10 }
 
