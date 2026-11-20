@@ -110,8 +110,8 @@ struct FrameTimelineView: View {
                 .fixedSize()
         }
         .padding(.horizontal, 12)
-        .padding(.top, 2)
-        .padding(.bottom, 5)
+        .padding(.top, 1)
+        .padding(.bottom, 3)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color(hex: 0x14161E))
