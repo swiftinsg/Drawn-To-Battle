@@ -28,7 +28,8 @@ struct HomeHubView: View {
         ZStack {
             Color(hex: 0x0C0D12).ignoresSafeArea()
 
-            HubBackdrop()
+            // Rive ambient animation layered over the static backdrop.
+            RiveHomeBackground { HubBackdrop() }
 
             // The fighter is the focal point, like a Brawl Stars lobby.
             FighterFigureView(accessory: game.equippedAccessory)
