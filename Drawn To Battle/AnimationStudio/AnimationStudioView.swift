@@ -23,36 +23,38 @@ struct AnimationStudioView: View {
     var onBack: (() -> Void)?
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Top bar.
-            topBar
+        GeometryReader { geo in
+            ZStack {
+                // Canvas — the main zone: big paper canvas with the rig.
+                StickmanCanvasView(
+                    pose: studio.currentFrame?.pose ?? StickmanPose(),
+                    selectedBone: $selectedBone,
+                    onRotate: handleRotate,
+                    onMove: { newRoot in
+                        studio.updateCurrentPose { pose in
+                            pose.root = CGPoint(
+                                x: min(390, max(10, newRoot.x)),
+                                y: min(505, max(30, newRoot.y))
+                            )
+                        }
+                    },
+                    editingHandles: !studio.isPlaying,
+                    bottomInset: 0,
+                    ghostPoses: onionSkinGhosts,
+                    futureGhost: onionSkinFuture
+                )
+                .ignoresSafeArea()
 
-            // Canvas — the main zone: big paper canvas with the rig,
-            // inset so the floor line sits above the bottom panel when
-            // animating.
-            StickmanCanvasView(
-                pose: studio.currentFrame?.pose ?? StickmanPose(),
-                selectedBone: $selectedBone,
-                onRotate: handleRotate,
-                onMove: { newRoot in
-                    studio.updateCurrentPose { pose in
-                        pose.root = CGPoint(
-                            x: min(390, max(10, newRoot.x)),
-                            y: min(505, max(30, newRoot.y))
-                        )
-                    }
-                },
-                editingHandles: !studio.isPlaying,
-                bottomInset: mode == .animate ? bottomPanelHeight : 0,
-                ghostPoses: onionSkinGhosts,
-                futureGhost: onionSkinFuture
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
+                // Bottom bar — buttons (left) + frames (right), pinned to
+                // the very bottom of the screen.
+                if mode == .animate {
+                    bottomPanel
+                        .position(x: geo.size.width / 2, y: geo.size.height - bottomPanelHeight / 2)
+                }
 
-            // Bottom panel — buttons (left) + frames (right), pinned to the
-            // bottom of the screen.
-            if mode == .animate {
-                bottomPanel
+                // Top bar, pinned to the very top.
+                topBar
+                    .position(x: geo.size.width / 2, y: topBarHeight / 2)
             }
         }
         .onAppear {
@@ -143,7 +145,7 @@ struct AnimationStudioView: View {
     /// Bottom panel — buttons in the left column, frames (the timeline) in
     /// the middle to right. No sliders.
     private var bottomPanel: some View {
-        HStack(alignment: .top, spacing: 12) {
+        HStack(alignment: .bottom, spacing: 12) {
             // Left — the buttons.
             StudioButtonsRow(studio: studio, selectedBone: $selectedBone)
                 .frame(width: 205)
