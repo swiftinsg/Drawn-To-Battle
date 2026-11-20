@@ -204,6 +204,11 @@ final class GameSave: ObservableObject {
     @Published var hasSeenStudioTutorial: Bool = false {
         didSet { persist() }
     }
+    /// Level-road steps whose rewards have been claimed — each level's
+    /// reward is granted once, when XP first reaches the step's threshold.
+    @Published var claimedLevelSteps: Set<Int> = [] {
+        didSet { persist() }
+    }
     var hasUsername: Bool { !username.isEmpty }
 
     private static let key = "DrawnToBattle.save.v1"
@@ -269,6 +274,24 @@ final class GameSave: ObservableObject {
 
     var level: Int { Self.level(for: experience) }
 
+    /// The Level Road — stops whose XP thresholds define rewards for
+    /// reaching levels (see `claimReachedLevelRoadSteps`).
+    static let levelRoadSteps: [LevelRoadStep] = [
+        LevelRoadStep(level: 2, rewardCoins: 60, rewardStardust: 8),
+        LevelRoadStep(level: 3, rewardCoins: 100, rewardStardust: 12),
+        LevelRoadStep(level: 4, rewardCoins: 160, rewardStardust: 16),
+        LevelRoadStep(level: 5, rewardCoins: 240, rewardStardust: 20),
+        LevelRoadStep(level: 6, rewardCoins: 340, rewardStardust: 25),
+        LevelRoadStep(level: 7, rewardCoins: 480, rewardStardust: 30),
+        LevelRoadStep(level: 8, rewardCoins: 680, rewardStardust: 40),
+        LevelRoadStep(level: 9, rewardCoins: 960, rewardStardust: 50),
+    ]
+
+    /// Levels whose road reward is still reachable but not yet claimed.
+    var pendingLevelRoadSteps: [LevelRoadStep] {
+        Self.levelRoadSteps.filter { !claimedLevelSteps.contains($0.level) && $0.isReached(by: experience) }
+    }
+
     /// XP needed to enter a given level, measured from level 1.
     static func cumulativeXP(for level: Int) -> Int {
         let steps = max(0, level - 1)
@@ -290,6 +313,17 @@ final class GameSave: ObservableObject {
 
     func addExperience(_ amount: Int) {
         experience += max(0, amount)
+        claimReachedLevelRoadSteps()
+    }
+
+    /// Grants the rewards of any level road step the player has reached.
+    func claimReachedLevelRoadSteps() {
+        for step in Self.levelRoadSteps
+        where !claimedLevelSteps.contains(step.level) && step.isReached(by: experience) {
+            claimedLevelSteps.insert(step.level)
+            coins += step.rewardCoins
+            stardust += step.rewardStardust
+        }
     }
 
     // MARK: Costumes
@@ -495,6 +529,7 @@ final class GameSave: ObservableObject {
         var testUnlockAll: Bool?
         var hasAnimated: Bool?
         var hasSeenStudioTutorial: Bool?
+        var claimedLevelSteps: Set<Int>?
     }
 
     private func persist() {
@@ -514,7 +549,8 @@ final class GameSave: ObservableObject {
             lastDailyClaimDate: lastDailyClaimDate,
             testUnlockAll: testUnlockAll,
             hasAnimated: hasAnimated,
-            hasSeenStudioTutorial: hasSeenStudioTutorial
+            hasSeenStudioTutorial: hasSeenStudioTutorial,
+            claimedLevelSteps: claimedLevelSteps
         )
         if let encoded = try? JSONEncoder().encode(data) {
             UserDefaults.standard.set(encoded, forKey: Self.key)
