@@ -2,6 +2,13 @@ import SwiftUI
 
 // MARK: - Animation Studio (main screen)
 
+/// ANIMATE shows the timeline + playback + buttons + frames; DRAW strips
+/// the studio chrome (hides the panel, timeline, controls) for a pure
+/// canvas view.
+enum StudioMode: Equatable {
+    case animate, draw
+}
+
 struct AnimationStudioView: View {
     @ObservedObject var studio: StudioState
     @State private var selectedBone: Bone?
@@ -9,14 +16,20 @@ struct AnimationStudioView: View {
     @State private var nameEditorShown = false
     /// First-time walkthrough, shown once per fighter.
     @State private var showTutorial = false
+    /// ANIMATE shows the timeline + playback + buttons + frames; DRAW
+    /// strips the studio chrome for a pure canvas view.
+    @State private var mode: StudioMode = .animate
 
     var onBack: (() -> Void)?
 
     var body: some View {
-        ZStack {
-            Color(hex: 0x0C0D12).ignoresSafeArea()
+        VStack(spacing: 0) {
+            // Top bar.
+            topBar
 
-            // Full-screen editing canvas with overlaid panels.
+            // Canvas — the main zone: big paper canvas with the rig,
+            // inset so the floor line sits above the bottom panel when
+            // animating.
             StickmanCanvasView(
                 pose: studio.currentFrame?.pose ?? StickmanPose(),
                 selectedBone: $selectedBone,
@@ -30,80 +43,16 @@ struct AnimationStudioView: View {
                     }
                 },
                 editingHandles: !studio.isPlaying,
-                bottomInset: bottomPanelHeight,
-                topInset: topBarHeight,
+                bottomInset: mode == .animate ? bottomPanelHeight : 0,
                 ghostPoses: onionSkinGhosts,
                 futureGhost: onionSkinFuture
             )
-            .ignoresSafeArea(edges: .bottom)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
 
-            VStack(spacing: 0) {
-                // Top bar.
-                HStack(spacing: 10) {
-                    if let onBack {
-                        StudioIconButton(systemImage: "chevron.left") { onBack() }
-                    }
-                    Button {
-                        nameEditorShown = true
-                    } label: {
-                        HStack(spacing: 6) {
-                            Text(studio.project.name)
-                                .font(DrawnToBattleTypography.display(17))
-                                .foregroundStyle(.white)
-                                .lineLimit(1)
-                            Image(systemName: "pencil")
-                                .font(.system(size: 11, weight: .semibold))
-                                .foregroundStyle(.white.opacity(0.5))
-                        }
-                    }
-                    .buttonStyle(.plain)
-
-                    // Live quality readout, re-scored on every edit, and the
-                    // same score that sets battle damage.
-                    let live = AnimationAnalysis.analyze(studio.project)
-                    Text("POWER \(Int(live.power)) • \(live.powerLabel)")
-                        .font(.system(size: 10, weight: .black, design: .rounded))
-                        .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
-                        .padding(.horizontal, 8)
-                        .padding(.vertical, 4)
-                        .background(Capsule().fill(Color(hex: 0xF5C451).opacity(0.1)))
-                        .lineLimit(1)
-
-                    Spacer()
-
-                    Text(studio.hasUnsavedChanges ? "SAVING" : "AUTO SAVED")
-                        .font(.system(size: 8, weight: .black, design: .rounded))
-                        .foregroundStyle(.white.opacity(0.35))
-                    StudioIconButton(systemImage: "questionmark.circle") { showTutorial = true }
-                        .accessibilityLabel("Tutorial")
-                    StudioIconButton(systemImage: "folder") { projectsBrowserShown = true }
-                    StudioIconButton(systemImage: "plus.rectangle.on.rectangle") { studio.newProject() }
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 6)
-                .padding(.bottom, 4)
-
-                Spacer()
-
-                // Bottom panel — buttons in the left column, frames (the
-                // timeline) in the middle to right. No sliders.
-                HStack(alignment: .top, spacing: 12) {
-                    // Left — the buttons.
-                    StudioButtonsRow(studio: studio, selectedBone: $selectedBone)
-                        .frame(width: 250)
-
-                    // Middle to right — the frames (timeline with gold playhead).
-                    FrameTimelineView(studio: studio)
-                        .padding(.trailing, 8)
-                }
-                .padding(.horizontal, 12)
-                .padding(.top, 8)
-                .padding(.bottom, 6)
-                .background(
-                    RoundedTopCorners(radius: 18)
-                        .fill(Color(hex: 0x14161E).opacity(0.97))
-                        .ignoresSafeArea(edges: .bottom)
-                )
+            // Bottom panel — buttons (left) + frames (right), pinned to the
+            // bottom of the screen.
+            if mode == .animate {
+                bottomPanel
             }
         }
         .onAppear {
@@ -141,11 +90,76 @@ struct AnimationStudioView: View {
         }
     }
 
-    /// Height of the overlaid bottom panel, timeline + playback + pose
-    /// strip + frame strip, used by the canvas to keep the figure and
-    /// floor line above it.
     private var topBarHeight: CGFloat { 48 }
-    private var bottomPanelHeight: CGFloat { 264 }
+    private var bottomPanelHeight: CGFloat { 190 }
+
+    /// Top bar: BACK, project chip, quality readout, mode tabs, save.
+    private var topBar: some View {
+        HStack(spacing: 10) {
+            if let onBack {
+                StudioIconButton(systemImage: "chevron.left") { onBack() }
+            }
+            Button {
+                nameEditorShown = true
+            } label: {
+                HStack(spacing: 6) {
+                    Text(studio.project.name)
+                        .font(DrawnToBattleTypography.display(17))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    Image(systemName: "pencil")
+                        .font(.system(size: 11, weight: .semibold))
+                        .foregroundStyle(.white.opacity(0.5))
+                }
+            }
+            .buttonStyle(.plain)
+
+            // Live quality readout, re-scored on every edit, and the
+            // same score that sets battle damage.
+            let live = AnimationAnalysis.analyze(studio.project)
+            Text("POWER \(Int(live.power)) • \(live.powerLabel)")
+                .font(.system(size: 10, weight: .black, design: .rounded))
+                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
+                .padding(.horizontal, 8)
+                .padding(.vertical, 4)
+                .background(Capsule().fill(Color(hex: 0xF5C451).opacity(0.1)))
+                .lineLimit(1)
+
+            Spacer()
+
+            Text(studio.hasUnsavedChanges ? "SAVING" : "AUTO SAVED")
+                .font(.system(size: 8, weight: .black, design: .rounded))
+                .foregroundStyle(.white.opacity(0.35))
+            StudioIconButton(systemImage: "questionmark.circle") { showTutorial = true }
+                .accessibilityLabel("Tutorial")
+            StudioIconButton(systemImage: "folder") { projectsBrowserShown = true }
+            StudioIconButton(systemImage: "plus.rectangle.on.rectangle") { studio.newProject() }
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .padding(.bottom, 4)
+    }
+
+    /// Bottom panel — buttons in the left column, frames (the timeline) in
+    /// the middle to right. No sliders.
+    private var bottomPanel: some View {
+        HStack(alignment: .top, spacing: 12) {
+            // Left — the buttons.
+            StudioButtonsRow(studio: studio, selectedBone: $selectedBone)
+                .frame(width: 205)
+
+            // Middle to right — the frames (timeline with gold playhead).
+            FrameTimelineView(studio: studio)
+                .padding(.trailing, 8)
+        }
+        .padding(.horizontal, 12)
+        .padding(.top, 6)
+        .padding(.bottom, 6)
+        .background(
+            RoundedTopCorners(radius: 18)
+                .fill(Color(hex: 0x14161E).opacity(0.97))
+        )
+    }
 
     /// Up to two previous frames for onion skinning, nearest first.
     private var onionSkinGhosts: [StickmanPose] {
