@@ -14,6 +14,9 @@ struct CollectionView: View {
     @StateObject private var editStudio = StudioState()
     @State private var editingBlueprint: MoveBlueprint?
     @State private var tab: CollectionTab = .moves
+    /// Keeps the cosmetic grid from jumping to another section when equipping
+    /// an item publishes a save update and rebuilds the scroll content.
+    @State private var scrollSectionID: String?
 
     var body: some View {
         ZStack {
@@ -102,13 +105,16 @@ struct CollectionView: View {
                             studioSection
                         } else {
                             CosmeticCollectionView(game: game)
+                                .id("cosmetic-collection")
                         }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
                 }
+                .scrollPosition(id: $scrollSectionID)
             }
         }
+        .onChange(of: tab) { _, _ in scrollSectionID = nil }
         .fullScreenCover(item: $editingBlueprint) { bp in
             AnimationStudioView(studio: editStudio, onBack: { editingBlueprint = nil })
                 .onAppear {

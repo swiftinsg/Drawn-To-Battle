@@ -27,6 +27,7 @@ struct CosmeticCollectionView: View {
                 let items = Accessory.allCases.filter { $0.collectionSection == section }
                 if !items.isEmpty {
                     sectionBlock(section: section, items: items)
+                        .id("section-\(section.rawValue)")
                 }
             }
 
