@@ -89,6 +89,14 @@ struct ContentView: View {
         // Debug route: studio tutorial alone.
         case "tutorial":
             StudioTutorialView(game: game)
+        // Debug route: blueprint tutorial on top of the studio (no base animation).
+        case "blueprint-tutorial":
+            AnimationStudioView(studio: studioState, onBack: { })
+                .onAppear {
+                    studioState.game = game
+                    studioState.editBlueprint(BlueprintCatalog.all[0], edited: nil)
+                    studioState.showBlueprintTutorial = true
+                }
         default:
             HomeHubView(game: game, studio: studioState)
         }

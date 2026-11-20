@@ -175,6 +175,15 @@ struct AnimationStudioView: View {
                 StudioTutorialView(game: game)
             }
         }
+        // Blueprint tutorial, shown the first time a blueprint is opened.
+        .sheet(
+            isPresented: Binding(
+                get: { studio.showBlueprintTutorial },
+                set: { studio.showBlueprintTutorial = $0 }
+            )
+        ) {
+            BlueprintTutorialView { studio.showBlueprintTutorial = false }
+        }
         .onDisappear {
             studio.stop()
             studio.flushAutosave()

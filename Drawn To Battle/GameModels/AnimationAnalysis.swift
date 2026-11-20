@@ -147,8 +147,10 @@ enum AnimationAnalysis {
         let contrast = clamp01(1 - early / max(maxLimb, 1))
         r.timing = lateness * 0.5 + contrast * 0.5
 
-        // Telegraph: strike speed vs windup speed.
-        r.telegraph = clamp01(maxLimb / max(early, 1) / 3)
+        // Telegraph: how much faster the strike is than the windup. (Speed is
+        // already measured by speed; telegraph credits the swing's power,
+        // not the raw speed again, so a fast punch isn't double-counted.)
+        r.telegraph = maxLimb > 0.001 ? clamp01((maxLimb - early) / maxLimb) : 0
 
         // --- Power (weighted) ---
         r.power = (r.speed * 0.18 + r.acceleration * 0.09 + r.fluidity * 0.12 +

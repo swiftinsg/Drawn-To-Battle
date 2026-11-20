@@ -193,3 +193,22 @@ struct DailyReward {
     let pens: Int
     let xp: Int
 }
+
+// MARK: - Level road
+
+/// One stop on the Level Road, reached at the given XP threshold.
+/// Reaching a level grants its rewards automatically (see
+/// `GameSave.claimReachedLevelRoadSteps`).
+struct LevelRoadStep {
+    let level: Int
+    let rewardCoins: Int
+    let rewardStardust: Int
+
+    /// XP needed to reach this level (reusing the leveling curve).
+    var xpNeeded: Int { GameSave.cumulativeXP(for: level) }
+
+    /// Whether the player has reached this level's threshold.
+    func isReached(by experience: Int) -> Bool {
+        experience >= xpNeeded
+    }
+}
