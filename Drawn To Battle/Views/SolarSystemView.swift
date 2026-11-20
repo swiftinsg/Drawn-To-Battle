@@ -51,6 +51,9 @@ struct SolarSystemView: View {
                 .padding(.horizontal, 26)
                 .padding(.top, 10)
 
+                // Level road — reached levels grant their rewards.
+                LevelRoadView(game: game)
+
                 // The system itself.
                 GeometryReader { geo in
                     let mid = geo.size.width / 2
