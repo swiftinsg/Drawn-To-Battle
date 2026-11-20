@@ -42,7 +42,7 @@ struct ProfileView: View {
         ) {
             Button("CHANGE NAME") {
                 if game.changeUsername(to: draftName) {
-                    renameMessage = "Name changed! −\(GameSave.nameChangeCost.formatted()) coins."
+                    renameMessage = "Name changed! \(GameSave.nameChangeCost.formatted()) coins spent."
                 } else if trimmedDraftName.count < GameSave.minNameLength {
                     renameMessage = "Use at least \(GameSave.minNameLength) characters!"
                 } else if trimmedDraftName == game.username {
@@ -86,6 +86,14 @@ struct ProfileView: View {
 
             Color.clear.frame(width: 30, height: 30)
         }
+    }
+
+    private var milestoneText: String {
+        guard let next = Accessory.milestoneLevels.first(where: { $0 > game.level }),
+              let reward = Accessory.accessory(forMilestone: next) else {
+            return "ALL LEVEL REWARDS UNLOCKED"
+        }
+        return "NEXT REWARD \(reward.name.uppercased()) AT LV \(next)"
     }
 
     private var avatarAndLevel: some View {
@@ -143,6 +151,11 @@ struct ProfileView: View {
                     .font(.system(size: 9, weight: .black, design: .rounded))
                     .tracking(1)
                     .foregroundStyle(.white.opacity(0.55))
+
+                Text(milestoneText)
+                    .font(.system(size: 8, weight: .black, design: .rounded))
+                    .tracking(0.5)
+                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.75))
             }
         }
         .padding(.top, 2)
@@ -348,7 +361,7 @@ private struct ProfileSolarDecor: View {
                     style: StrokeStyle(lineWidth: 1, dash: [4, 8])
                 )
 
-                // Earth, Sun, Uranus — same palette as the boss planets.
+                // Earth, Sun, Uranus, same palette as the boss planets.
                 let planets: [(CGFloat, CGFloat, CGFloat, UInt32, UInt32)] = [
                     (-0.78, 0.16, 13, 0x3FA65C, 0x4C8DFF),
                     (0.0, -1.0, 17, 0xF5C451, 0xFF8A3C),

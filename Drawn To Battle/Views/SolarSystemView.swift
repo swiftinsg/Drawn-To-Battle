@@ -51,7 +51,7 @@ struct SolarSystemView: View {
                 .padding(.horizontal, 26)
                 .padding(.top, 10)
 
-                // Level road — reached levels grant their rewards.
+                // Level road. Reached levels grant their rewards.
                 LevelRoadView(game: game)
 
                 // The system itself.
@@ -64,7 +64,7 @@ struct SolarSystemView: View {
                         OrbitRing(width: geo.size.width * 0.6, height: geo.size.width * 0.38)
                             .offset(y: -geo.size.height * 0.06)
 
-                        // The Sun — the system's star and final boss.
+                        // The Sun, the system's star and final boss.
                         planetNode("sun", size: 108)
                             .position(x: mid, y: geo.size.height * 0.26)
 
@@ -102,7 +102,7 @@ struct SolarSystemView: View {
     private var nextGoalText: String {
         let allDefeated = BossDefinition.all.allSatisfy { game.defeatedBosses.contains($0.id) }
         if allDefeated {
-            return "ALL PLANETS CONQUERED — YOU ARE A LEGEND"
+            return "ALL PLANETS CONQUERED, YOU ARE A LEGEND"
         }
 
         guard let next = BossDefinition.all.first(where: { !game.defeatedBosses.contains($0.id) }) else {

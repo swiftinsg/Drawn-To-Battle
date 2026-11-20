@@ -15,19 +15,19 @@ struct StudioTutorialView: View {
          "This is where you bring your stickman to life. Every bone you rotate and every frame you add becomes your fighter's attack in battle."),
 
         ("PICK A BONE",
-         "Tap \"SELECT BONE\" at the top, then choose a joint — arm, leg, torso or head — to move it."),
+         "Tap \"SELECT BONE\" at the top, then choose a joint (arm, leg, torso or head) to move it."),
 
         ("POSE IT",
          "Drag the selected bone around, or use the angle slider to rotate it precisely. Your changes update the frame live."),
 
         ("ADD A FRAME",
-         "Tap the film-strip button to add another frame. String poses together and you've got an animation."),
+         "Tap the film strip button to add another frame. Hold and drag a frame to reorder it."),
 
         ("PLAY IT",
-         "Hit the play button to preview your move. Scrub the timeline to check each frame."),
+         "Hit the play button to preview your move. Tap a frame in the timeline to check each pose."),
 
-        ("SAVE IT",
-         "Tap the down-arrow to save. Your custom move is now equipped and ready to take into battle."),
+        ("IT SAVES ITSELF",
+         "Your work saves automatically. Your custom move is equipped and ready to take into battle."),
     ]
 
     var body: some View {
@@ -103,7 +103,7 @@ struct StudioTutorialView: View {
                         Button {
                             finish()
                         } label: {
-                            Text("I'M READY — ANIMATE")
+                            Text("I'M READY, ANIMATE")
                                 .font(.system(size: 14, weight: .black, design: .rounded))
                                 .foregroundStyle(.black)
                                 .frame(maxWidth: .infinity)

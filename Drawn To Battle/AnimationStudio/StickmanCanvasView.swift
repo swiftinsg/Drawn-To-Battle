@@ -15,33 +15,31 @@ struct StickmanCanvasView: View {
     var editingHandles: Bool
     /// Height of the bottom overlay panel, so floor + figure sit above it.
     var bottomInset: CGFloat = 0
+    /// Height of the top bar, so the head never sits under the toolbar.
+    var topInset: CGFloat = 0
     /// Faded ghosts of previous frames (onion skinning), nearest first.
     var ghostPoses: [StickmanPose] = []
-    /// The "future" frame ghost — the frame after the selected one.
+    /// The next frame ghost, drawn in blue when onion skin is on.
     var futureGhost: StickmanPose? = nil
 
     @State private var dragBone: Bone?
 
     var body: some View {
         GeometryReader { geo in
-            let t = PoseViewTransform(canvasSize: geo.size, bottomMargin: bottomInset + 26)
+            let t = PoseViewTransform(
+                canvasSize: geo.size,
+                topMargin: topInset,
+                bottomMargin: bottomInset
+            )
             ZStack {
                 Canvas { context, size in
-                    // Paper sheet behind the stickman (F7F7F7, with a dark
-                    // sketch border so it reads as a paper page).
-                    var paper = Path()
-                    paper.addRect(CGRect(origin: .zero, size: size))
-                    context.fill(paper, with: .color(Color(hex: 0xF7F7F7)))
-                    context.stroke(paper, with: .color(Color.black.opacity(0.10)),
-                                   style: StrokeStyle(lineWidth: 2))
-
                     // Floor line for readability.
                     var floor = Path()
                     floor.move(to: CGPoint(x: 20, y: size.height - bottomInset - 14))
                     floor.addLine(to: CGPoint(x: size.width - 20, y: size.height - bottomInset - 14))
                     context.stroke(
                         floor,
-                        with: .color(Color(hex: 0x1A1A1E).opacity(0.28)),
+                        with: .color(.white.opacity(0.15)),
                         style: StrokeStyle(lineWidth: 1.5, dash: [6, 6])
                     )
 
@@ -216,7 +214,7 @@ private struct JointHandles: View {
                     let ring = CGRect(x: c.x - 8, y: c.y - 8, width: 16, height: 16)
                     context.stroke(
                         Path(ellipseIn: ring),
-                        with: .color(Color(hex: 0xF5C451)),
+                        with: .color(.white.opacity(0.9)),
                         lineWidth: 1.5
                     )
                     let dot = CGRect(x: c.x - 5.5, y: c.y - 5.5, width: 11, height: 11)
@@ -224,7 +222,7 @@ private struct JointHandles: View {
                 } else {
                     // Small subtle dot for other joints.
                     let dot = CGRect(x: c.x - 3.5, y: c.y - 3.5, width: 7, height: 7)
-                    context.fill(Path(ellipseIn: dot), with: .color(Color(hex: 0x1A1A1E).opacity(0.55)))
+                    context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.55)))
                 }
             }
 
@@ -235,12 +233,12 @@ private struct JointHandles: View {
             let hc = transform.toCanvas(headCenter)
             if selectedBone == .head {
                 let ring = CGRect(x: hc.x - 8, y: hc.y - 8, width: 16, height: 16)
-                context.stroke(Path(ellipseIn: ring), with: .color(Color(hex: 0xF5C451)), lineWidth: 1.5)
+                context.stroke(Path(ellipseIn: ring), with: .color(.white.opacity(0.9)), lineWidth: 1.5)
                 let dot = CGRect(x: hc.x - 5.5, y: hc.y - 5.5, width: 11, height: 11)
                 context.fill(Path(ellipseIn: dot), with: .color(Color(hex: 0xF5C451)))
             } else {
                 let dot = CGRect(x: hc.x - 3.5, y: hc.y - 3.5, width: 7, height: 7)
-                context.fill(Path(ellipseIn: dot), with: .color(Color(hex: 0x1A1A1E).opacity(0.55)))
+                context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.55)))
             }
             drawHandle(.leftElbow, for: .leftUpperArm)
             drawHandle(.leftHand, for: .leftForearm)

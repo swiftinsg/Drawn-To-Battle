@@ -35,7 +35,7 @@ struct LevelRoadView: View {
             Spacer()
 
             if let next = nextStep {
-                Text("NEXT — L\(next.level) +\(next.rewardCoins) coins +\(next.rewardStardust) pens")
+                Text("NEXT L\(next.level) +\(next.rewardCoins) coins +\(next.rewardStardust) pens")
                     .font(.system(size: 9, weight: .semibold))
                     .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
                     .lineLimit(1)
@@ -46,7 +46,7 @@ struct LevelRoadView: View {
     }
 }
 
-/// One stop on the road — a circle with the level number; reached stops are
+/// One stop on the road: a circle with the level number; reached stops are
 /// gold, the rest are dim.
 private struct LevelRoadStop: View {
     let step: LevelRoadStep

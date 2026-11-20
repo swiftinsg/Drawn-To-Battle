@@ -110,7 +110,7 @@ struct DailyRewardView: View {
                 }
             }
 
-            Text("7-DAY CYCLE  •  BIGGER REWARDS EVERY DAY")
+            Text("7 DAY CYCLE  •  BIGGER REWARDS EVERY DAY")
                 .font(.system(size: 9, weight: .black, design: .rounded))
                 .tracking(1)
                 .foregroundStyle(.white.opacity(0.4))

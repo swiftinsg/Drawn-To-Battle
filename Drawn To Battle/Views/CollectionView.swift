@@ -2,12 +2,18 @@ import SwiftUI
 
 // MARK: - Collection + loadout
 
+private enum CollectionTab: Hashable {
+    case moves
+    case accessories
+}
+
 struct CollectionView: View {
     @ObservedObject var game: GameSave
     @Environment(\.dismiss) private var dismiss
 
     @StateObject private var editStudio = StudioState()
     @State private var editingBlueprint: MoveBlueprint?
+    @State private var tab: CollectionTab = .moves
 
     var body: some View {
         ZStack {
@@ -29,52 +35,65 @@ struct CollectionView: View {
                         .font(DrawnToBattleTypography.display(20))
                         .foregroundStyle(.white)
                     Spacer()
-                    Text("\(game.ownedBlueprints.count)/\(BlueprintCatalog.all.count)")
+                    Text(tab == .moves
+                         ? "\(game.ownedBlueprints.count)/\(BlueprintCatalog.all.count)"
+                         : "\(game.ownedAccessories.count)/\(Accessory.allCases.count)")
                         .font(.system(size: 13, weight: .heavy, design: .monospaced))
                         .foregroundStyle(.white.opacity(0.6))
                 }
                 .padding(.horizontal, 16)
                 .padding(.top, 10)
 
+                HStack(spacing: 8) {
+                    tabButton("MOVES", tab: .moves)
+                    tabButton("ACCESSORIES", tab: .accessories)
+                }
+                .padding(.horizontal, 16)
+                .padding(.top, 10)
+
                 ScrollView(showsIndicators: false) {
                     VStack(alignment: .leading, spacing: 14) {
-                        // Equipped.
-                        equippedSection
+                        if tab == .moves {
+                            // Equipped.
+                            equippedSection
 
-                        // Blueprints by rarity.
-                        ForEach(Rarity.allCases.reversed(), id: \.self) { rarity in
-                            let bps = BlueprintCatalog.blueprints(in: rarity)
-                            if !bps.isEmpty {
-                                VStack(alignment: .leading, spacing: 8) {
-                                    HStack(spacing: 6) {
-                                        RaritySticker(rarity: rarity, height: 14)
-                                        Spacer()
-                                        Text("\(String(format: "%.0f", rarity.weight))%")
-                                            .font(.system(size: 10, weight: .semibold, design: .monospaced))
-                                            .foregroundStyle(.white.opacity(0.35))
-                                    }
-                                    LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
-                                        ForEach(bps) { bp in
-                                            BlueprintCell(
-                                                bp: bp,
-                                                owned: game.ownedBlueprints.contains(bp.id),
-                                                equipped: isEquipped(bp),
-                                                edited: game.blueprintEdit(id: bp.id) != nil,
-                                                onEdit: { editingBlueprint = bp },
-                                                onReset: { game.clearBlueprintEdit(bp.id) }
-                                            ) {
-                                                if game.ownedBlueprints.contains(bp.id) {
-                                                    game.equip(blueprint: bp)
+                            // Blueprints by rarity.
+                            ForEach(Rarity.allCases.reversed(), id: \.self) { rarity in
+                                let bps = BlueprintCatalog.blueprints(in: rarity)
+                                if !bps.isEmpty {
+                                    VStack(alignment: .leading, spacing: 8) {
+                                        HStack(spacing: 6) {
+                                            RaritySticker(rarity: rarity, height: 14)
+                                            Spacer()
+                                            Text("\(String(format: "%.0f", rarity.weight))%")
+                                                .font(.system(size: 10, weight: .semibold, design: .monospaced))
+                                                .foregroundStyle(.white.opacity(0.35))
+                                        }
+                                        LazyVGrid(columns: [GridItem(.flexible()), GridItem(.flexible()), GridItem(.flexible())], spacing: 8) {
+                                            ForEach(bps) { bp in
+                                                BlueprintCell(
+                                                    bp: bp,
+                                                    owned: game.ownedBlueprints.contains(bp.id),
+                                                    equipped: isEquipped(bp),
+                                                    edited: game.blueprintEdit(id: bp.id) != nil,
+                                                    onEdit: { editingBlueprint = bp },
+                                                    onReset: { game.clearBlueprintEdit(bp.id) }
+                                                ) {
+                                                    if game.ownedBlueprints.contains(bp.id) {
+                                                        game.equip(blueprint: bp)
+                                                    }
                                                 }
                                             }
                                         }
                                     }
                                 }
                             }
-                        }
 
-                        // Studio animations.
-                        studioSection
+                            // Studio animations.
+                            studioSection
+                        } else {
+                            AccessoryCollectionView(game: game)
+                        }
                     }
                     .padding(.horizontal, 16)
                     .padding(.vertical, 14)
@@ -88,6 +107,26 @@ struct CollectionView: View {
                     editStudio.editBlueprint(bp, edited: game.blueprintEdit(id: bp.id))
                 }
         }
+    }
+
+    private func tabButton(_ title: String, tab: CollectionTab) -> some View {
+        Button {
+            self.tab = tab
+        } label: {
+            Text(title)
+                .font(.system(size: 10, weight: .black, design: .rounded))
+                .tracking(1)
+                .foregroundStyle(self.tab == tab ? Color.black : Color.white.opacity(0.65))
+                .frame(maxWidth: .infinity)
+                .padding(.vertical, 8)
+                .background(
+                    RoundedRectangle(cornerRadius: 10)
+                        .fill(self.tab == tab
+                              ? Color(hex: 0xF5C451)
+                              : Color.white.opacity(0.07))
+                )
+        }
+        .buttonStyle(.plain)
     }
 
     private var equippedSection: some View {
@@ -127,7 +166,7 @@ struct CollectionView: View {
                 .padding(12)
                 .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.06)))
             } else {
-                Text("No move equipped — draw a blueprint or equip a Studio animation")
+                Text("No move equipped. Draw a blueprint or equip a Studio animation")
                     .font(.system(size: 12, weight: .semibold))
                     .foregroundStyle(.white.opacity(0.45))
                     .frame(maxWidth: .infinity, alignment: .leading)
@@ -144,7 +183,7 @@ struct CollectionView: View {
                 .font(.system(size: 12, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.7))
             if projects.isEmpty {
-                Text("Make a move in the Studio, save it, then equip it here.")
+                Text("Make a move in the Studio, then equip it here.")
                     .font(.system(size: 11, weight: .medium))
                     .foregroundStyle(.white.opacity(0.4))
             }

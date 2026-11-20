@@ -3,9 +3,9 @@ import UIKit
 import CoreText
 
 enum DrawnToBattleTypography {
-    // Rust Sport (Andriy Dykun) — free for personal and commercial use.
+    // Rust Sport (Andriy Dykun), free for personal and commercial use.
     // The TTF ships in the app bundle ("RustSport.ttf") and is registered
-    // at runtime below — no Info.plist needed. Falls back gracefully
+    // at runtime below, no Info.plist needed. Falls back gracefully
     // if the file is ever missing.
     static let rustFamilyName = "RustSport"
 

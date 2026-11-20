@@ -5,12 +5,12 @@ import Combine
 // MARK: - Boss definitions
 
 enum BossAttackKind: String, Codable {
-    case projectileLob   // lobbed boulder — dodge
-    case groundShock     // wave along the floor — jump
-    case charge          // boss rushes across — dodge/jump
-    case flare           // full-screen wave — block
-    case fan             // spread of projectiles — dodge gaps
-    case melee           // close-range strike — move away
+    case projectileLob   // lobbed boulder, dodge
+    case groundShock     // wave along the floor, jump
+    case charge          // boss rushes across, dodge/jump
+    case flare           // full-screen wave, block
+    case fan             // spread of projectiles, dodge gaps
+    case melee           // close-range strike, move away
 
     var hint: String {
         switch self {
@@ -163,7 +163,7 @@ final class GameSave: ObservableObject {
     @Published var blueprintEdits: [String: AnimationProject] = [:] {
         didSet { persist() }
     }
-    /// Coins — earned from battles. (Pens/stardust above is the gacha currency.)
+    /// Coins, earned from battles. (Pens/stardust above is the gacha currency.)
     @Published var coins: Int = 100{
         didSet { persist() }
     }
@@ -179,8 +179,16 @@ final class GameSave: ObservableObject {
     @Published var gachaHistory: [GachaPullRecord] = [] {
         didSet { persist() }
     }
+    /// Accessories owned from world gachas and level milestones.
+    @Published var ownedAccessories: Set<String> = [] {
+        didSet { persist() }
+    }
     /// World gear currently shown on the home-screen fighter.
     @Published var equippedAccessory: Accessory? {
+        didSet { persist() }
+    }
+    /// Milestone levels whose one-off reward has already been granted.
+    @Published var claimedLevelMilestones: Set<Int> = [] {
         didSet { persist() }
     }
     /// Consecutive days the daily reward has been claimed.
@@ -196,7 +204,7 @@ final class GameSave: ObservableObject {
         didSet { persist() }
     }
     /// Has the fighter animated their own move at least once?
-    /// Battles are locked behind this — you can't fight with someone else's animation.
+    /// Battles are locked behind this, you can't fight with someone else's animation.
     @Published var hasAnimated: Bool = false {
         didSet { persist() }
     }
@@ -204,7 +212,7 @@ final class GameSave: ObservableObject {
     @Published var hasSeenStudioTutorial: Bool = false {
         didSet { persist() }
     }
-    /// Level-road steps whose rewards have been claimed — each level's
+    /// Level-road steps whose rewards have been claimed. Each level's
     /// reward is granted once, when XP first reaches the step's threshold.
     @Published var claimedLevelSteps: Set<Int> = [] {
         didSet { persist() }
@@ -260,7 +268,17 @@ final class GameSave: ObservableObject {
             username = saved.username ?? ""
             profileImageData = saved.profileImageData
             gachaHistory = saved.gachaHistory ?? []
-            equippedAccessory = saved.equippedAccessory.flatMap { Accessory(rawValue: $0) }
+            // Older saves already have signature gear for worlds they beat.
+            // Legacy ids are mapped so the themed accessory swap keeps progress.
+            var startingAccessories = Set(
+                saved.defeatedBosses.compactMap { Accessory.signature(forBoss: $0)?.rawValue }
+            )
+            startingAccessories.formUnion((saved.ownedAccessories ?? []).map(Accessory.migratedID))
+            ownedAccessories = startingAccessories
+            equippedAccessory = saved.equippedAccessory.flatMap {
+                Accessory(rawValue: Accessory.migratedID($0))
+            }
+            claimedLevelMilestones = saved.claimedLevelMilestones ?? []
             dailyStreak = saved.dailyStreak ?? 0
             lastDailyClaimDate = saved.lastDailyClaimDate
             testUnlockAll = saved.testUnlockAll ?? false
@@ -268,6 +286,7 @@ final class GameSave: ObservableObject {
             hasSeenStudioTutorial = saved.hasSeenStudioTutorial ?? false
             claimedLevelSteps = saved.claimedLevelSteps ?? []
             if needsStarterMoves { persist() }
+            grantMilestoneRewards()
         }
     }
 
@@ -275,7 +294,7 @@ final class GameSave: ObservableObject {
 
     var level: Int { Self.level(for: experience) }
 
-    /// The Level Road — stops whose XP thresholds define rewards for
+    /// The Level Road: stops whose XP thresholds define rewards for
     /// reaching levels (see `claimReachedLevelRoadSteps`).
     static let levelRoadSteps: [LevelRoadStep] = [
         LevelRoadStep(level: 2, rewardCoins: 60, rewardStardust: 8),
@@ -314,6 +333,7 @@ final class GameSave: ObservableObject {
 
     func addExperience(_ amount: Int) {
         experience += max(0, amount)
+        grantMilestoneRewards()
         claimReachedLevelRoadSteps()
     }
 
@@ -327,18 +347,53 @@ final class GameSave: ObservableObject {
         }
     }
 
-    // MARK: Costumes
-
-    func isAccessoryUnlocked(_ accessory: Accessory) -> Bool {
-        defeatedBosses.contains(accessory.bossID)
+    /// The next level milestone and how many levels away it is.
+    var nextMilestone: (level: Int, remaining: Int) {
+        let next = Accessory.milestoneLevels.first { $0 > level } ?? Accessory.milestoneLevels.last ?? 0
+        return (next, max(0, next - level))
     }
 
-    var unlockedAccessories: [Accessory] {
-        Accessory.allCases.filter { isAccessoryUnlocked($0) }
+    private func grantMilestoneRewards() {
+        for milestone in Accessory.milestoneLevels where level >= milestone
+            && !claimedLevelMilestones.contains(milestone) {
+            claimedLevelMilestones.insert(milestone)
+            let tier = milestone / 5
+            coins += 100 * tier
+            stardust += 20 * tier
+            if let reward = Accessory.accessory(forMilestone: milestone) {
+                ownedAccessories.insert(reward.rawValue)
+            }
+        }
+    }
+
+    // MARK: Accessories
+
+    func isAccessoryOwned(_ accessory: Accessory) -> Bool {
+        ownedAccessories.contains(accessory.rawValue)
+    }
+
+    var ownedAccessoryList: [Accessory] {
+        Accessory.allCases.filter { isAccessoryOwned($0) }
+    }
+
+    /// A world gacha opens as soon as its boss has been defeated.
+    func isAccessoryGachaUnlocked(bossID: String) -> Bool {
+        testUnlockAll || defeatedBosses.contains(bossID)
+    }
+
+    /// Draws an accessory. Returns false for a duplicate, which pays coins.
+    @discardableResult
+    func addAccessory(_ accessory: Accessory) -> Bool {
+        if isAccessoryOwned(accessory) {
+            coins += Gacha.accessoryDuplicateRefund
+            return false
+        }
+        ownedAccessories.insert(accessory.rawValue)
+        return true
     }
 
     func equip(accessory: Accessory) {
-        guard isAccessoryUnlocked(accessory) else { return }
+        guard isAccessoryOwned(accessory) else { return }
         equippedAccessory = accessory
     }
 
@@ -388,6 +443,12 @@ final class GameSave: ObservableObject {
         return true
     }
 
+    func spendCoins(_ amount: Int) -> Bool {
+        guard coins >= amount else { return false }
+        coins -= amount
+        return true
+    }
+
     func addStardust(_ amount: Int) {
         stardust += amount
     }
@@ -426,7 +487,7 @@ final class GameSave: ObservableObject {
     @discardableResult
     func registerPull(_ blueprint: MoveBlueprint) -> Bool /* isNew */ {
         if ownedBlueprints.contains(blueprint.id) {
-            // Collection's complete — extra pulls now pay coins and XP.
+            // Collection's complete, extra pulls now pay coins and XP.
             coins += Gacha.duplicateRefund
             addExperience(Self.xpPerDuplicate)
             return false
@@ -483,6 +544,10 @@ final class GameSave: ObservableObject {
 
     func registerVictory(boss: BossDefinition) {
         defeatedBosses.insert(boss.id)
+        // Conquering a world grants its signature accessory and opens its gacha.
+        if let signature = Accessory.signature(forBoss: boss.id) {
+            ownedAccessories.insert(signature.rawValue)
+        }
         let first = !defeatedBosses.contains(boss.id + "_rewarded")
         coins += boss.coinReward(firstClear: first)
         stardust += boss.penReward(firstClear: first)
@@ -500,7 +565,9 @@ final class GameSave: ObservableObject {
         blueprintEdits = [:]
         coins = 100
         gachaHistory = []
+        ownedAccessories = []
         equippedAccessory = nil
+        claimedLevelMilestones = []
         dailyStreak = 0
         lastDailyClaimDate = nil
         hasAnimated = false
@@ -525,7 +592,9 @@ final class GameSave: ObservableObject {
         var username: String?
         var profileImageData: Data?
         var gachaHistory: [GachaPullRecord]?
+        var ownedAccessories: Set<String>?
         var equippedAccessory: String?
+        var claimedLevelMilestones: Set<Int>?
         var dailyStreak: Int?
         var lastDailyClaimDate: String?
         var testUnlockAll: Bool?
@@ -546,7 +615,9 @@ final class GameSave: ObservableObject {
             username: username,
             profileImageData: profileImageData,
             gachaHistory: gachaHistory,
+            ownedAccessories: ownedAccessories,
             equippedAccessory: equippedAccessory?.rawValue,
+            claimedLevelMilestones: claimedLevelMilestones,
             dailyStreak: dailyStreak,
             lastDailyClaimDate: lastDailyClaimDate,
             testUnlockAll: testUnlockAll,

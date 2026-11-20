@@ -93,7 +93,7 @@ struct BattleView: View {
             }
         }
         .onAppear {
-            // Fresh start every time the battle is entered — hard-reset so
+            // Fresh start every time the battle is entered, hard-reset so
             // the end screen is a new screen, never a stale result from a
             // previous run.
             engine.reset()
@@ -286,7 +286,7 @@ struct BattleView: View {
                 lineWidth: 3
             )
             context.draw(
-                Text("\(engine.currentAttackName) — \(engine.currentAttack?.kind.hint ?? "GET READY")")
+                Text("\(engine.currentAttackName), \(engine.currentAttack?.kind.hint ?? "GET READY")")
                     .font(.system(size: 13, weight: .heavy, design: .rounded))
                     .foregroundColor(.white),
                 at: CGPoint(x: center.x, y: max(center.y - a.bodyRadius - 40, 150))
@@ -403,10 +403,14 @@ private struct BattleHUD: View {
                 Text(boss.requiredTechnique.label)
                     .font(.system(size: 14, weight: .black, design: .rounded))
                     .foregroundStyle(Color(hex: 0xF5C451))
-                // Your animation's quality drives damage — show the score.
+                // Your animation's quality drives damage, and the fight clock
+                // is visible while the battle is live.
                 Text("POWER \(Int(engine.analysis.power)) • \(engine.analysis.powerLabel)")
                     .font(.system(size: 9, weight: .heavy, design: .rounded))
                     .foregroundStyle(.white.opacity(0.55))
+                Text(String(format: "TIME %.1fs", engine.elapsedTime))
+                    .font(.system(size: 9, weight: .black, design: .monospaced))
+                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.75))
             }
             .padding(.horizontal, 12)
             .padding(.vertical, 6)
@@ -463,7 +467,7 @@ private struct UltMeter: View {
         }
         .frame(height: 6)
         .overlay(
-            Text(percent >= 1 ? "ULTIMATE READY — TAP ULT" : "ULTIMATE")
+            Text(percent >= 1 ? "ULTIMATE READY, TAP ULT" : "ULTIMATE")
                 .font(.system(size: 7, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.7))
         )
@@ -486,7 +490,7 @@ private struct StaggerBar: View {
         }
         .frame(height: 5)
         .overlay(
-            Text(stunned ? "STUNNED — ATTACK!" : "STAGGER")
+            Text(stunned ? "STUNNED! ATTACK!" : "STAGGER")
                 .font(.system(size: 6.5, weight: .black, design: .rounded))
                 .foregroundStyle(stunned ? Color(hex: 0xA86CFF) : .white.opacity(0.5))
         )
@@ -809,7 +813,7 @@ private struct BattleResultOverlay: View {
                     Text("+\(boss.xpReward(firstClear: firstClear)) XP")
                         .font(.system(size: 12, weight: .black, design: .rounded))
                         .foregroundStyle(.white.opacity(0.7))
-                    Text("YOUR ANIMATION — POWER \(Int(engine.analysis.power)) • \(engine.analysis.powerLabel)")
+                    Text("YOUR ANIMATION, POWER \(Int(engine.analysis.power)) • \(engine.analysis.powerLabel)")
                         .font(.system(size: 11, weight: .heavy, design: .rounded))
                         .foregroundStyle(.white.opacity(0.6))
                 } else {

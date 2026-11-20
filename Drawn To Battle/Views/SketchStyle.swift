@@ -54,7 +54,7 @@ struct SquashButtonStyle: ButtonStyle {
     }
 }
 
-/// Slow idle bob for hero stickers — the drawing feels alive.
+/// Slow idle bob for hero stickers, the drawing feels alive.
 struct StickerBob: ViewModifier {
     var lift: CGFloat = 4
     @State private var up = false

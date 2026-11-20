@@ -2,7 +2,7 @@ import SwiftUI
 
 // MARK: - Blueprint tutorial
 //
-// "How to animate" walkthrough — shown when a blueprint is opened for the
+// "How to animate" walkthrough, shown when a blueprint is opened for the
 // first time, instead of a pre-made base animation. The studio starts blank
 // and you build the move yourself.
 
@@ -14,7 +14,7 @@ struct BlueprintTutorialView: View {
 
     private let steps: [(title: String, body: String)] = [
         ("YOUR BLUEPRINT",
-         "Blueprints are the moves you animate and equip in battle. Here you learn to make your own — no pre-made animation to copy."),
+         "Blueprints are the moves you animate and equip in battle. Here you learn to make your own from a blank canvas."),
 
         ("MOVE THE JOINTS",
          "Drag any joint handle on the stickman to rotate that part. Drag the whole figure to move it. Every change updates your frame live."),
@@ -23,13 +23,13 @@ struct BlueprintTutorialView: View {
          "Tap the film-strip button to key a new pose. String poses together and you've got your animation."),
 
         ("PLAY IT BACK",
-         "Hit the play button to preview your move at the FPS you set. The JOINTS toggle shows the red ghosts of the previous frames."),
+         "Hit the play button to preview your move at the speed you choose. The ghost toggle shows red past frames and a blue next frame."),
 
         ("THE POWER METER",
-         "Animation quality drives damage — the POWER readout in the studio tells you how good your move is right now."),
+         "Animation quality drives damage. The POWER readout in the studio tells you how good your move is right now."),
 
         ("SAVE YOUR MOVE",
-         "Tap the down-arrow to save. Your animation becomes the equipped move in battle — you can animate again anytime to improve it."),
+         "Your animation saves automatically. It becomes the equipped move in battle, and you can animate again anytime to improve it."),
     ]
 
     var body: some View {
@@ -103,7 +103,7 @@ struct BlueprintTutorialView: View {
                         Button {
                             onFinish()
                         } label: {
-                            Text("I'M READY — ANIMATE")
+                            Text("I'M READY TO ANIMATE")
                                 .font(.system(size: 14, weight: .black, design: .rounded))
                                 .foregroundStyle(.black)
                                 .frame(maxWidth: .infinity)

@@ -8,7 +8,38 @@ private struct GachaDrawResult: Identifiable {
 
 private enum GachaTab: Hashable {
     case moves
-    case costumes
+    case earth
+    case uranus
+    case sun
+
+    var bossID: String? {
+        switch self {
+        case .moves: return nil
+        case .earth: return "earth"
+        case .uranus: return "mars"
+        case .sun: return "sun"
+        }
+    }
+
+    var title: String {
+        switch self {
+        case .moves: return "BLUEPRINT DRAW"
+        case .earth: return "EARTH DRAW"
+        case .uranus: return "URANUS DRAW"
+        case .sun: return "SUN DRAW"
+        }
+    }
+
+    var label: String {
+        switch self {
+        case .moves: return "MOVES"
+        case .earth: return "EARTH"
+        case .uranus: return "URANUS"
+        case .sun: return "SUN"
+        }
+    }
+
+    static let all: [GachaTab] = [.moves, .earth, .uranus, .sun]
 }
 
 // MARK: - Gacha screen
@@ -41,13 +72,9 @@ struct GachaView: View {
             VStack(spacing: 0) {
                 topBar
 
-                Picker("Category", selection: $tab) {
-                    Text("MOVES").tag(GachaTab.moves)
-                    Text("COSTUMES").tag(GachaTab.costumes)
-                }
-                .pickerStyle(.segmented)
-                .padding(.horizontal, 16)
-                .padding(.top, 10)
+                tabStrip
+                    .padding(.horizontal, 16)
+                    .padding(.top, 10)
 
                 ScrollView(showsIndicators: false) {
                     VStack(spacing: 12) {
@@ -56,8 +83,9 @@ struct GachaView: View {
                             machine
                             collectionProgress
                             secondaryButtons
-                        } else {
-                            CostumeVaultView(game: game)
+                        } else if let bossID = tab.bossID {
+                            AccessoryGachaView(game: game, bossID: bossID)
+                                .id(bossID)
                         }
                     }
                     .padding(.horizontal, 16)
@@ -91,6 +119,33 @@ struct GachaView: View {
 
     private var availableDraws: Int { game.stardust / Gacha.pullCost }
 
+    private var tabStrip: some View {
+        HStack(spacing: 6) {
+            ForEach(GachaTab.all, id: \.self) { item in
+                Button {
+                    tab = item
+                } label: {
+                    Text(item.label)
+                        .font(.system(size: 10, weight: .black, design: .rounded))
+                        .tracking(0.5)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
+                        .foregroundStyle(tab == item
+                                         ? Color.black : Color.white.opacity(0.65))
+                        .frame(maxWidth: .infinity)
+                        .padding(.vertical, 8)
+                        .background(
+                            RoundedRectangle(cornerRadius: 10)
+                                .fill(tab == item
+                                      ? Color(hex: 0xF5C451)
+                                      : Color.white.opacity(0.07))
+                        )
+                }
+                .buttonStyle(.plain)
+            }
+        }
+    }
+
     // MARK: Sections
 
     private var topBar: some View {
@@ -106,25 +161,34 @@ struct GachaView: View {
 
             Spacer()
 
-            Text(tab == .moves ? "BLUEPRINT DRAW" : "COSTUME VAULT")
+            Text(tab.title)
                 .font(DrawnToBattleTypography.display(20))
                 .foregroundStyle(.white)
 
             Spacer()
 
             HStack(spacing: 5) {
-                Image("DrawnToBattleGachaToken")
-                    .resizable()
-                    .scaledToFit()
-                    .frame(height: 20)
-                Text("\(game.stardust)")
-                    .font(.system(size: 14, weight: .heavy, design: .rounded))
-                    .foregroundStyle(.white)
+                if tab == .moves {
+                    Image("DrawnToBattleGachaToken")
+                        .resizable()
+                        .scaledToFit()
+                        .frame(height: 20)
+                    Text("\(game.stardust)")
+                        .font(.system(size: 14, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white)
+                } else {
+                    Image(systemName: "circlebadge.fill")
+                        .font(.system(size: 14, weight: .bold))
+                        .foregroundStyle(Color(hex: 0xF5C451))
+                    Text("\(game.coins)")
+                        .font(.system(size: 14, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white)
+                }
             }
             .padding(.horizontal, 9)
             .padding(.vertical, 6)
             .background(RoundedRectangle(cornerRadius: 10).fill(Color.black.opacity(0.5)))
-            .accessibilityLabel("Pens balance")
+            .accessibilityLabel(tab == .moves ? "Pens balance" : "Coin balance")
         }
         .padding(.horizontal, 16)
         .padding(.top, 10)
@@ -175,13 +239,13 @@ struct GachaView: View {
 
             HStack(spacing: 10) {
                 drawButton(
-                    title: "DRAW — \(Gacha.pullCost)",
+                    title: "DRAW \(Gacha.pullCost)",
                     enabled: enabled,
                     accessibility: "Draw one move for \(Gacha.pullCost) pens"
                 ) { pull(1) }
 
                 drawButton(
-                    title: "DRAW ALL — \(availableDraws)",
+                    title: "DRAW ALL \(availableDraws)",
                     enabled: enabled,
                     accessibility: "Draw all \(availableDraws) moves for \(allCost) pens"
                 ) { pull(availableDraws) }

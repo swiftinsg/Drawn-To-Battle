@@ -12,9 +12,9 @@ struct AnalysisResult {
     var balance: Double = 0
     var timing: Double = 0
     var telegraph: Double = 0
-    /// Overall 0–100 power score.
+    /// Overall 0 to 100 power score.
     var power: Double = 0
-    /// How the power score reads in words — shown in the HUD, studio and collection.
+    /// How the power score reads in words, shown in the HUD, studio and collection.
     var powerLabel: String {
         switch power {
         case ..<25: return "SLOPPY"
@@ -149,7 +149,7 @@ enum AnimationAnalysis {
 
         // Telegraph: how much faster the strike is than the windup. (Speed is
         // already measured by speed; telegraph credits the swing's power,
-        // not the raw speed again — so a fast punch isn't double-counted.)
+        // not the raw speed again, so a fast punch isn't double-counted.)
         r.telegraph = maxLimb > 0.001 ? clamp01((maxLimb - early) / maxLimb) : 0
 
         // --- Power (weighted) ---
