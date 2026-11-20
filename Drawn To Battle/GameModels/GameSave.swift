@@ -311,11 +311,21 @@ final class GameSave: ObservableObject {
     /// range and are always worth more than the pens on the same stop.
     static let levelRoadSteps: [LevelRoadStep] = (1...20).map { tier in
         let level = tier * 5
+        let cosmetic: Accessory?
+        switch level {
+        case 10: cosmetic = .trophyCrest
+        case 20: cosmetic = .championCrown
+        case 30: cosmetic = .meteorWings
+        case 40: cosmetic = .galacticHalo
+        case 50: cosmetic = .legendStar
+        case 100: cosmetic = .sunRing
+        default: cosmetic = nil
+        }
         return LevelRoadStep(
             level: level,
             rewardCoins: min(60, 30 + 5 * (tier - 1)),
             rewardStardust: min(20, 5 + 2 * (tier - 1)),
-            rewardCosmetic: level == 10 ? .sunRing : nil
+            rewardCosmetic: cosmetic
         )
     }
 

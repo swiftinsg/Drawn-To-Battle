@@ -118,7 +118,9 @@ struct CosmeticGachaView: View {
                         .tint(tint)
                         .scaleEffect(1.4)
                 } else {
-                    GachaMachineIcon()
+                    Image("DrawnToBattleGachaMachine")
+                        .resizable()
+                        .scaledToFit()
                         .frame(width: 132, height: 132)
                 }
             }

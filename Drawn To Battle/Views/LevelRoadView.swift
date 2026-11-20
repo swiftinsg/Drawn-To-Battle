@@ -21,7 +21,7 @@ struct LevelRoadPageView: View {
                         Text("TROPHY ROAD")
                             .font(DrawnToBattleTypography.display(26))
                             .foregroundStyle(.white)
-                        Text("LEVEL \(game.level)  •  CLAIM EACH STOP BY HAND")
+                        Text("LEVEL \(game.level)")
                             .font(.system(size: 10, weight: .black, design: .rounded))
                             .foregroundStyle(.white.opacity(0.45))
                     }

@@ -62,9 +62,10 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
     case fireOrbit
     case fireWings
     case fireHalo
-    // Level road
+    // Trophy road
+    case trophyCrest
     case sunRing
-    // Level milestones
+    // Trophy road rewards
     case championCrown
     case meteorWings
     case galacticHalo
@@ -98,6 +99,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         case .fireOrbit: return "Fire Orbit"
         case .fireWings: return "Fire Wings"
         case .fireHalo: return "Fire Halo"
+        case .trophyCrest: return "Trophy Crest"
         case .sunRing: return "Sun Ring"
         case .championCrown: return "Champion Crown"
         case .meteorWings: return "Meteor Wings"
@@ -116,8 +118,8 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
              .crystalCrown, .iceCrown, .soulFire: return "mars"   // Uranus (save id)
         case .solarHalo, .flameCrown, .angelWings, .emberCrown, .flareWings,
              .fireOrbit, .fireWings, .fireHalo: return "sun"
-        case .sunRing, .championCrown, .meteorWings, .galacticHalo,
-             .legendStar: return nil
+        case .trophyCrest, .sunRing, .championCrown, .meteorWings,
+             .galacticHalo, .legendStar: return nil
         }
     }
 
@@ -140,20 +142,20 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         }
     }
 
-    /// Level that awards this cosmetic outright.
-    var milestoneLevel: Int? {
+    /// Level that still awards coins and pens as an old milestone.
+    var milestoneLevel: Int? { nil }
+
+    /// Trophy road step that awards this cosmetic.
+    var levelRoadLevel: Int? {
         switch self {
-        case .championCrown: return 5
-        case .meteorWings: return 10
-        case .galacticHalo: return 15
-        case .legendStar: return 20
+        case .trophyCrest: return 10
+        case .championCrown: return 20
+        case .meteorWings: return 30
+        case .galacticHalo: return 40
+        case .legendStar: return 50
+        case .sunRing: return 100
         default: return nil
         }
-    }
-
-    /// Level road step that awards this cosmetic.
-    var levelRoadLevel: Int? {
-        self == .sunRing ? 10 : nil
     }
 
     static let milestoneLevels = [5, 10, 15, 20]
@@ -194,7 +196,7 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
     var render: AccessoryRender {
         switch self {
         case .leafCrown, .vineWreath, .mossCrest, .mapleCrown, .flameCrown,
-             .emberCrown, .championCrown:
+             .emberCrown, .trophyCrest, .championCrown:
             return .crown
         case .iceWings, .angelWings, .flareWings, .meteorWings:
             return .wings
@@ -254,7 +256,8 @@ enum Accessory: String, Codable, CaseIterable, Identifiable {
         case .fireOrbit: return 0xFF6B2C
         case .fireWings: return 0xFF7A2F
         case .fireHalo: return 0xFF9A3C
-        case .sunRing: return 0xF5C451
+        case .trophyCrest: return 0xF5C451
+        case .sunRing: return 0xFFD54F
         case .championCrown: return 0xFFD54F
         case .meteorWings: return 0xE86A6A
         case .galacticHalo: return 0xA86CFF

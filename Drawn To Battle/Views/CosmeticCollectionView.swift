@@ -60,7 +60,7 @@ struct CosmeticCollectionView: View {
         return VStack(alignment: .leading, spacing: 8) {
             HStack(spacing: 8) {
                 Text(section.rawValue)
-                    .font(.system(size: 11, weight: .black, design: .rounded))
+                    .font(.system(size: 12, weight: .black, design: .rounded))
                     .tracking(1.5)
                     .foregroundStyle(tint)
 
@@ -95,30 +95,30 @@ struct CosmeticCollectionView: View {
             Haptics.light()
         } label: {
             ZStack(alignment: .topTrailing) {
-                VStack(spacing: 5) {
+                VStack(spacing: 6) {
                     FighterFigureView(accessory: accessory)
-                        .frame(width: 112, height: 132)
+                        .frame(width: 128, height: 152)
                         .opacity(owned ? 1 : 0.14)
 
                     Text(accessory.name.uppercased())
-                        .font(.system(size: 9, weight: .black, design: .rounded))
+                        .font(.system(size: 11, weight: .black, design: .rounded))
                         .foregroundStyle(owned ? .white : .white.opacity(0.5))
                         .lineLimit(2)
-                        .minimumScaleFactor(0.7)
+                        .minimumScaleFactor(0.8)
                         .multilineTextAlignment(.center)
 
                     Text(unlockHint(accessory))
-                        .font(.system(size: 8, weight: .heavy, design: .rounded))
+                        .font(.system(size: 9, weight: .heavy, design: .rounded))
                         .foregroundStyle(owned
-                                         ? .white.opacity(0.5)
-                                         : accessory.tint.opacity(0.8))
+                                         ? .white.opacity(0.55)
+                                         : accessory.tint.opacity(0.85))
                         .lineLimit(2)
-                        .minimumScaleFactor(0.75)
+                        .minimumScaleFactor(0.8)
                         .multilineTextAlignment(.center)
                 }
                 .frame(maxWidth: .infinity)
                 .padding(.horizontal, 4)
-                .padding(.vertical, 8)
+                .padding(.vertical, 10)
 
                 if !owned {
                     Image(systemName: "lock.fill")

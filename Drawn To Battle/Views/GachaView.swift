@@ -227,7 +227,9 @@ struct GachaView: View {
                         .tint(Color(hex: 0xF5C451))
                         .scaleEffect(1.4)
                 } else {
-                    GachaMachineIcon()
+                    Image("DrawnToBattleGachaMachine")
+                        .resizable()
+                        .scaledToFit()
                         .frame(width: 132, height: 132)
                 }
 
