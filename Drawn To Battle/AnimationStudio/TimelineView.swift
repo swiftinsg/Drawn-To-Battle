@@ -1,5 +1,10 @@
 import SwiftUI
 
+// MARK: - Frame timeline
+//
+// Horizontal strip of frame thumbnails. Hold a frame then drag left or right
+// to reorder it. The gold marker sits on the selected thumbnail itself, so it
+// stays aligned even after the strip has been scrolled.
 
 struct FrameTimelineView: View {
     @ObservedObject var studio: StudioState
@@ -105,8 +110,8 @@ struct FrameTimelineView: View {
                 .fixedSize()
         }
         .padding(.horizontal, 12)
-        .padding(.top, 4)
-        .padding(.bottom, 8)
+        .padding(.top, 1)
+        .padding(.bottom, 3)
         .background(
             RoundedRectangle(cornerRadius: 10)
                 .fill(Color(hex: 0x14161E))
@@ -179,7 +184,7 @@ private struct FrameThumbnail: View {
                 )
                 context.fill(Path(ellipseIn: headRect), with: .color(scaled.color))
             }
-            .frame(width: 42, height: 48)
+            .frame(width: 40, height: 42)
             .background(
                 RoundedRectangle(cornerRadius: 7)
                     .fill(Color.white.opacity(isSelected ? 0.16 : 0.06))

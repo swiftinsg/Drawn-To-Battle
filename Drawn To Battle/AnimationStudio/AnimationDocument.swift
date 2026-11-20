@@ -7,7 +7,7 @@ import Foundation
 struct AnimationFrame: Codable, Equatable, Identifiable {
     var id: UUID
     var pose: StickmanPose
-    
+
     var hold: Int
 
     init(id: UUID = UUID(), pose: StickmanPose, hold: Int = 0) {
@@ -23,7 +23,7 @@ struct AnimationProject: Codable, Equatable {
     var frames: [AnimationFrame]
     var fps: Int
 
-    
+
     static var defaultFPS: Int {
         UserDefaults.standard.object(forKey: "DrawnToBattle.defaultFPS") as? Int ?? 12
     }
@@ -83,17 +83,27 @@ final class StudioState: ObservableObject {
     @Published var selectedIndex: Int {
         didSet { clampSelection() }
     }
- 
+
     @Published var isPlaying = false
- 
+
     @Published var hasUnsavedChanges = false
-  
+
     @Published var onionSkin = false
 
     @Published var playbackSpeed: Double = 1
-  
+
     @Published var editingBlueprintID: String?
- 
+
+    /// Per-blueprint "how to animate" tutorials, shown when a blueprint is
+    /// opened for the first time instead of a pre-made base animation.
+    @Published var showBlueprintTutorial = false
+
+    /// Blueprints whose "how to animate" tutorial has been shown.
+    static var blueprintTutorialsShown: Set<String> {
+        get { Set(UserDefaults.standard.stringArray(forKey: "DrawnToBattle.blueprintTutorialsShown") ?? []) }
+        set { UserDefaults.standard.set(Array(newValue), forKey: "DrawnToBattle.blueprintTutorialsShown") }
+    }
+
     var game: GameSave?
 
     private var playbackTimer: Timer?
@@ -108,7 +118,7 @@ final class StudioState: ObservableObject {
         self.onionSkin = UserDefaults.standard.bool(forKey: "DrawnToBattle.defaultOnionSkin")
     }
 
- 
+
     var currentFrame: AnimationFrame? {
         guard project.frames.indices.contains(selectedIndex) else { return nil }
         return project.frames[selectedIndex]
@@ -181,7 +191,7 @@ final class StudioState: ObservableObject {
         }
     }
 
- 
+
     func cyclePlaybackSpeed() {
         if playbackSpeed == 1 { playbackSpeed = 2 }
         else if playbackSpeed == 2 { playbackSpeed = 0.5 }
@@ -278,7 +288,15 @@ final class StudioState: ObservableObject {
     func editBlueprint(_ blueprint: MoveBlueprint, edited: AnimationProject?) {
         stop()
         cancelAutosave()
-        project = edited ?? blueprint.baseAnimation
+        var shown = Self.blueprintTutorialsShown
+        let unseen = !shown.contains(blueprint.id)
+        if unseen {
+            shown.insert(blueprint.id)
+            Self.blueprintTutorialsShown = shown
+            showBlueprintTutorial = true
+        }
+      
+        project = edited ?? (unseen ? .blank() : blueprint.baseAnimation)
         editingBlueprintID = blueprint.id
         selectedIndex = 0
         hasUnsavedChanges = false

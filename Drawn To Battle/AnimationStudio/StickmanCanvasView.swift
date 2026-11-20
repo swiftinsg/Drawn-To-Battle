@@ -15,19 +15,23 @@ struct StickmanCanvasView: View {
     var editingHandles: Bool
     /// Height of the bottom overlay panel, so floor + figure sit above it.
     var bottomInset: CGFloat = 0
+    /// Height of the top bar, so the head never sits under the toolbar.
+    var topInset: CGFloat = 0
     /// Faded ghosts of previous frames (onion skinning), nearest first.
     var ghostPoses: [StickmanPose] = []
+    /// The next frame ghost, drawn in blue when onion skin is on.
+    var futureGhost: StickmanPose? = nil
 
     @State private var dragBone: Bone?
 
     var body: some View {
         GeometryReader { geo in
-            let t = PoseViewTransform(canvasSize: geo.size, bottomMargin: bottomInset + 26)
+            let t = PoseViewTransform(
+                canvasSize: geo.size,
+                topMargin: topInset,
+                bottomMargin: bottomInset
+            )
             ZStack {
-                // Paper surface: the canvas is a light "sheet of paper" with a
-                // dark sketch border, surrounded by dark studio chrome.
-                PaperSurface()
-
                 Canvas { context, size in
                     // Floor line for readability.
                     var floor = Path()
@@ -35,18 +39,19 @@ struct StickmanCanvasView: View {
                     floor.addLine(to: CGPoint(x: size.width - 20, y: size.height - bottomInset - 14))
                     context.stroke(
                         floor,
-                        with: .color(Color(hex: 0x1A1A1E).opacity(0.28)),
+                        with: .color(.white.opacity(0.15)),
                         style: StrokeStyle(lineWidth: 1.5, dash: [6, 6])
                     )
 
-                    // Onion-skin ghosts of previous frames.
+                    // Onion skin: previous frames in red, the future frame in blue.
                     for (ghostIndex, ghost) in ghostPoses.enumerated() {
-                        let alpha = 0.22 - Double(ghostIndex) * 0.09
+                        let alpha = 0.6 - Double(ghostIndex) * 0.12
                         guard alpha > 0 else { continue }
+                        let red = Color(hex: 0xE84040)
                         let ghostPath = t.transformedPath(StickmanKinematics.skeletonPath(for: ghost))
                         context.stroke(
                             ghostPath,
-                            with: .color(Color(hex: 0x1A1A1E).opacity(alpha)),
+                            with: .color(red.opacity(alpha)),
                             style: StrokeStyle(lineWidth: ghost.thickness * t.scale, lineCap: .round, lineJoin: .round)
                         )
                         let ghostHead = StickmanKinematics.headCircle(for: ghost)
@@ -54,7 +59,25 @@ struct StickmanCanvasView: View {
                         let ghr = ghostHead.radius * t.scale
                         context.fill(
                             Path(ellipseIn: CGRect(x: ghc.x - ghr, y: ghc.y - ghr, width: ghr * 2, height: ghr * 2)),
-                            with: .color(Color(hex: 0x1A1A1E).opacity(alpha))
+                            with: .color(red.opacity(alpha))
+                        )
+                    }
+
+                    if let futureGhost {
+                        let blue = Color(hex: 0x4070FF)
+                        let alpha: Double = 0.55
+                        let futurePath = t.transformedPath(StickmanKinematics.skeletonPath(for: futureGhost))
+                        context.stroke(
+                            futurePath,
+                            with: .color(blue.opacity(alpha)),
+                            style: StrokeStyle(lineWidth: futureGhost.thickness * t.scale, lineCap: .round, lineJoin: .round)
+                        )
+                        let futureHead = StickmanKinematics.headCircle(for: futureGhost)
+                        let fc = t.toCanvas(futureHead.center)
+                        let fr = futureHead.radius * t.scale
+                        context.fill(
+                            Path(ellipseIn: CGRect(x: fc.x - fr, y: fc.y - fr, width: fr * 2, height: fr * 2)),
+                            with: .color(blue.opacity(alpha))
                         )
                     }
 
@@ -171,23 +194,6 @@ struct StickmanCanvasView: View {
     }
 }
 
-// MARK: - Paper surface
-
-/// The canvas zone: a light paper sheet with a dark sketch border,
-/// sitting on dark studio chrome around it.
-private struct PaperSurface: View {
-    var body: some View {
-        RoundedRectangle(cornerRadius: 12)
-            .fill(Color(hex: 0xF7F7F7))
-            .shadow(color: Color.black.opacity(0.18), radius: 12, y: 2)
-            .overlay(
-                RoundedRectangle(cornerRadius: 12)
-                    .stroke(Color.black.opacity(0.10), lineWidth: 2)
-            )
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
-}
-
 // MARK: - Joint handle dots
 
 private struct JointHandles: View {
@@ -208,7 +214,7 @@ private struct JointHandles: View {
                     let ring = CGRect(x: c.x - 8, y: c.y - 8, width: 16, height: 16)
                     context.stroke(
                         Path(ellipseIn: ring),
-                        with: .color(Color(hex: 0xF5C451)),
+                        with: .color(.white.opacity(0.9)),
                         lineWidth: 1.5
                     )
                     let dot = CGRect(x: c.x - 5.5, y: c.y - 5.5, width: 11, height: 11)
@@ -216,7 +222,7 @@ private struct JointHandles: View {
                 } else {
                     // Small subtle dot for other joints.
                     let dot = CGRect(x: c.x - 3.5, y: c.y - 3.5, width: 7, height: 7)
-                    context.fill(Path(ellipseIn: dot), with: .color(Color(hex: 0x1A1A1E).opacity(0.55)))
+                    context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.55)))
                 }
             }
 
@@ -227,12 +233,12 @@ private struct JointHandles: View {
             let hc = transform.toCanvas(headCenter)
             if selectedBone == .head {
                 let ring = CGRect(x: hc.x - 8, y: hc.y - 8, width: 16, height: 16)
-                context.stroke(Path(ellipseIn: ring), with: .color(Color(hex: 0xF5C451)), lineWidth: 1.5)
+                context.stroke(Path(ellipseIn: ring), with: .color(.white.opacity(0.9)), lineWidth: 1.5)
                 let dot = CGRect(x: hc.x - 5.5, y: hc.y - 5.5, width: 11, height: 11)
                 context.fill(Path(ellipseIn: dot), with: .color(Color(hex: 0xF5C451)))
             } else {
                 let dot = CGRect(x: hc.x - 3.5, y: hc.y - 3.5, width: 7, height: 7)
-                context.fill(Path(ellipseIn: dot), with: .color(Color(hex: 0x1A1A1E).opacity(0.55)))
+                context.fill(Path(ellipseIn: dot), with: .color(.white.opacity(0.55)))
             }
             drawHandle(.leftElbow, for: .leftUpperArm)
             drawHandle(.leftHand, for: .leftForearm)
