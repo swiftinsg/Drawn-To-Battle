@@ -74,8 +74,10 @@ struct Afterimage {
 /// BattleView; HUD-relevant values are published. All mutating work happens
 /// here, never during view rendering.
 final class BattleEngine: ObservableObject {
-    /// Block goes on cooldown as soon as it absorbs or parries a hit.
+    /// Block goes on cooldown whenever the shield is used.
     static let blockCooldownDuration: CGFloat = 1.2
+    /// Longest time the shield can stay up before it drops into cooldown.
+    static let blockMaxHold: CGFloat = 0.55
 
     // Config
     let boss: BossDefinition
@@ -309,11 +311,21 @@ final class BattleEngine: ObservableObject {
 
         // Once the strike has landed the player can move, block and dodge again,
         // even while the rest of a long animation finishes playing.
+        let wasBlocking = blockActive
         let canControl = (!attackActive || attackDamageDone) && hurtTimer <= 0
         blockActive = input.blockHeld && canControl && !dodgeActive && blockCooldown <= 0
-        if blockActive { blockTime += d } else { blockTime = 0 }
-        if blockActive && blockStart < 0 { blockStart = time }
-        if !input.blockHeld { blockStart = -10 }
+
+        if blockActive {
+            if blockStart < 0 { blockStart = time }
+            blockTime += d
+            // Raising the shield is a commitment. It drops after a short hold,
+            // then the same cooldown ring shown after a hit begins filling.
+            if blockTime >= Self.blockMaxHold { startBlockCooldown() }
+        } else {
+            if wasBlocking || blockTime > 0 { startBlockCooldown() }
+            blockTime = 0
+            if !input.blockHeld { blockStart = -10 }
+        }
 
         // Dodge roll (cancels a finished attack too).
         if input.dodgeQueued {
@@ -739,13 +751,19 @@ final class BattleEngine: ObservableObject {
         }
     }
 
-    /// Drops the shield after it has been hit and starts the cooldown.
-    private func consumeBlock() {
+    /// Drops the shield and starts the cooldown after any use.
+    private func startBlockCooldown() {
+        guard blockCooldown <= 0 else { return }
         blockCooldown = Self.blockCooldownDuration
         blockTime = 0
         blockStart = -10
         blockActive = false
         input.blockHeld = false
+    }
+
+    /// A hit cuts the shield short and starts the same cooldown immediately.
+    private func consumeBlock() {
+        startBlockCooldown()
     }
 
     // MARK: Damage to player
