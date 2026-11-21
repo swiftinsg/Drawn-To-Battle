@@ -28,8 +28,8 @@ struct HomeHubView: View {
         ZStack {
             Color(hex: 0x0C0D12).ignoresSafeArea()
 
-            // Rive ambient animation layered over the static backdrop.
-            RiveHomeBackground { HubBackdrop() }
+            // Rive ambient animation is the only backdrop; no static image.
+            RiveHomeBackground()
 
             // The fighter is the focal point, like a Brawl Stars lobby.
             FighterFigureView(accessory: game.equippedAccessory)
@@ -329,92 +329,6 @@ struct HomeHubView: View {
 
     private var equippedAnalysis: AnalysisResult {
         AnimationAnalysis.analyze(game.equipped?.project ?? PoseTemplate.animation(for: .punch, name: "x"))
-    }
-}
-
-// MARK: - Hub backdrop
-
-/// Faint star field, orbit and planets behind the centered fighter so the hub
-/// doesn't read as a flat black screen.
-private struct HubBackdrop: View {
-    var body: some View {
-        GeometryReader { _ in
-            Canvas { context, size in
-                let gold = Color(hex: 0xF5C451)
-
-                // Warm corner glow, drawn behind everything else.
-                context.fill(
-                    Path(ellipseIn: CGRect(
-                        x: size.width * 0.42,
-                        y: -size.height * 0.34,
-                        width: size.width * 0.95,
-                        height: size.height * 0.95
-                    )),
-                    with: .color(gold.opacity(0.07))
-                )
-
-                // Star field.
-                var rng = SeededRandom(seed: 119)
-                for _ in 0..<44 {
-                    let x = CGFloat(rng.next()) * size.width
-                    let y = CGFloat(rng.next()) * size.height
-                    let radius = CGFloat(0.7 + rng.next() * 1.3)
-                    let opacity = 0.08 + rng.next() * 0.2
-                    context.fill(
-                        Path(ellipseIn: CGRect(
-                            x: x - radius, y: y - radius,
-                            width: radius * 2, height: radius * 2
-                        )),
-                        with: .color(.white.opacity(opacity))
-                    )
-                }
-
-                // Orbit.
-                context.stroke(
-                    Path(ellipseIn: CGRect(
-                        x: -size.width * 0.12,
-                        y: size.height * 0.22,
-                        width: size.width * 1.22,
-                        height: size.height * 0.78
-                    )),
-                    with: .color(.white.opacity(0.06)),
-                    style: StrokeStyle(lineWidth: 1, dash: [6, 10])
-                )
-
-                // The three boss planets, kept above the bottom sticker row.
-                let planets: [(CGFloat, CGFloat, CGFloat, UInt32, UInt32)] = [
-                    (0.87, 0.34, 24, 0x3FA65C, 0x4C8DFF),
-                    (0.70, 0.14, 16, 0xF5C451, 0xFF8A3C),
-                    (0.88, 0.56, 28, 0x4FC3F7, 0xB3E5FC),
-                ]
-                for planet in planets {
-                    let x = planet.0 * size.width
-                    let y = planet.1 * size.height
-                    let d = planet.2
-                    let body = Color(hex: planet.3)
-                    let accent = Color(hex: planet.4)
-
-                    context.fill(
-                        Path(ellipseIn: CGRect(x: x - d * 1.7, y: y - d * 1.7,
-                                               width: d * 3.4, height: d * 3.4)),
-                        with: .color(accent.opacity(0.08))
-                    )
-                    context.fill(
-                        Path(ellipseIn: CGRect(x: x - d / 2, y: y - d / 2,
-                                               width: d, height: d)),
-                        with: .color(body.opacity(0.55))
-                    )
-                    context.stroke(
-                        Path(ellipseIn: CGRect(x: x - d / 2 - 3, y: y - d / 2 - 3,
-                                               width: d + 6, height: d + 6)),
-                        with: .color(accent.opacity(0.35)),
-                        style: StrokeStyle(lineWidth: 1.5)
-                    )
-                }
-            }
-        }
-        .ignoresSafeArea()
-        .allowsHitTesting(false)
     }
 }
 
