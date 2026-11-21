@@ -84,7 +84,7 @@ struct CollectionView: View {
                                                     learned: game.isBlueprintLearned(bp.id),
                                                     equipped: isEquipped(bp),
                                                     edited: game.blueprintEdit(id: bp.id) != nil,
-                                                    onEdit: { editingBlueprint = bp },
+                                                    onEdit: { openStudio(for: bp) },
                                                     onReset: { game.clearBlueprintEdit(bp.id) }
                                                 ) {
                                                     guard game.ownedBlueprints.contains(bp.id) else { return }
@@ -92,7 +92,7 @@ struct CollectionView: View {
                                                         game.equip(blueprint: bp)
                                                     } else {
                                                         // Open the studio lesson for this move.
-                                                        editingBlueprint = bp
+                                                        openStudio(for: bp)
                                                     }
                                                 }
                                             }
@@ -117,11 +117,16 @@ struct CollectionView: View {
         .onChange(of: tab) { _, _ in scrollSectionID = nil }
         .fullScreenCover(item: $editingBlueprint) { bp in
             AnimationStudioView(studio: editStudio, onBack: { editingBlueprint = nil })
-                .onAppear {
-                    editStudio.game = game
-                    editStudio.editBlueprint(bp, edited: game.blueprintEdit(id: bp.id))
-                }
+                .onAppear { editStudio.game = game }
         }
+    }
+
+    /// Set up the move (and its lesson) before the studio appears, otherwise
+    /// the studio's own onAppear can present the generic walkthrough first.
+    private func openStudio(for bp: MoveBlueprint) {
+        editStudio.game = game
+        editStudio.editBlueprint(bp, edited: game.blueprintEdit(id: bp.id))
+        editingBlueprint = bp
     }
 
     private func tabButton(_ title: String, tab: CollectionTab) -> some View {

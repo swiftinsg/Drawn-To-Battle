@@ -329,7 +329,10 @@ final class StudioState: ObservableObject {
         // A move you haven't learned opens as a blank canvas with its lesson.
         // Finishing the lesson marks it learned; closing early leaves it locked.
         let unlearned = !(game?.isBlueprintLearned(blueprint.id) ?? true)
-        showBlueprintTutorial = unlearned
+        // Even already-learned moves get their personalised lesson the first
+        // time they're opened — older saves had every owned move marked learned.
+        let uncoached = !(game?.isBlueprintCoached(blueprint.id) ?? true)
+        showBlueprintTutorial = unlearned || uncoached
 
         project = edited ?? (unlearned ? .blank() : blueprint.baseAnimation)
         editingBlueprintID = blueprint.id

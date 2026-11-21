@@ -144,8 +144,16 @@ struct AnimationStudioView: View {
             Text(studio.hasUnsavedChanges ? "SAVING" : "AUTO SAVED")
                 .font(.system(size: 8, weight: .black, design: .rounded))
                 .foregroundStyle(.white.opacity(0.35))
-            StudioIconButton(systemImage: "questionmark.circle") { showTutorial = true }
-                .accessibilityLabel("Tutorial")
+            // When a blueprint is open, the help button replays that move's
+            // personalised lesson; otherwise it shows the general walkthrough.
+            StudioIconButton(systemImage: "questionmark.circle") {
+                if studio.editingBlueprint != nil {
+                    studio.showBlueprintTutorial = true
+                } else {
+                    showTutorial = true
+                }
+            }
+            .accessibilityLabel(studio.editingBlueprint == nil ? "Tutorial" : "Move tutorial")
             StudioIconButton(systemImage: "folder") { projectsBrowserShown = true }
             StudioIconButton(systemImage: "plus.rectangle.on.rectangle") { studio.newProject() }
         }

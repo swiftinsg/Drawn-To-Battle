@@ -159,6 +159,12 @@ final class GameSave: ObservableObject {
     @Published var learnedBlueprints: Set<String> = [] {
         didSet { persist() }
     }
+    /// Blueprints whose personalised "how to animate" lesson has been shown.
+    /// Separate from `learnedBlueprints` so existing saves still get the new
+    /// per-move lesson the first time they open each blueprint.
+    @Published var coachedBlueprints: Set<String> = [] {
+        didSet { persist() }
+    }
     @Published var equipped: EquippedLoadout? {
         didSet { persist() }
     }
@@ -269,6 +275,7 @@ final class GameSave: ObservableObject {
             // Existing saves keep using the moves they already owned; fresh
             // saves start with nothing learned so tutorials are required.
             learnedBlueprints = saved.learnedBlueprints ?? saved.ownedBlueprints
+            coachedBlueprints = saved.coachedBlueprints ?? []
             equipped = saved.equipped
             defeatedBosses = saved.defeatedBosses
             blueprintEdits = saved.blueprintEdits ?? [:]
@@ -553,6 +560,15 @@ final class GameSave: ObservableObject {
     /// Called when the player finishes a blueprint's "how to animate" lesson.
     func markBlueprintLearned(_ id: String) {
         learnedBlueprints.insert(id)
+        coachedBlueprints.insert(id)
+    }
+
+    func isBlueprintCoached(_ id: String) -> Bool {
+        coachedBlueprints.contains(id)
+    }
+
+    func markBlueprintCoached(_ id: String) {
+        coachedBlueprints.insert(id)
     }
 
     func equip(blueprint: MoveBlueprint) {
@@ -609,6 +625,7 @@ final class GameSave: ObservableObject {
         experience = 0
         ownedBlueprints = Self.starterBlueprintIDs
         learnedBlueprints = []
+        coachedBlueprints = []
         equipped = nil
         defeatedBosses = []
         blueprintEdits = [:]
@@ -635,6 +652,7 @@ final class GameSave: ObservableObject {
         var experience: Int?
         var ownedBlueprints: Set<String>
         var learnedBlueprints: Set<String>?
+        var coachedBlueprints: Set<String>?
         var equipped: EquippedLoadout?
         var defeatedBosses: Set<String>
         var blueprintEdits: [String: AnimationProject]?
@@ -659,6 +677,7 @@ final class GameSave: ObservableObject {
             experience: experience,
             ownedBlueprints: ownedBlueprints,
             learnedBlueprints: learnedBlueprints,
+            coachedBlueprints: coachedBlueprints,
             equipped: equipped,
             defeatedBosses: defeatedBosses,
             blueprintEdits: blueprintEdits,
