@@ -228,18 +228,6 @@
       </StateMachineLayer>
     </StateMachine>
     <LinearAnimation loopValue="loop" duration="900" name="Ambient" id="0:6">
-      <KeyedObject objectId="0:110">
-      <KeyedProperty propertyKey="15">
-        <KeyFrameDouble value="0.0000" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="6.2832" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:111">
-      <KeyedProperty propertyKey="15">
-        <KeyFrameDouble value="0.0000" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="6.2832" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      </KeyedObject>
       <KeyedObject objectId="0:120">
       <KeyedProperty propertyKey="13">
         <KeyFrameDouble value="1137.0000" interpolationType="cubicValue" frame="0">

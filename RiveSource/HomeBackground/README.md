@@ -1,9 +1,10 @@
 # Home screen Rive background
 
 `scene.rml` is the editable source for `Drawn To Battle/HomeBackground.riv`.
-It is a 15-second looping ambient scene: two slowly rotating orbit rings, three
-planets that hug those ellipses on smooth cubic arcs while spinning on their
-axes, and a twinkling star field. Earth is green with blue oceans, Uranus is
+It is a 15-second looping ambient scene: two fixed orbit rings, three planets
+that hug those ellipses on smooth cubic arcs while spinning on their axes, and
+a twinkling star field. The rings do not rotate, so the planets always sit on
+their tracks. Earth is green with blue oceans, Uranus is
 cyan with its pale ring, and the Sun is gold with an orange corona. There are no
 decorative glow ovals. The orbits span the full landscape artboard so every
 planet stays on screen under the home UI.
