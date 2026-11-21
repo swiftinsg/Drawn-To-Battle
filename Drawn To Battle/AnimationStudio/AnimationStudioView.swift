@@ -55,7 +55,9 @@ struct AnimationStudioView: View {
         }
         .background(Color(hex: 0x0C0D12).ignoresSafeArea())
         .onAppear {
-            if let game = studio.game, !game.hasSeenStudioTutorial {
+            // A new blueprint's own lesson takes priority over the generic
+            // walkthrough so first-time users see the move-specific pointers.
+            if let game = studio.game, !game.hasSeenStudioTutorial, !studio.showBlueprintTutorial {
                 showTutorial = true
             }
         }
@@ -76,6 +78,13 @@ struct AnimationStudioView: View {
                 BlueprintTutorialView(blueprint: blueprint) {
                     studio.game?.markBlueprintLearned(blueprint.id)
                     studio.showBlueprintTutorial = false
+                    // Follow up with the general studio walkthrough if this is
+                    // the fighter's first time in the studio.
+                    if let game = studio.game, !game.hasSeenStudioTutorial {
+                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
+                            showTutorial = true
+                        }
+                    }
                 }
             }
         }
