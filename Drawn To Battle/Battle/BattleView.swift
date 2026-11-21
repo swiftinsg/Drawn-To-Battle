@@ -577,7 +577,6 @@ private struct ControlCluster: View {
 
 private struct BlockButton: View {
     @ObservedObject var engine: BattleEngine
-    @State private var pressed = false
 
     private var cooling: Bool { engine.blockCooldown > 0 }
 
@@ -591,55 +590,38 @@ private struct BlockButton: View {
     }
 
     var body: some View {
-        ZStack {
-            Circle()
-                .fill(pressed && !cooling
-                      ? Color(hex: 0x4C8DFF)
-                      : Color.white.opacity(0.08))
-
-            if cooling {
+        Button { engine.tapBlock() } label: {
+            ZStack {
                 Circle()
-                    .fill(Color(hex: 0x4C8DFF).opacity(0.42 * (1 - cooldownProgress)))
+                    .fill(engine.blockActive
+                          ? Color(hex: 0x4C8DFF)
+                          : Color.white.opacity(0.08))
+
+                if cooling {
+                    Circle()
+                        .fill(Color(hex: 0x4C8DFF).opacity(0.42 * (1 - cooldownProgress)))
+                    Circle()
+                        .trim(from: 0, to: cooldownProgress)
+                        .stroke(Color(hex: 0x4C8DFF),
+                                style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                        .rotationEffect(.degrees(-90))
+                }
+
+                Text("BLOCK")
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(engine.blockActive
+                                     ? .black
+                                     : Color(hex: 0x4C8DFF).opacity(cooling ? 0.45 : 1))
+
                 Circle()
-                    .trim(from: 0, to: cooldownProgress)
-                    .stroke(Color(hex: 0x4C8DFF),
-                            style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
+                    .stroke((parryGlow ? Color(hex: 0xF5C451) : Color(hex: 0x4C8DFF))
+                            .opacity(engine.blockActive ? 1 : 0.6),
+                            lineWidth: parryGlow ? 4 : 2)
             }
-
-            Text("BLOCK")
-                .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundStyle(pressed && !cooling
-                                 ? .black
-                                 : Color(hex: 0x4C8DFF).opacity(cooling ? 0.45 : 1))
-
-            Circle()
-                .stroke((parryGlow ? Color(hex: 0xF5C451) : Color(hex: 0x4C8DFF))
-                        .opacity(pressed && !cooling ? 1 : 0.6),
-                        lineWidth: parryGlow ? 4 : 2)
+            .frame(width: 70, height: 70)
+            .contentShape(Circle())
         }
-        .frame(width: 70, height: 70)
-        .contentShape(Circle())
-        .gesture(
-            DragGesture(minimumDistance: 0)
-                .onChanged { _ in
-                    guard !cooling else { return }
-                    pressed = true
-                    engine.input.blockHeld = true
-                }
-                .onEnded { _ in
-                    pressed = false
-                    engine.input.blockHeld = false
-                }
-        )
-        .onTapGesture {
-            guard !cooling else { return }
-            pressed = true
-            engine.tapBlock()
-            DispatchQueue.main.asyncAfter(deadline: .now() + 0.14) {
-                pressed = false
-            }
-        }
+        .buttonStyle(.plain)
     }
 }
 

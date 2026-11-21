@@ -18,7 +18,7 @@ enum Haptics {
 struct BattleInput {
     var move: CGVector = .zero       // -1...1 both axes (joystick)
     var attackQueued = false
-    var blockHeld = false
+    var blockQueued = false
     var ultimateQueued = false
     var dodgeQueued = false
 }
@@ -313,18 +313,17 @@ final class BattleEngine: ObservableObject {
         // even while the rest of a long animation finishes playing.
         let wasBlocking = blockActive
         let canControl = (!attackActive || attackDamageDone) && hurtTimer <= 0
-        blockActive = input.blockHeld && canControl && !dodgeActive && blockCooldown <= 0
 
-        if blockActive {
-            if blockStart < 0 { blockStart = time }
-            blockTime += d
-            // Raising the shield is a commitment. It drops after a short hold,
-            // then the same cooldown ring shown after a hit begins filling.
-            if blockTime >= Self.blockMaxHold { startBlockCooldown() }
-        } else {
-            if wasBlocking || blockTime > 0 { startBlockCooldown() }
-            blockTime = 0
-            if !input.blockHeld { blockStart = -10 }
+        // Block is queued exactly like dodge: the button records the intent and
+        // the next simulation tick resolves it. No hold gesture, no missed taps.
+        if input.blockQueued {
+            input.blockQueued = false
+            if canControl && !dodgeActive && blockCooldown <= 0 {
+                blockActive = true
+                blockStart = time
+                blockTime = 0
+                Haptics.light()
+            }
         }
 
         // Dodge roll (cancels a finished attack too).
@@ -332,9 +331,24 @@ final class BattleEngine: ObservableObject {
             input.dodgeQueued = false
             let canCancelAttack = attackActive && attackDamageDone
             if (canControl || canCancelAttack) && dodgeCooldown <= 0 {
+                if blockActive { consumeBlock() }
                 if canCancelAttack { attackActive = false }
                 startDodge()
             }
+        }
+
+        if blockActive {
+            if !canControl || dodgeActive {
+                consumeBlock()
+            } else {
+                blockTime += d
+                // Raising the shield is a commitment. It drops after a short hold,
+                // then the same cooldown ring shown after a hit begins filling.
+                if blockTime >= Self.blockMaxHold { startBlockCooldown() }
+            }
+        } else if wasBlocking || blockTime > 0 {
+            startBlockCooldown()
+            blockTime = 0
         }
 
         if dodgeActive {
@@ -740,15 +754,10 @@ final class BattleEngine: ObservableObject {
 
     private func facingSign() -> CGFloat { playerPos.x > bossX ? 1 : -1 }
 
-    /// Short tap fallback. Some taps end between simulation ticks, so latch
-    /// the shield briefly instead of relying only on the hold gesture.
+    /// Dodge-style input: queue the intent, let the sim tick decide whether
+    /// the shield can actually rise. Safe to call from a plain button tap.
     func tapBlock() {
-        guard blockCooldown <= 0, hurtTimer <= 0, !dodgeActive else { return }
-        input.blockHeld = true
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.12) { [weak self] in
-            guard let self else { return }
-            if self.blockCooldown <= 0 { self.input.blockHeld = false }
-        }
+        input.blockQueued = true
     }
 
     /// Drops the shield and starts the cooldown after any use.
@@ -758,7 +767,6 @@ final class BattleEngine: ObservableObject {
         blockTime = 0
         blockStart = -10
         blockActive = false
-        input.blockHeld = false
     }
 
     /// A hit cuts the shield short and starts the same cooldown immediately.
@@ -803,7 +811,8 @@ final class BattleEngine: ObservableObject {
         flashPlayer = 0.3
         playerHP = max(0, playerHP - raw)
         damageTaken += raw
-        ultMeter = min(100, ultMeter + 12)
+        // ULT is earned by dealing damage and parrying. Getting hit never
+        // charges it, otherwise taking a beating secretly rewarded you.
         comboCount = 0
         comboTimer = 0
         shake = max(shake, 9)
