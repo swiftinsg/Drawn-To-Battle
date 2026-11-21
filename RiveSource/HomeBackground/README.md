@@ -1,10 +1,12 @@
 # Home screen Rive background
 
 `scene.rml` is the editable source for `Drawn To Battle/HomeBackground.riv`.
-It is a 15-second looping ambient scene: drifting gold/blue/purple glows,
-two slowly rotating orbit rings, four planets that hug those ellipses on smooth
-cubic arcs while spinning on their axes, and a twinkling star field. The orbits
-span the full landscape artboard so every planet stays on screen under the home UI.
+It is a 15-second looping ambient scene: two slowly rotating orbit rings, three
+planets that hug those ellipses on smooth cubic arcs while spinning on their
+axes, and a twinkling star field. Earth is green with blue oceans, Uranus is
+cyan with its pale ring, and the Sun is gold with an orange corona. There are no
+decorative glow ovals. The orbits span the full landscape artboard so every
+planet stays on screen under the home UI.
 
 Your Rive CLI is at `~/.rive/bin/rive`. Useful commands from the repo root:
 

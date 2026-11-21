@@ -1,18 +1,6 @@
 <Rive version="1" kind="fragment">
   <Artboard defaultStateMachineId="0:7" styleId="0:5" width="1334" height="750" name="HomeBackground" id="0:2">
     <LayoutComponentStyle name="Artboard Style" id="0:5"/>
-    <Shape x="1075" y="90" name="Glow100" id="0:100">
-      <Ellipse width="380" height="80"/>
-      <Fill name="GlowFill"><SolidColor colorValue="FFF5C451" name="Color"/></Fill>
-    </Shape>
-    <Shape x="165" y="690" name="Glow101" id="0:101">
-      <Ellipse width="340" height="90"/>
-      <Fill name="GlowFill"><SolidColor colorValue="FF4C8DFF" name="Color"/></Fill>
-    </Shape>
-    <Shape x="665" y="385" name="Glow102" id="0:102">
-      <Ellipse width="420" height="120"/>
-      <Fill name="GlowFill"><SolidColor colorValue="FFA86CFF" name="Color"/></Fill>
-    </Shape>
     <Shape x="667" y="375" name="Orbit110" id="0:110">
       <Ellipse width="940" height="530"/>
       <Stroke thickness="1.4" cap="round"><SolidColor colorValue="18F5C451" name="Color"/></Stroke>
@@ -21,22 +9,64 @@
       <Ellipse width="1120" height="660"/>
       <Stroke thickness="1.4" cap="round"><SolidColor colorValue="124C8DFF" name="Color"/></Stroke>
     </Shape>
-    <Shape x="1137" y="375" name="Planet120" id="0:120">
-      <Ellipse width="22" height="16"/>
-      <Fill name="PlanetFill"><SolidColor colorValue="FFF5C451" name="Color"/></Fill>
-    </Shape>
-    <Shape x="432" y="604.4966" name="Planet121" id="0:121">
-      <Ellipse width="16" height="12"/>
-      <Fill name="PlanetFill"><SolidColor colorValue="FF4C8DFF" name="Color"/></Fill>
-    </Shape>
-    <Shape x="969.5693" y="652.6854" name="Planet122" id="0:122">
-      <Ellipse width="18" height="13"/>
-      <Fill name="PlanetFill"><SolidColor colorValue="FFA86CFF" name="Color"/></Fill>
-    </Shape>
-    <Shape x="125.5930" y="290.6714" name="Planet123" id="0:123">
-      <Ellipse width="13" height="9"/>
-      <Fill name="PlanetFill"><SolidColor colorValue="FFFFFFFF" name="Color"/></Fill>
-    </Shape>
+    <Node x="1137" y="375" name="Earth" id="0:120">
+      <Shape x="-6" y="-7" name="Earth Highlight" id="0:301">
+        <Ellipse width="6" height="6"/>
+        <Fill><SolidColor colorValue="A0FFFFFF" name="Color"/></Fill>
+      </Shape>
+      <Shape x="5" y="3" name="Earth Ocean" id="0:302">
+        <Ellipse width="10" height="8"/>
+        <Fill><SolidColor colorValue="FF4C8DFF" name="Color"/></Fill>
+      </Shape>
+      <Shape x="-7" y="5" name="Earth Ocean 2" id="0:303">
+        <Ellipse width="7" height="6"/>
+        <Fill><SolidColor colorValue="CC4C8DFF" name="Color"/></Fill>
+      </Shape>
+      <Shape name="Earth Rim" id="0:304">
+        <Ellipse width="30" height="30"/>
+        <Stroke thickness="1.6"><SolidColor colorValue="804C8DFF" name="Color"/></Stroke>
+      </Shape>
+      <Shape name="Earth Body" id="0:300">
+        <Ellipse width="26" height="26"/>
+        <Fill><SolidColor colorValue="FF3FA65C" name="Color"/></Fill>
+      </Shape>
+    </Node>
+    <Node x="432" y="604.4966" name="Uranus" id="0:121">
+      <Shape x="-5" y="-5" name="Uranus Highlight" id="0:311">
+        <Ellipse width="6" height="6"/>
+        <Fill><SolidColor colorValue="B0FFFFFF" name="Color"/></Fill>
+      </Shape>
+      <Shape name="Uranus Body" id="0:310">
+        <Ellipse width="22" height="22"/>
+        <Fill><SolidColor colorValue="FF4FC3F7" name="Color"/></Fill>
+      </Shape>
+      <Shape rotation="-0.28" name="Uranus Ring" id="0:312">
+        <Ellipse width="40" height="11"/>
+        <Stroke thickness="2.5"><SolidColor colorValue="FFB3E5FC" name="Color"/></Stroke>
+      </Shape>
+    </Node>
+    <Node x="969.5693" y="652.6854" name="Sun" id="0:122">
+      <Shape x="-4" y="-3" name="Sun Spot" id="0:322">
+        <Ellipse width="5" height="5"/>
+        <Fill><SolidColor colorValue="FFFF8A3C" name="Color"/></Fill>
+      </Shape>
+      <Shape x="5" y="4" name="Sun Spot 2" id="0:323">
+        <Ellipse width="4" height="4"/>
+        <Fill><SolidColor colorValue="FFFF8A3C" name="Color"/></Fill>
+      </Shape>
+      <Shape name="Sun Body" id="0:321">
+        <Ellipse width="24" height="24"/>
+        <Fill><SolidColor colorValue="FFF5C451" name="Color"/></Fill>
+      </Shape>
+      <Shape name="Sun Corona" id="0:320">
+        <Ellipse width="38" height="38"/>
+        <Fill><SolidColor colorValue="30FF8A3C" name="Color"/></Fill>
+      </Shape>
+      <Shape name="Sun Rim" id="0:324">
+        <Ellipse width="29" height="29"/>
+        <Stroke thickness="2"><SolidColor colorValue="FFFF8A3C" name="Color"/></Stroke>
+      </Shape>
+    </Node>
     <Shape x="716.6" y="714.5" name="Star0" id="0:200">
       <Ellipse width="3.35" height="3.35"/>
       <Fill name="StarFill"><SolidColor colorValue="FFFFFFFF" name="Color"/></Fill>
@@ -198,75 +228,6 @@
       </StateMachineLayer>
     </StateMachine>
     <LinearAnimation loopValue="loop" duration="900" name="Ambient" id="0:6">
-      <KeyedObject objectId="0:100">
-      <KeyedProperty propertyKey="13">
-        <KeyFrameDouble value="1045.2994" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="1134.4990" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="1104.7006" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="1015.5010" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="1045.2994" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      <KeyedProperty propertyKey="14">
-        <KeyFrameDouble value="99.4091" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="100.3667" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="80.5909" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="79.6333" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="99.4091" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      <KeyedProperty propertyKey="18">
-        <KeyFrameDouble value="0.4696" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="0.7110" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="0.6304" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="0.3890" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="0.4696" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:101">
-      <KeyedProperty propertyKey="13">
-        <KeyFrameDouble value="218.8084" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="190.3951" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="111.1916" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="139.6049" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="218.8084" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      <KeyedProperty propertyKey="14">
-        <KeyFrameDouble value="701.4266" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="679.1605" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="678.5734" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="700.8395" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="701.4266" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      <KeyedProperty propertyKey="18">
-        <KeyFrameDouble value="0.6628" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="0.5768" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="0.3372" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="0.4232" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="0.6628" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:102">
-      <KeyedProperty propertyKey="13">
-        <KeyFrameDouble value="593.1795" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="680.6227" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="736.8205" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="649.3773" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="593.1795" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      <KeyedProperty propertyKey="14">
-        <KeyFrameDouble value="381.7247" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="405.7430" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="388.2753" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="364.2570" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="381.7247" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      <KeyedProperty propertyKey="18">
-        <KeyFrameDouble value="0.1741" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="0.3883" interpolationType="linear" frame="225"/>
-        <KeyFrameDouble value="0.5259" interpolationType="linear" frame="450"/>
-        <KeyFrameDouble value="0.3117" interpolationType="linear" frame="675"/>
-        <KeyFrameDouble value="0.1741" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      </KeyedObject>
       <KeyedObject objectId="0:110">
       <KeyedProperty propertyKey="15">
         <KeyFrameDouble value="0.0000" interpolationType="linear" frame="0"/>
@@ -385,42 +346,6 @@
       <KeyedProperty propertyKey="15">
         <KeyFrameDouble value="0.0000" interpolationType="linear" frame="0"/>
         <KeyFrameDouble value="6.2832" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      </KeyedObject>
-      <KeyedObject objectId="0:123">
-      <KeyedProperty propertyKey="13">
-        <KeyFrameDouble value="125.5930" interpolationType="cubicValue" frame="0">
-          <CubicValueInterpolator x1="0.33333334" y1="204.6266" x2="0.6666667" y2="511.0922"/>
-        </KeyFrameDouble>
-        <KeyFrameDouble value="810.1030" interpolationType="cubicValue" frame="225">
-          <CubicValueInterpolator x1="0.33333334" y1="1109.1138" x2="0.6666667" y2="1287.4406"/>
-        </KeyFrameDouble>
-        <KeyFrameDouble value="1208.4070" interpolationType="cubicValue" frame="450">
-          <CubicValueInterpolator x1="0.33333334" y1="1129.3734" x2="0.6666667" y2="822.9078"/>
-        </KeyFrameDouble>
-        <KeyFrameDouble value="523.8970" interpolationType="cubicValue" frame="675">
-          <CubicValueInterpolator x1="0.33333334" y1="224.8862" x2="0.6666667" y2="46.5594"/>
-        </KeyFrameDouble>
-        <KeyFrameDouble value="125.5930" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      <KeyedProperty propertyKey="14">
-        <KeyFrameDouble value="290.6714" interpolationType="cubicValue" frame="0">
-          <CubicValueInterpolator x1="0.33333334" y1="114.4686" x2="0.6666667" y2="9.3832"/>
-        </KeyFrameDouble>
-        <KeyFrameDouble value="55.9566" interpolationType="cubicValue" frame="225">
-          <CubicValueInterpolator x1="0.33333334" y1="102.5300" x2="0.6666667" y2="283.1258"/>
-        </KeyFrameDouble>
-        <KeyFrameDouble value="459.3286" interpolationType="cubicValue" frame="450">
-          <CubicValueInterpolator x1="0.33333334" y1="635.5314" x2="0.6666667" y2="740.6168"/>
-        </KeyFrameDouble>
-        <KeyFrameDouble value="694.0434" interpolationType="cubicValue" frame="675">
-          <CubicValueInterpolator x1="0.33333334" y1="647.4700" x2="0.6666667" y2="466.8742"/>
-        </KeyFrameDouble>
-        <KeyFrameDouble value="290.6714" interpolationType="linear" frame="900"/>
-      </KeyedProperty>
-      <KeyedProperty propertyKey="15">
-        <KeyFrameDouble value="0.0000" interpolationType="linear" frame="0"/>
-        <KeyFrameDouble value="-6.2832" interpolationType="linear" frame="900"/>
       </KeyedProperty>
       </KeyedObject>
       <KeyedObject objectId="0:200">
