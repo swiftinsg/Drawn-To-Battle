@@ -188,8 +188,10 @@ struct HomeHubView: View {
         }
         .fullScreenCover(isPresented: $showGacha) {
             GachaView(game: game) { blueprint in
-                // Unlocking starts the lesson: set up the studio on that move,
-                // close the gacha, then open the studio.
+                // Unlocking starts the lesson. The studio needs the save first,
+                // otherwise editBlueprint treats the move as already coached and
+                // the personalised blueprint lesson never appears.
+                studio.game = game
                 studio.editBlueprint(blueprint, edited: game.blueprintEdit(id: blueprint.id))
                 showGacha = false
                 DispatchQueue.main.asyncAfter(deadline: .now() + 0.35) {
