@@ -14,11 +14,11 @@ struct PlayLockView: View {
             Color.black.opacity(0.8).ignoresSafeArea()
 
             VStack(spacing: 20) {
-                Text("MAKE YOUR OWN MOVE")
+                Text("MAKE YOUR OWN MOVES")
                     .font(DrawnToBattleTypography.display(28))
                     .foregroundStyle(Color(hex: 0xF5C451))
 
-                Text("You can't take someone else's animation into battle.\nOpen the STUDIO and animate your fighter's attack first.")
+                Text("You currently don't have any attack animation.\nOpen the STUDIO and animate your fighter's attack first.")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.8))
                     .multilineTextAlignment(.center)

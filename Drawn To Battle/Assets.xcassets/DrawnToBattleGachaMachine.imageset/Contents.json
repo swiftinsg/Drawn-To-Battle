@@ -1,4 +1,12 @@
 {
-  "images" : [ { "filename" : "gacha_machine.png", "idiom" : "universal" } ],
-  "info" : { "author" : "xcode", "version" : 1 }
+  "images" : [
+    {
+      "filename" : "Gacha Icon Rework.png",
+      "idiom" : "universal"
+    }
+  ],
+  "info" : {
+    "author" : "xcode",
+    "version" : 1
+  }
 }

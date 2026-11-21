@@ -12,13 +12,13 @@ struct StudioTutorialView: View {
 
     private let steps: [(title: String, body: String)] = [
         ("WELCOME TO THE STUDIO",
-         "This is where you bring your stickman to life. Every bone you rotate and every frame you add becomes your fighter's attack in battle."),
+         "This is where you bring your stickman to life. Every joint you move and every frame you add becomes your fighter's attack in battle."),
 
-        ("PICK A BONE",
-         "Tap \"SELECT BONE\" at the top, then choose a joint (arm, leg, torso or head) to move it."),
+        ("PICK A JOINT",
+         "Choose a joint (arm, leg, torso, head, etc) to move it."),
 
         ("POSE IT",
-         "Drag the selected bone around, or use the angle slider to rotate it precisely. Your changes update the frame live."),
+         "Drag the selected bone around. Your changes update the frame live."),
 
         ("ADD A FRAME",
          "Tap the film strip button to add another frame. Hold and drag a frame to reorder it."),
@@ -26,8 +26,8 @@ struct StudioTutorialView: View {
         ("PLAY IT",
          "Hit the play button to preview your move. Tap a frame in the timeline to check each pose."),
 
-        ("IT SAVES ITSELF",
-         "Your work saves automatically. Your custom move is equipped and ready to take into battle."),
+        ("AUTOSAVE",
+         "Your work saves automatically. Equip your custom move to take into battle."),
     ]
 
     var body: some View {
