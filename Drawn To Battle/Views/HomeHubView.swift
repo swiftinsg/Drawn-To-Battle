@@ -261,7 +261,7 @@ struct HomeHubView: View {
     private var gachaTile: some View {
         Button { showGacha = true } label: {
             VStack(spacing: 2) {
-                Image("DrawnToBattleGachaToken")
+                Image("DrawnToBattleGachaMachine")
                     .frame(width: 44, height: 44)
                 Text("GACHA")
                     .font(.system(size: 12, weight: .black, design: .rounded))
