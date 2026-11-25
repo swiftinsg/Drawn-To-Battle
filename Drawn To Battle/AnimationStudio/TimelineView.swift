@@ -2,9 +2,9 @@ import SwiftUI
 
 // MARK: - Frame timeline
 //
-// Horizontal strip of frame thumbnails. Hold a frame then drag left or right
-// to reorder it. The gold marker sits on the selected thumbnail itself, so it
-// stays aligned even after the strip has been scrolled.
+// Horizontal, scrollable strip of frame thumbnails. Swipe to browse frames;
+// hold a frame then drag left or right to reorder it. The gold marker sits on
+// the selected thumbnail itself, so it stays aligned while scrolling.
 
 struct FrameTimelineView: View {
     @ObservedObject var studio: StudioState
@@ -16,9 +16,59 @@ struct FrameTimelineView: View {
 
     private let cellWidth: CGFloat = 82 // 76pt thumbnail + 6pt spacing
 
+    private func beginReorder(at index: Int) {
+        guard !studio.isMultiSelecting else { return }
+        draggingIndex = index
+        dropIndex = index
+        Haptics.light()
+    }
+
+    private func updateReorder(at index: Int, translation: CGFloat) {
+        guard !studio.isMultiSelecting, draggingIndex == index else { return }
+        dragOffset = translation
+        let steps = Int((translation / cellWidth).rounded())
+        let lastIndex = studio.project.frames.count - 1
+        let target = max(0, min(lastIndex, index + steps))
+        if target != dropIndex {
+            dropIndex = target
+            Haptics.light()
+        }
+    }
+
+    private func finishReorder(at index: Int) {
+        guard draggingIndex == index else { return }
+        if let target = dropIndex, target != index {
+            studio.moveFrame(from: index, to: target)
+        }
+        withAnimation(.easeOut(duration: 0.15)) {
+            draggingIndex = nil
+            dropIndex = nil
+            dragOffset = 0
+        }
+    }
+
+    private func reorderGesture(at index: Int) -> some Gesture {
+        LongPressGesture(minimumDuration: 0.35)
+            .sequenced(before: DragGesture(minimumDistance: 0))
+            .onChanged { value in
+                switch value {
+                case .first(true):
+                    beginReorder(at: index)
+                case .second(true, let drag?):
+                    updateReorder(at: index, translation: drag.translation.width)
+                default:
+                    break
+                }
+            }
+            .onEnded { value in
+                guard case .second(true, _) = value else { return }
+                finishReorder(at: index)
+            }
+    }
+
     var body: some View {
         HStack(spacing: 10) {
-            ScrollView(.horizontal, showsIndicators: false) {
+            ScrollView(.horizontal, showsIndicators: true) {
                 HStack(spacing: 6) {
                     ForEach(Array(studio.project.frames.enumerated()), id: \.element.id) { index, frame in
                         FrameThumbnail(
@@ -51,41 +101,10 @@ struct FrameTimelineView: View {
                                 studio.selectFrame(index)
                             }
                         }
-                        .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.35)
-                                .onEnded { _ in
-                                    guard !studio.isMultiSelecting else { return }
-                                    draggingIndex = index
-                                    dropIndex = index
-                                    Haptics.light()
-                                }
-                        )
-                        .simultaneousGesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    guard !studio.isMultiSelecting, draggingIndex == index else { return }
-                                    dragOffset = value.translation.width
-                                    let steps = Int((value.translation.width / cellWidth).rounded())
-                                    let target = max(0,
-                                                     min(studio.project.frames.count - 1,
-                                                         index + steps))
-                                    if target != dropIndex {
-                                        dropIndex = target
-                                        Haptics.light()
-                                    }
-                                }
-                                .onEnded { _ in
-                                    guard draggingIndex == index else { return }
-                                    if let target = dropIndex, target != index {
-                                        studio.moveFrame(from: index, to: target)
-                                    }
-                                    withAnimation(.easeOut(duration: 0.15)) {
-                                        draggingIndex = nil
-                                        dropIndex = nil
-                                        dragOffset = 0
-                                    }
-                                }
-                        )
+                        // A plain swipe belongs to the ScrollView. Only after
+                        // the long press succeeds does the drag take over for
+                        // reordering, so more frames can always be scrolled to.
+                        .gesture(reorderGesture(at: index))
                         .accessibilityLabel("Frame \(index + 1). Hold and drag to reorder.")
                     }
                 }
