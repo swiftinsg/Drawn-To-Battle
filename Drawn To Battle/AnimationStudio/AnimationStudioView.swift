@@ -16,6 +16,9 @@ struct AnimationStudioView: View {
     @State private var nameEditorShown = false
     /// First-time walkthrough, shown once per fighter.
     @State private var showTutorial = false
+    /// Guided edit that points at the real studio controls after a blueprint lesson.
+    @State private var coachStep: Int?
+    @State private var pendingGenericTutorial = false
     /// ANIMATE shows the timeline + playback + buttons + frames; DRAW
     /// strips the studio chrome for a pure canvas view.
     @State private var mode: StudioMode = .animate
@@ -45,7 +48,8 @@ struct AnimationStudioView: View {
                 editingHandles: !studio.isPlaying,
                 bottomInset: 0,
                 ghostPoses: onionSkinGhosts,
-                futureGhost: onionSkinFuture
+                futureGhost: onionSkinFuture,
+                coachFocus: currentCoachFocus
             )
             .frame(maxWidth: .infinity, maxHeight: .infinity)
 
@@ -54,6 +58,20 @@ struct AnimationStudioView: View {
             }
         }
         .background(Color(hex: 0x0C0D12).ignoresSafeArea())
+        .overlay(alignment: .top) {
+            if let index = coachStep, let step = currentCoachStep {
+                StudioCoachCard(
+                    index: index,
+                    total: blueprintCoachSteps.count,
+                    step: step,
+                    onBack: { coachStep = max(0, index - 1) },
+                    onNext: { coachStep = min(blueprintCoachSteps.count - 1, index + 1) },
+                    onDone: finishBlueprintCoach
+                )
+                .padding(.top, topBarHeight + 8)
+                .padding(.horizontal, 12)
+            }
+        }
         .onAppear {
             // A new blueprint's own lesson takes priority over the generic
             // walkthrough so first-time users see the move-specific pointers.
@@ -76,15 +94,7 @@ struct AnimationStudioView: View {
         ) {
             if let blueprint = studio.editingBlueprint {
                 BlueprintTutorialView(blueprint: blueprint) {
-                    studio.game?.markBlueprintLearned(blueprint.id)
-                    studio.showBlueprintTutorial = false
-                    // Follow up with the general studio walkthrough if this is
-                    // the fighter's first time in the studio.
-                    if let game = studio.game, !game.hasSeenStudioTutorial {
-                        DispatchQueue.main.asyncAfter(deadline: .now() + 0.4) {
-                            showTutorial = true
-                        }
-                    }
+                    finishBlueprintLesson(blueprint)
                 }
             }
         }
@@ -106,6 +116,48 @@ struct AnimationStudioView: View {
 
     private var topBarHeight: CGFloat { 48 }
     private var bottomPanelHeight: CGFloat { 130 }
+
+    // MARK: Blueprint guidance
+
+    private var blueprintCoachSteps: [StudioCoachStep] {
+        guard let blueprint = studio.editingBlueprint else { return [] }
+        return BlueprintCoach.lesson(for: blueprint).studioCoachSteps
+    }
+
+    private var currentCoachStep: StudioCoachStep? {
+        guard let coachStep, blueprintCoachSteps.indices.contains(coachStep) else { return nil }
+        return blueprintCoachSteps[coachStep]
+    }
+
+    private var currentCoachTarget: StudioCoachTarget? { currentCoachStep?.target }
+
+    private var currentCoachFocus: BlueprintFocus? {
+        switch currentCoachTarget {
+        case .pose(let focus)?: return focus
+        default: return nil
+        }
+    }
+
+    private func finishBlueprintLesson(_ blueprint: MoveBlueprint) {
+        studio.game?.markBlueprintLearned(blueprint.id)
+        studio.showBlueprintTutorial = false
+        // The generic walkthrough follows after the guided pass, not on top of it.
+        pendingGenericTutorial = !(studio.game?.hasSeenStudioTutorial ?? false)
+        beginBlueprintCoach()
+    }
+
+    private func beginBlueprintCoach() {
+        mode = .animate
+        coachStep = 0
+        selectedBone = currentCoachFocus?.primaryBone
+    }
+
+    private func finishBlueprintCoach() {
+        coachStep = nil
+        guard pendingGenericTutorial else { return }
+        pendingGenericTutorial = false
+        showTutorial = true
+    }
 
     /// Top bar: BACK, project chip, quality readout, mode tabs, save.
     private var topBar: some View {
@@ -148,6 +200,7 @@ struct AnimationStudioView: View {
             // personalised lesson; otherwise it shows the general walkthrough.
             StudioIconButton(systemImage: "questionmark.circle") {
                 if studio.editingBlueprint != nil {
+                    coachStep = nil
                     studio.showBlueprintTutorial = true
                 } else {
                     showTutorial = true
@@ -167,8 +220,12 @@ struct AnimationStudioView: View {
     private var bottomPanel: some View {
         HStack(alignment: .bottom, spacing: 12) {
             // Left — the buttons.
-            StudioButtonsRow(studio: studio, selectedBone: $selectedBone)
-                .frame(width: 270)
+            StudioButtonsRow(
+                studio: studio,
+                selectedBone: $selectedBone,
+                coachTarget: currentCoachTarget
+            )
+            .frame(width: 270)
 
             // Middle to right — the frames (timeline with gold playhead).
             FrameTimelineView(studio: studio)
@@ -276,16 +333,17 @@ struct RoundedTopCorners: Shape {
 private struct StudioButtonsRow: View {
     @ObservedObject var studio: StudioState
     @Binding var selectedBone: Bone?
+    var coachTarget: StudioCoachTarget?
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
             // One tidy row: playback, speed, ghosts, frame edits.
             HStack(alignment: .center, spacing: 6) {
                 StudioIconButton(systemImage: "backward.end.fill") { studio.selectFrame(0) }
-                BigPlayButton(studio: studio)
+                BigPlayButton(studio: studio, coachHighlighted: coachTarget == .some(.play))
                 PlaySpeedToggle(studio: studio)
-                OnionToggleButton(studio: studio)
-                FilmChipButton(studio: studio)
+                OnionToggleButton(studio: studio, coachHighlighted: coachTarget == .some(.ghosts))
+                FilmChipButton(studio: studio, coachHighlighted: coachTarget == .some(.addFrame))
                 StudioIconButton(
                     systemImage: studio.isMultiSelecting
                         ? "checkmark.circle.fill"
@@ -318,6 +376,7 @@ private struct StudioButtonsRow: View {
 /// The big play/stop button in the buttons row.
 private struct BigPlayButton: View {
     @ObservedObject var studio: StudioState
+    var coachHighlighted = false
 
     var body: some View {
         Button { studio.isPlaying ? studio.stop() : studio.play() } label: {
@@ -335,6 +394,7 @@ private struct BigPlayButton: View {
                 .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 8, y: 2)
         }
         .buttonStyle(SquashButtonStyle())
+        .coachSpotlight(active: coachHighlighted)
     }
 }
 
@@ -365,6 +425,7 @@ private struct PlaySpeedToggle: View {
 /// Onion-skin toggle — red ghosts of previous frames.
 private struct OnionToggleButton: View {
     @ObservedObject var studio: StudioState
+    var coachHighlighted = false
 
     var body: some View {
         Button { studio.onionSkin.toggle() } label: {
@@ -383,12 +444,14 @@ private struct OnionToggleButton: View {
                 .accessibilityLabel(studio.onionSkin ? "Hide ghost frames" : "Show ghost frames")
         }
         .buttonStyle(.plain)
+        .coachSpotlight(active: coachHighlighted)
     }
 }
 
 /// Film-strip button on a gold chip — adds a frame.
 private struct FilmChipButton: View {
     @ObservedObject var studio: StudioState
+    var coachHighlighted = false
 
     var body: some View {
         Button { studio.addFrame() } label: {
@@ -406,6 +469,7 @@ private struct FilmChipButton: View {
                 .accessibilityLabel("Add frame")
         }
         .buttonStyle(SquashButtonStyle())
+        .coachSpotlight(active: coachHighlighted)
     }
 }
 
@@ -486,6 +550,109 @@ func rgbaToARGB(_ color: Color) -> UInt32 {
     let B = UInt32(max(0, min(255, b * 255)))
     let A = UInt32(max(0, min(255, a * 255)))
     return (A << 24) | (R << 16) | (G << 8) | B
+}
+
+// MARK: - Blueprint guidance UI
+
+/// Pulses a gold ring around the real control the lesson is talking about.
+private struct StudioCoachSpotlight: ViewModifier {
+    let active: Bool
+    @State private var pulse = false
+
+    func body(content: Content) -> some View {
+        content
+            .overlay {
+                if active {
+                    RoundedRectangle(cornerRadius: 12)
+                        .stroke(Color(hex: 0xF5C451), lineWidth: 3)
+                        .padding(-4)
+                        .shadow(color: Color(hex: 0xF5C451).opacity(0.45), radius: 8)
+                        .scaleEffect(pulse ? 1.08 : 1)
+                        .opacity(pulse ? 0.6 : 1)
+                        .allowsHitTesting(false)
+                }
+            }
+            .onAppear { animateIfNeeded(active) }
+            .onChange(of: active) { _, newValue in animateIfNeeded(newValue) }
+    }
+
+    private func animateIfNeeded(_ active: Bool) {
+        guard active else { return }
+        pulse = false
+        withAnimation(.easeInOut(duration: 0.75).repeatForever(autoreverses: true)) {
+            pulse = true
+        }
+    }
+}
+
+private extension View {
+    func coachSpotlight(active: Bool) -> some View {
+        modifier(StudioCoachSpotlight(active: active))
+    }
+}
+
+/// Compact instruction pill. It sits above the canvas and never changes the
+/// fixed studio layout, so the target buttons remain exactly where they were.
+private struct StudioCoachCard: View {
+    let index: Int
+    let total: Int
+    let step: StudioCoachStep
+    let onBack: () -> Void
+    let onNext: () -> Void
+    let onDone: () -> Void
+
+    var body: some View {
+        HStack(spacing: 10) {
+            if index > 0 {
+                Button(action: onBack) {
+                    Image(systemName: "chevron.left")
+                        .font(.system(size: 13, weight: .black))
+                        .foregroundStyle(Color.white.opacity(0.75))
+                        .frame(width: 24, height: 30)
+                }
+                .buttonStyle(.plain)
+            }
+
+            VStack(alignment: .leading, spacing: 2) {
+                Text("GUIDED EDIT · \(index + 1) OF \(total)")
+                    .font(.system(size: 8, weight: .black, design: .rounded))
+                    .foregroundStyle(Color(hex: 0xF5C451))
+
+                Text(step.title)
+                    .font(.system(size: 12, weight: .black, design: .rounded))
+                    .foregroundStyle(.white)
+
+                Text(step.body)
+                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                    .foregroundStyle(.white.opacity(0.7))
+                    .lineLimit(1)
+            }
+
+            Spacer(minLength: 0)
+
+            Button(action: index == total - 1 ? onDone : onNext) {
+                Text(index == total - 1 ? "DONE" : "NEXT")
+                    .font(.system(size: 10, weight: .black, design: .rounded))
+                    .foregroundStyle(.black)
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(Capsule().fill(Color(hex: 0xF5C451)))
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 7)
+        .frame(width: 320)
+        .background(
+            RoundedRectangle(cornerRadius: 13)
+                .fill(Color(hex: 0x14161E).opacity(0.97))
+        )
+        .overlay(
+            RoundedRectangle(cornerRadius: 13)
+                .stroke(Color(hex: 0xF5C451).opacity(0.75), lineWidth: 1.5)
+        )
+        .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
+    }
 }
 
 // MARK: - Shared UI bits

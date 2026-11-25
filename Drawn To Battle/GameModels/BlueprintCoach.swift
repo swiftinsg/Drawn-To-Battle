@@ -6,7 +6,7 @@ import SwiftUI
 // the joint that actually sells the move, and one extra tip. The tutorial uses
 // this to point at the right part of the stickman the first time a move is used.
 
-enum BlueprintFocus: String {
+enum BlueprintFocus: String, Equatable {
     case head, torso, rightArm, leftArm, rightLeg, leftLeg
     case bothArms, bothLegs, wholeBody
 
@@ -38,6 +38,39 @@ enum BlueprintFocus: String {
         case .wholeBody: return [CGPoint(x: 100, y: 140)]
         }
     }
+
+    /// The real rig handles highlighted by the in-studio guided edit.
+    var studioBones: [Bone] {
+        switch self {
+        case .head: return [.head]
+        case .torso: return [.torso]
+        case .rightArm: return [.rightUpperArm, .rightForearm]
+        case .leftArm: return [.leftUpperArm, .leftForearm]
+        case .rightLeg: return [.rightThigh, .rightShin]
+        case .leftLeg: return [.leftThigh, .leftShin]
+        case .bothArms: return [.leftUpperArm, .leftForearm, .rightUpperArm, .rightForearm]
+        case .bothLegs: return [.leftThigh, .leftShin, .rightThigh, .rightShin]
+        case .wholeBody: return []
+        }
+    }
+
+    /// Used to preselect a bone when the studio guidance starts.
+    var primaryBone: Bone? { studioBones.first }
+
+    /// Short, actionable text shown in the studio guidance pill.
+    var studioHint: String {
+        switch self {
+        case .head: return "Drag the glowing head handle to set the tilt."
+        case .torso: return "Drag the glowing neck handle to lean the torso."
+        case .rightArm: return "Drag the glowing right-arm handles to load, then strike."
+        case .leftArm: return "Drag the glowing left-arm handles to load, then strike."
+        case .rightLeg: return "Drag the glowing right-leg handles through knee, then foot."
+        case .leftLeg: return "Drag the glowing left-leg handles through knee, then foot."
+        case .bothArms: return "Drag both glowing arm handles so the fists move together."
+        case .bothLegs: return "Drag both glowing leg handles so the feet land together."
+        case .wholeBody: return "Drag away from a joint to shift the whole figure."
+        }
+    }
 }
 
 struct BlueprintLesson {
@@ -47,6 +80,48 @@ struct BlueprintLesson {
     let focus: BlueprintFocus
     /// One move-specific extra hint.
     let tip: String
+}
+
+/// A real studio control or canvas handle the guided edit should highlight.
+enum StudioCoachTarget: Equatable {
+    case pose(BlueprintFocus)
+    case addFrame
+    case ghosts
+    case play
+}
+
+struct StudioCoachStep: Equatable {
+    let target: StudioCoachTarget
+    let title: String
+    let body: String
+}
+
+extension BlueprintLesson {
+    /// A short guided pass through the actual studio UI, shown after the lesson.
+    var studioCoachSteps: [StudioCoachStep] {
+        [
+            StudioCoachStep(
+                target: .pose(focus),
+                title: "EDIT \(focus.label)",
+                body: focus.studioHint
+            ),
+            StudioCoachStep(
+                target: .addFrame,
+                title: "KEY THE POSE",
+                body: "Tap the gold film-strip button to add a frame."
+            ),
+            StudioCoachStep(
+                target: .ghosts,
+                title: "COMPARE FRAMES",
+                body: "Tap the stacked-squares button to show ghost frames."
+            ),
+            StudioCoachStep(
+                target: .play,
+                title: "PREVIEW THE MOVE",
+                body: "Tap play to preview. Bigger, cleaner motion hits harder."
+            ),
+        ]
+    }
 }
 
 enum BlueprintCoach {

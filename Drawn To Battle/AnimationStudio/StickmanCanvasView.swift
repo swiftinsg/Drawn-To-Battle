@@ -21,8 +21,11 @@ struct StickmanCanvasView: View {
     var ghostPoses: [StickmanPose] = []
     /// The next frame ghost, drawn in blue when onion skin is on.
     var futureGhost: StickmanPose? = nil
+    /// Blueprint lesson focus: highlights the real handles to drag.
+    var coachFocus: BlueprintFocus? = nil
 
     @State private var dragBone: Bone?
+    @State private var coachPulse = false
 
     var body: some View {
         GeometryReader { geo in
@@ -109,8 +112,18 @@ struct StickmanCanvasView: View {
                     JointHandles(pose: pose, transform: t, selectedBone: selectedBone)
                         .allowsHitTesting(false)
                 }
+
+                if editingHandles, let coachFocus {
+                    coachMarkers(for: coachFocus, transform: t)
+                        .allowsHitTesting(false)
+                }
             }
             .gesture(editGesture(t))
+            .onAppear {
+                withAnimation(.easeInOut(duration: 0.8).repeatForever(autoreverses: true)) {
+                    coachPulse = true
+                }
+            }
         }
     }
 
@@ -190,6 +203,73 @@ struct StickmanCanvasView: View {
         case .leftThigh, .rightThigh: return joints[.hip]
         case .leftShin: return joints[.leftKnee]
         case .rightShin: return joints[.rightKnee]
+        }
+    }
+
+    // MARK: Blueprint coaching
+
+    /// Pulses the actual studio handles for the focus joint. These sit in the
+    /// same coordinate space as the drag handles, so the arrow lands on the
+    /// part the player must move rather than on a separate diagram.
+    @ViewBuilder
+    private func coachMarkers(for focus: BlueprintFocus, transform: PoseViewTransform) -> some View {
+        let joints = StickmanKinematics.resolve(pose)
+        let points = coachPoints(for: focus, joints: joints, transform: transform)
+
+        ForEach(Array(points.enumerated()), id: \.offset) { index, point in
+            Circle()
+                .fill(Color(hex: 0xF5C451).opacity(0.2))
+                .frame(width: 28, height: 28)
+                .position(point)
+
+            Circle()
+                .stroke(Color(hex: 0xF5C451), lineWidth: 3)
+                .frame(width: 34, height: 34)
+                .position(point)
+                .scaleEffect(coachPulse ? 1.22 : 1)
+                .opacity(coachPulse ? 0.65 : 1)
+
+            if index == 0 {
+                Image(systemName: "arrow.down.circle.fill")
+                    .font(.system(size: 16, weight: .black))
+                    .foregroundStyle(Color(hex: 0xF5C451))
+                    .position(CGPoint(x: point.x, y: max(18, point.y - 34)))
+                    .offset(y: coachPulse ? -3 : 2)
+            }
+        }
+    }
+
+    private func coachPoints(
+        for focus: BlueprintFocus,
+        joints: [JointPoint: CGPoint],
+        transform: PoseViewTransform
+    ) -> [CGPoint] {
+        func canvas(_ joint: JointPoint) -> CGPoint? {
+            guard let p = joints[joint] else { return nil }
+            return transform.toCanvas(p)
+        }
+
+        switch focus {
+        case .head:
+            return [transform.toCanvas(StickmanKinematics.headCircle(for: pose).center)]
+        case .torso:
+            return [canvas(.neck)].compactMap { $0 }
+        case .rightArm:
+            return [canvas(.rightElbow), canvas(.rightHand)].compactMap { $0 }
+        case .leftArm:
+            return [canvas(.leftElbow), canvas(.leftHand)].compactMap { $0 }
+        case .rightLeg:
+            return [canvas(.rightKnee), canvas(.rightFoot)].compactMap { $0 }
+        case .leftLeg:
+            return [canvas(.leftKnee), canvas(.leftFoot)].compactMap { $0 }
+        case .bothArms:
+            return [canvas(.leftElbow), canvas(.rightElbow),
+                    canvas(.leftHand), canvas(.rightHand)].compactMap { $0 }
+        case .bothLegs:
+            return [canvas(.leftKnee), canvas(.rightKnee),
+                    canvas(.leftFoot), canvas(.rightFoot)].compactMap { $0 }
+        case .wholeBody:
+            return [transform.toCanvas(pose.root)]
         }
     }
 }

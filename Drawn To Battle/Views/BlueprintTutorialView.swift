@@ -5,7 +5,8 @@ import SwiftUI
 // An "how to animate" lesson for one specific move. Shown when a blueprint is
 // opened before it has been learned — the studio starts blank and the player
 // builds the move themselves. Only finishing the lesson unlocks the move.
-// The lesson, key poses and pointer are personalised per blueprint.
+// The lesson, key poses and pointer are personalised per blueprint. Finishing
+// it starts a guided pass that points at the real handles and controls.
 
 struct BlueprintTutorialView: View {
     @Environment(\.dismiss) private var dismiss
@@ -35,7 +36,7 @@ struct BlueprintTutorialView: View {
                  focus: move.focus),
 
             Step(title: "POINT: \(move.focus.label)",
-                 body: "The arrows point at the joint that matters most for \(blueprint.name). Drag the highlighted gold handle to pose it. \(move.tip)",
+                 body: "The arrows show the joint that matters most for \(blueprint.name). After this lesson, the studio will glow the real handle to drag. \(move.tip)",
                  focus: move.focus),
 
             Step(title: "ADD FRAMES",
@@ -45,7 +46,7 @@ struct BlueprintTutorialView: View {
                  body: "Hit play to preview \(blueprint.name). Use the ghost toggle to see the previous and next frames so the poses flow together. Bigger, cleaner motion means more POWER and more damage."),
 
             Step(title: "SAVE YOUR MOVE",
-                 body: "Your animation saves automatically as YOUR version of \(blueprint.name). Finish the lesson to unlock it — then equip it from your Collection and take it into battle."),
+                 body: "Your animation saves automatically as YOUR version of \(blueprint.name). Tap SHOW ME to follow the glowing pointers in the studio, then equip it from your Collection."),
         ]
     }
 
@@ -130,7 +131,7 @@ struct BlueprintTutorialView: View {
                         Button {
                             onFinish()
                         } label: {
-                            Text("I'M READY TO ANIMATE")
+                            Text("SHOW ME IN THE STUDIO")
                                 .font(.system(size: 14, weight: .black, design: .rounded))
                                 .foregroundStyle(.black)
                                 .frame(maxWidth: .infinity)
