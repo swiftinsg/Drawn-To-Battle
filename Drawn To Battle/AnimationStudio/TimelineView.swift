@@ -15,11 +15,14 @@ struct FrameTimelineView: View {
     @State private var dragOffset: CGFloat = 0
     /// Drives only the decorative scroll rail; never affects frame editing.
     @State private var scrollMetrics = ScrollMetrics()
+    /// Prevents a long-press reorder from being treated as a frame tap.
+    @State private var suppressTapUntil = Date.distantPast
 
     private let cellWidth: CGFloat = 82 // 76pt thumbnail + 6pt spacing
 
     private func beginReorder(at index: Int) {
         guard !studio.isMultiSelecting else { return }
+        suppressTapUntil = .distantFuture
         draggingIndex = index
         dropIndex = index
         Haptics.light()
@@ -47,6 +50,7 @@ struct FrameTimelineView: View {
             dropIndex = nil
             dragOffset = 0
         }
+        suppressTapUntil = Date().addingTimeInterval(0.25)
     }
 
     private func reorderGesture(at index: Int) -> some Gesture {
@@ -62,8 +66,7 @@ struct FrameTimelineView: View {
                     break
                 }
             }
-            .onEnded { value in
-                guard case .second(true, _) = value else { return }
+            .onEnded { _ in
                 finishReorder(at: index)
             }
     }
@@ -96,17 +99,20 @@ struct FrameTimelineView: View {
                         .scaleEffect(draggingIndex == index ? 1.12 : 1)
                         .offset(x: draggingIndex == index ? dragOffset : 0)
                         .zIndex(draggingIndex == index ? 10 : 0)
-                        .onTapGesture {
-                            if studio.isMultiSelecting {
-                                studio.toggleFrameSelection(frame.id)
-                            } else if draggingIndex == nil {
-                                studio.selectFrame(index)
-                            }
-                        }
                         // A plain swipe belongs to the ScrollView. Only after
                         // the long press succeeds does the drag take over for
                         // reordering, so more frames can always be scrolled to.
                         .gesture(reorderGesture(at: index))
+                        .simultaneousGesture(
+                            TapGesture().onEnded {
+                                guard Date() > suppressTapUntil else { return }
+                                if studio.isMultiSelecting {
+                                    studio.toggleFrameSelection(frame.id)
+                                } else {
+                                    studio.selectFrame(index)
+                                }
+                            }
+                        )
                         .accessibilityLabel("Frame \(index + 1). Hold and drag to reorder.")
                     }
                 }
@@ -145,18 +151,20 @@ struct FrameTimelineView: View {
     private var scrollRail: some View {
         GeometryReader { rail in
             let trackWidth = rail.size.width
-            let thumbWidth = max(24, min(trackWidth, trackWidth * scrollMetrics.thumbRatio))
+            let thumbWidth = max(44, min(trackWidth, trackWidth * scrollMetrics.thumbRatio))
             let thumbX = (trackWidth - thumbWidth) * scrollMetrics.progress
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(AppStyle.hairline)
+                    .fill(Color.white.opacity(0.2))
                 Capsule()
-                    .fill(AppStyle.gold.opacity(0.8))
+                    .fill(AppStyle.gold)
                     .frame(width: thumbWidth)
                     .offset(x: thumbX)
+                    .shadow(color: AppStyle.gold.opacity(0.4), radius: 6, y: 0)
             }
         }
-        .frame(height: 3)
+        .frame(height: 7)
+        .padding(.top, 2)
         .allowsHitTesting(false)
     }
 }
@@ -231,9 +239,9 @@ private struct FrameThumbnail: View {
                         isMultiSelected
                             ? Color(hex: 0x4C8DFF)
                             : (isSelected
-                                ? Color(hex: 0xF5C451).opacity(0.9)
+                                ? AppStyle.gold
                                 : Color.white.opacity(0.12)),
-                        lineWidth: (isMultiSelected || isSelected) ? 2.5 : 1
+                        lineWidth: isSelected ? 3 : (isMultiSelected ? 2.5 : 1)
                     )
             )
         }
