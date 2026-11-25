@@ -318,7 +318,11 @@ final class BattleEngine: ObservableObject {
         // the next simulation tick resolves it. No hold gesture, no missed taps.
         if input.blockQueued {
             input.blockQueued = false
-            if canControl && !dodgeActive && blockCooldown <= 0 {
+            // Match dodge: a shield can also cancel an attack after its damage
+            // has landed, instead of feeling ignored during recovery.
+            let canCancelAttackForBlock = attackActive && attackDamageDone
+            if (canControl || canCancelAttackForBlock) && !dodgeActive && blockCooldown <= 0 {
+                if canCancelAttackForBlock { attackActive = false }
                 blockActive = true
                 blockStart = time
                 blockTime = 0
@@ -757,6 +761,9 @@ final class BattleEngine: ObservableObject {
     /// Dodge-style input: queue the intent, let the sim tick decide whether
     /// the shield can actually rise. Safe to call from a plain button tap.
     func tapBlock() {
+        // One queued intent at a time; extra taps during cooldown must not
+        // stack up and fire the instant the shield becomes available again.
+        guard !input.blockQueued, blockCooldown <= 0 else { return }
         input.blockQueued = true
     }
 

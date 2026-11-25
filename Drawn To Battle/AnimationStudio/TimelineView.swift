@@ -99,20 +99,18 @@ struct FrameTimelineView: View {
                         .scaleEffect(draggingIndex == index ? 1.12 : 1)
                         .offset(x: draggingIndex == index ? dragOffset : 0)
                         .zIndex(draggingIndex == index ? 10 : 0)
-                        // A plain swipe belongs to the ScrollView. Only after
-                        // the long press succeeds does the drag take over for
-                        // reordering, so more frames can always be scrolled to.
-                        .gesture(reorderGesture(at: index))
-                        .simultaneousGesture(
-                            TapGesture().onEnded {
-                                guard Date() > suppressTapUntil else { return }
-                                if studio.isMultiSelecting {
-                                    studio.toggleFrameSelection(frame.id)
-                                } else {
-                                    studio.selectFrame(index)
-                                }
+                        // Tap has priority so a tap always selects the frame.
+                        // A plain swipe makes the tap fail and belongs to the
+                        // ScrollView; only a held frame can be reordered.
+                        .onTapGesture {
+                            guard Date() > suppressTapUntil else { return }
+                            if studio.isMultiSelecting {
+                                studio.toggleFrameSelection(frame.id)
+                            } else {
+                                studio.selectFrame(index)
                             }
-                        )
+                        }
+                        .simultaneousGesture(reorderGesture(at: index))
                         .accessibilityLabel("Frame \(index + 1). Hold and drag to reorder.")
                     }
                 }

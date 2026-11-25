@@ -600,11 +600,13 @@ private struct BlockButton: View {
                 if cooling {
                     Circle()
                         .fill(Color(hex: 0x4C8DFF).opacity(0.42 * (1 - cooldownProgress)))
-                    Circle()
-                        .trim(from: 0, to: cooldownProgress)
-                        .stroke(Color(hex: 0x4C8DFF),
-                                style: StrokeStyle(lineWidth: 5, lineCap: .round))
-                        .rotationEffect(.degrees(-90))
+                    if cooldownProgress > 0.01 {
+                        Circle()
+                            .trim(from: 0, to: cooldownProgress)
+                            .stroke(Color(hex: 0x4C8DFF),
+                                    style: StrokeStyle(lineWidth: 5, lineCap: .round))
+                            .rotationEffect(.degrees(-90))
+                    }
                 }
 
                 Text("BLOCK")
