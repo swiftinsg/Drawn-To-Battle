@@ -95,9 +95,9 @@ struct CosmeticGachaView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 48)
-        .background(RoundedRectangle(cornerRadius: 18).fill(Color(hex: 0x14161E)))
+        .background(RoundedRectangle(cornerRadius: AppStyle.largeCorner).fill(AppStyle.surface))
         .overlay(
-            RoundedRectangle(cornerRadius: 18)
+            RoundedRectangle(cornerRadius: AppStyle.largeCorner)
                 .stroke(tint.opacity(0.3), lineWidth: 1)
         )
     }
@@ -106,7 +106,7 @@ struct CosmeticGachaView: View {
         VStack(spacing: 10) {
             ZStack {
                 RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(hex: 0x14161E))
+                    .fill(AppStyle.surface)
                     .frame(width: 190, height: 170)
                     .overlay(
                         RoundedRectangle(cornerRadius: 20)
@@ -141,7 +141,7 @@ struct CosmeticGachaView: View {
                 Spacer()
                 Text("COINS \(game.coins)")
                     .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+                    .foregroundStyle(AppStyle.gold.opacity(0.8))
             }
             .padding(.horizontal, 4)
         }
@@ -194,11 +194,11 @@ struct CosmeticGachaView: View {
             .frame(maxWidth: .infinity)
             .padding(.vertical, 10)
             .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(enabled ? Color(hex: 0xF5C451) : Color.white.opacity(0.12))
+                RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                    .fill(enabled ? AppStyle.gold : AppStyle.hairline)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
                     .stroke(tint.opacity(enabled ? 0.9 : 0.25), lineWidth: 2)
             )
             .foregroundStyle(enabled ? Color.black : Color.white.opacity(0.5))
@@ -247,7 +247,7 @@ private struct CosmeticResultCard: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.78)
+            AppStyle.scrim
                 .ignoresSafeArea()
                 .onTapGesture(perform: onClose)
 
@@ -277,8 +277,8 @@ private struct CosmeticResultCard: View {
                             .foregroundStyle(.black)
                             .frame(maxWidth: 160)
                             .padding(.vertical, 9)
-                            .background(RoundedRectangle(cornerRadius: 10)
-                                .fill(Color(hex: 0xF5C451)))
+                            .background(RoundedRectangle(cornerRadius: AppStyle.smallCorner)
+                                .fill(AppStyle.gold))
                     }
                     .buttonStyle(.plain)
                 }
@@ -289,21 +289,14 @@ private struct CosmeticResultCard: View {
                         .foregroundStyle(.white.opacity(0.8))
                         .frame(maxWidth: 160)
                         .padding(.vertical, 9)
-                        .background(RoundedRectangle(cornerRadius: 10)
+                        .background(RoundedRectangle(cornerRadius: AppStyle.smallCorner)
                             .fill(Color.white.opacity(0.1)))
                 }
                 .buttonStyle(.plain)
             }
             .padding(22)
             .frame(maxWidth: 300)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color(hex: 0x14161E))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(accessory.tint, lineWidth: 2)
-                    )
-            )
+            .appModalCard(accent: accessory.tint)
         }
     }
 }
@@ -315,7 +308,7 @@ private struct CosmeticBatchResultView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.78)
+            AppStyle.scrim
                 .ignoresSafeArea()
                 .onTapGesture(perform: onClose)
 
@@ -326,7 +319,7 @@ private struct CosmeticBatchResultView: View {
 
                 Text("\(results.filter { $0.isNew }.count) NEW  •  \(results.filter { !$0.isNew }.count) DUPLICATES")
                     .font(.system(size: 10, weight: .black, design: .rounded))
-                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
+                    .foregroundStyle(AppStyle.gold.opacity(0.85))
 
                 ScrollView(.vertical, showsIndicators: false) {
                     VStack(spacing: 6) {
@@ -352,7 +345,7 @@ private struct CosmeticBatchResultView: View {
                             }
                             .padding(.horizontal, 10)
                             .padding(.vertical, 6)
-                            .background(RoundedRectangle(cornerRadius: 10)
+                            .background(RoundedRectangle(cornerRadius: AppStyle.smallCorner)
                                 .fill(Color.white.opacity(0.05)))
                         }
                     }
@@ -365,21 +358,14 @@ private struct CosmeticBatchResultView: View {
                         .foregroundStyle(.white.opacity(0.8))
                         .frame(maxWidth: 160)
                         .padding(.vertical, 9)
-                        .background(RoundedRectangle(cornerRadius: 10)
+                        .background(RoundedRectangle(cornerRadius: AppStyle.smallCorner)
                             .fill(Color.white.opacity(0.1)))
                 }
                 .buttonStyle(.plain)
             }
             .padding(20)
             .frame(maxWidth: 320)
-            .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color(hex: 0x14161E))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 18)
-                            .stroke(Color(hex: 0xF5C451), lineWidth: 2)
-                    )
-            )
+            .appModalCard(accent: AppStyle.gold)
         }
     }
 }

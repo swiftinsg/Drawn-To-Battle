@@ -12,11 +12,11 @@ struct DailyRewardView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: 0x0C0D12).ignoresSafeArea()
+            AppStyle.base.ignoresSafeArea()
 
             GeometryReader { geo in
                 Circle()
-                    .fill(Color(hex: 0xF5C451).opacity(0.1))
+                    .fill(AppStyle.gold.opacity(0.1))
                     .frame(width: geo.size.width * 0.9)
                     .blur(radius: 70)
                     .offset(y: -geo.size.height * 0.35)
@@ -32,7 +32,7 @@ struct DailyRewardView: View {
                     if let claimedReward {
                         Text("CLAIMED!  +\(claimedReward.coins) COINS  •  +\(claimedReward.pens) PENS  •  +\(claimedReward.xp) XP")
                             .font(.system(size: 10, weight: .black, design: .rounded))
-                            .foregroundStyle(Color(hex: 0xF5C451))
+                            .foregroundStyle(AppStyle.gold)
                             .multilineTextAlignment(.center)
                             .transition(.scale.combined(with: .opacity))
                     }
@@ -73,6 +73,7 @@ struct DailyRewardView: View {
                 Image(systemName: "xmark.circle.fill")
                     .font(.system(size: 22, weight: .bold))
                     .foregroundStyle(.white.opacity(0.5))
+                    .frame(width: 32, height: 32)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Close")
@@ -90,8 +91,8 @@ struct DailyRewardView: View {
                     ZStack {
                         Circle()
                             .fill(done || isNext
-                                  ? Color(hex: 0xF5C451).opacity(done ? 0.9 : 0.25)
-                                  : Color.white.opacity(0.08))
+                                  ? AppStyle.gold.opacity(done ? 0.9 : 0.25)
+                                  : AppStyle.softHairline)
                         if done {
                             Image(systemName: "checkmark")
                                 .font(.system(size: 13, weight: .black))
@@ -99,13 +100,13 @@ struct DailyRewardView: View {
                         } else {
                             Text("\(index + 1)")
                                 .font(.system(size: 12, weight: .black, design: .rounded))
-                                .foregroundStyle(isNext ? Color(hex: 0xF5C451) : .white.opacity(0.4))
+                                .foregroundStyle(isNext ? AppStyle.gold : .white.opacity(0.4))
                         }
                     }
                     .frame(width: 34, height: 34)
                     .overlay(
                         Circle()
-                            .stroke(isNext ? Color(hex: 0xF5C451) : Color.clear, lineWidth: 2)
+                            .stroke(isNext ? AppStyle.gold : Color.clear, lineWidth: 2)
                     )
                 }
             }
@@ -122,15 +123,13 @@ struct DailyRewardView: View {
 
         return VStack(spacing: 12) {
             Text(game.claimedDailyToday ? "NEXT REWARD" : "TODAY'S REWARD")
-                .font(.system(size: 10, weight: .black, design: .rounded))
-                .tracking(2)
-                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+                .appEyebrow(tracking: 2)
 
             HStack(spacing: 20) {
                 rewardItem(
                     image: AnyView(Image(systemName: "circlebadge.fill")
                         .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xF5C451))),
+                        .foregroundStyle(AppStyle.gold)),
                     value: "\(reward.coins)",
                     label: "COINS"
                 )
@@ -153,11 +152,7 @@ struct DailyRewardView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(18)
-        .background(RoundedRectangle(cornerRadius: 18).fill(Color(hex: 0x14161E)))
-        .overlay(
-            RoundedRectangle(cornerRadius: 18)
-                .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1)
-        )
+        .appModalCard(accent: AppStyle.gold)
     }
 
     private func rewardItem(image: AnyView, value: String, label: String) -> some View {
@@ -186,14 +181,14 @@ struct DailyRewardView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 14)
                 .background(
-                    RoundedRectangle(cornerRadius: 14)
+                    Capsule()
                         .fill(game.claimedDailyToday
                               ? Color.white.opacity(0.1)
-                              : Color(hex: 0xF5C451))
+                              : AppStyle.gold)
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14)
-                        .stroke(Color(hex: 0xF5C451).opacity(game.claimedDailyToday ? 0.2 : 0.9),
+                    Capsule()
+                        .stroke(AppStyle.gold.opacity(game.claimedDailyToday ? 0.2 : 0.9),
                                 lineWidth: 2)
                 )
         }

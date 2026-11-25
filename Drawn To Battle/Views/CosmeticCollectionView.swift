@@ -14,9 +14,7 @@ struct CosmeticCollectionView: View {
         VStack(alignment: .leading, spacing: 14) {
             VStack(alignment: .leading, spacing: 3) {
                 Text("COSMETICS")
-                    .font(.system(size: 10, weight: .heavy, design: .rounded))
-                    .tracking(2)
-                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
+                    .appEyebrow(size: 10, tracking: 2)
                 Text("World drops and trophy rewards. Tap one to dress your fighter.")
                     .font(.system(size: 11, weight: .semibold, design: .rounded))
                     .foregroundStyle(.white.opacity(0.5))
@@ -131,19 +129,19 @@ struct CosmeticCollectionView: View {
                 } else if equipped {
                     Image(systemName: "checkmark.circle.fill")
                         .font(.system(size: 14, weight: .black))
-                        .foregroundStyle(Color(hex: 0xF5C451))
+                        .foregroundStyle(AppStyle.gold)
                         .padding(4)
                 }
             }
             .frame(maxWidth: .infinity)
             .background(
-                RoundedRectangle(cornerRadius: 14)
-                    .fill(Color(hex: equipped ? 0x201D14 : 0x14161E))
+                RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                    .fill(equipped ? Color(hex: 0x201D14) : AppStyle.surface)
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
                     .stroke(equipped
-                            ? Color(hex: 0xF5C451)
+                            ? AppStyle.gold
                             : Color.white.opacity(owned ? 0.1 : 0.05),
                             lineWidth: equipped ? 2 : 1)
             )

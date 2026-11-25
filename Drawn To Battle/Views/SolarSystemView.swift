@@ -12,7 +12,7 @@ struct SolarSystemView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: 0x0C0D12).ignoresSafeArea()
+            AppStyle.base.ignoresSafeArea()
 
             StarField()
 
@@ -41,7 +41,7 @@ struct SolarSystemView: View {
                 HStack(spacing: 6) {
                     Image(systemName: "flag.checkered")
                         .font(.system(size: 11, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xF5C451))
+                        .foregroundStyle(AppStyle.gold)
                     Text(nextGoalText)
                         .font(.system(size: 11, weight: .bold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.6))
@@ -150,7 +150,7 @@ private struct PlanetNode: View {
                             .font(.system(size: 20, weight: .black))
                             .foregroundStyle(.white)
                             .padding(6)
-                            .background(Circle().fill(Color(hex: 0x5FBF6E)))
+                            .background(Circle().fill(AppStyle.success))
                             .offset(x: size * 0.38, y: -size * 0.38)
                     }
                 }
@@ -160,7 +160,7 @@ private struct PlanetNode: View {
                         .foregroundStyle(.white)
                     Text(unlocked ? boss.requiredTechnique.label : "LOCKED")
                         .font(.system(size: 9, weight: .heavy, design: .rounded))
-                        .foregroundStyle(unlocked ? Color(hex: 0xF5C451) : .white.opacity(0.4))
+                        .foregroundStyle(unlocked ? AppStyle.gold : .white.opacity(0.4))
                 }
             }
         }
@@ -179,7 +179,7 @@ private struct OrbitRing: View {
 
     var body: some View {
         Ellipse()
-            .stroke(Color.white.opacity(0.09), style: StrokeStyle(lineWidth: 1, dash: [4, 8]))
+            .stroke(AppStyle.softHairline, style: StrokeStyle(lineWidth: 1, dash: [4, 8]))
             .frame(width: width, height: height)
     }
 }

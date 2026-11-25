@@ -37,7 +37,7 @@ struct BattleView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: 0x07080C).ignoresSafeArea()
+            AppStyle.base.ignoresSafeArea()
 
             TimelineView(.animation) { _ in
                 Canvas { context, size in
@@ -705,7 +705,7 @@ private struct BattleTipsOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.78).ignoresSafeArea()
+            AppStyle.scrim.ignoresSafeArea()
 
             VStack(alignment: .leading, spacing: 14) {
                 Text("HOW TO FIGHT")
@@ -732,11 +732,7 @@ private struct BattleTipsOverlay: View {
                 .buttonStyle(.plain)
             }
             .padding(22)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(hex: 0x14161E))
-                    .overlay(RoundedRectangle(cornerRadius: 20).stroke(Color.white.opacity(0.12), lineWidth: 1))
-            )
+            .appModalCard()
             .padding(28)
         }
     }
@@ -768,7 +764,7 @@ private struct BattlePauseOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.82).ignoresSafeArea()
+            AppStyle.scrim.ignoresSafeArea()
 
             VStack(spacing: 18) {
                 Text("PAUSED")
@@ -806,6 +802,7 @@ private struct BattlePauseOverlay: View {
                 }
             }
             .padding(30)
+            .appModalCard()
         }
     }
 }
@@ -828,7 +825,7 @@ private struct BattleResultOverlay: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.76).ignoresSafeArea()
+            AppStyle.scrim.ignoresSafeArea()
 
             VStack(spacing: 14) {
                 Text(result == .victory ? "VICTORY!" : "DEFEATED")
@@ -899,6 +896,7 @@ private struct BattleResultOverlay: View {
                 }
             }
             .padding(30)
+            .appModalCard()
         }
     }
 

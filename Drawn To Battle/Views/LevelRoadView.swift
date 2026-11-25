@@ -13,7 +13,7 @@ struct LevelRoadPageView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: 0x0C0D12).ignoresSafeArea()
+            AppStyle.base.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 HStack {
@@ -32,8 +32,8 @@ struct LevelRoadPageView: View {
                         Image(systemName: "xmark")
                             .font(.system(size: 14, weight: .black))
                             .foregroundStyle(.white.opacity(0.8))
-                            .frame(width: 36, height: 36)
-                            .background(Circle().fill(Color.white.opacity(0.08)))
+                            .frame(width: 32, height: 32)
+                            .background(Circle().fill(AppStyle.softHairline))
                     }
                     .buttonStyle(.plain)
                     .accessibilityLabel("Close trophy road")
@@ -45,7 +45,7 @@ struct LevelRoadPageView: View {
                 if game.hasPendingLevelRoadRewards {
                     Text("REWARDS READY TO CLAIM")
                         .font(.system(size: 10, weight: .black, design: .rounded))
-                        .foregroundStyle(Color(hex: 0xF5C451))
+                        .foregroundStyle(AppStyle.gold)
                         .padding(.bottom, 6)
                 }
 
@@ -80,9 +80,9 @@ private struct LevelRoadCard: View {
         HStack(spacing: 12) {
             ZStack {
                 Circle()
-                    .fill(claimable ? Color(hex: 0xF5C451)
-                          : isClaimed ? Color(hex: 0x4ED36E).opacity(0.7)
-                          : Color.white.opacity(0.08))
+                    .fill(claimable ? AppStyle.gold
+                          : isClaimed ? AppStyle.success.opacity(0.7)
+                          : AppStyle.softHairline)
                     .frame(width: 46, height: 46)
 
                 if claimable {
@@ -108,7 +108,7 @@ private struct LevelRoadCard: View {
                 HStack(spacing: 8) {
                     Text("+\(step.rewardCoins) COINS")
                         .font(.system(size: 9, weight: .heavy, design: .rounded))
-                        .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
+                        .foregroundStyle(AppStyle.gold.opacity(0.85))
                     Text("+\(step.rewardStardust) PENS")
                         .font(.system(size: 9, weight: .heavy, design: .rounded))
                         .foregroundStyle(Color(hex: 0xA8F06A).opacity(0.85))
@@ -137,14 +137,14 @@ private struct LevelRoadCard: View {
                         .foregroundStyle(.black)
                         .padding(.horizontal, 14)
                         .padding(.vertical, 8)
-                        .background(Capsule().fill(Color(hex: 0xF5C451)))
+                        .background(Capsule().fill(AppStyle.gold))
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel("Claim level \(step.level) reward")
             } else if isClaimed {
                 Text("CLAIMED")
                     .font(.system(size: 9, weight: .black, design: .rounded))
-                    .foregroundStyle(Color(hex: 0x4ED36E).opacity(0.8))
+                    .foregroundStyle(AppStyle.success.opacity(0.8))
             } else {
                 Text("REACH L\(step.level)")
                     .font(.system(size: 9, weight: .black, design: .rounded))
@@ -153,13 +153,13 @@ private struct LevelRoadCard: View {
         }
         .padding(12)
         .background(
-            RoundedRectangle(cornerRadius: 14)
-                .fill(Color(hex: claimable ? 0x1B1A16 : 0x14161E))
+            RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                .fill(claimable ? Color(hex: 0x1B1A16) : AppStyle.surface)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 14)
+                    RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
                         .stroke(claimable
-                                ? Color(hex: 0xF5C451).opacity(0.7)
-                                : Color.white.opacity(0.08),
+                                ? AppStyle.gold.opacity(0.7)
+                                : AppStyle.softHairline,
                                 lineWidth: claimable ? 2 : 1)
                 )
         )

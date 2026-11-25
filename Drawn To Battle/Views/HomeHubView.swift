@@ -26,7 +26,7 @@ struct HomeHubView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: 0x0C0D12).ignoresSafeArea()
+            AppStyle.base.ignoresSafeArea()
 
             // Rive ambient animation is the only backdrop; no static image.
             RiveHomeBackground()
@@ -70,7 +70,7 @@ struct HomeHubView: View {
                         HStack(spacing: 4) {
                             Image(systemName: "circlebadge.fill")
                                 .font(.system(size: 11, weight: .bold))
-                                .foregroundStyle(Color(hex: 0xF5C451))
+                                .foregroundStyle(AppStyle.gold)
                             Text("\(game.coins)")
                                 .font(.system(size: 12, weight: .heavy, design: .rounded))
                                 .foregroundStyle(.white)
@@ -109,15 +109,7 @@ struct HomeHubView: View {
                         Image(systemName: "gearshape.fill")
                             .font(.system(size: 13, weight: .bold))
                             .foregroundStyle(.white.opacity(0.85))
-                            .padding(7)
-                            .background(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .fill(Color.black.opacity(0.55))
-                            )
-                            .overlay(
-                                RoundedRectangle(cornerRadius: 12)
-                                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
-                            )
+                            .bubbleChrome(paddingX: 7, paddingY: 7)
                     }
                     .buttonStyle(.plain)
                     .layoutPriority(1)
@@ -165,7 +157,7 @@ struct HomeHubView: View {
                             .scaledToFit()
                             .frame(width: bottomButtonSize.width,
                                    height: bottomButtonSize.height)
-                            .shadow(color: Color(hex: 0xF5C451).opacity(0.3), radius: 16, y: 5)
+                            .shadow(color: AppStyle.gold.opacity(0.3), radius: 16, y: 5)
                             .modifier(StickerBob())
                     }
                     .buttonStyle(.plain)
@@ -210,11 +202,11 @@ struct HomeHubView: View {
         }
         .sheet(isPresented: $showSettings) {
             SettingsView(game: game)
-                .presentationBackground(Color(hex: 0x0C0D12))
+                .presentationBackground(AppStyle.base)
         }
         .sheet(isPresented: $showDaily) {
             DailyRewardView(game: game)
-                .presentationBackground(Color(hex: 0x0C0D12))
+                .presentationBackground(AppStyle.base)
         }
         .fullScreenCover(isPresented: $showLevelRoad) {
             LevelRoadPageView(game: game)
@@ -249,7 +241,7 @@ struct HomeHubView: View {
                 }
                 if !game.claimedDailyToday {
                     Circle()
-                        .fill(Color(hex: 0xF5C451))
+                        .fill(AppStyle.gold)
                         .frame(width: 6, height: 6)
                 }
             }
@@ -273,14 +265,14 @@ struct HomeHubView: View {
             }
             .frame(width: bottomButtonSize.width, height: bottomButtonSize.height)
             .background(
-                RoundedRectangle(cornerRadius: 18)
-                    .fill(Color(hex: 0x14161E).opacity(0.92))
+                RoundedRectangle(cornerRadius: AppStyle.largeCorner)
+                    .fill(AppStyle.surface.opacity(0.92))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(Color(hex: 0xF5C451).opacity(0.65), lineWidth: 2)
+                RoundedRectangle(cornerRadius: AppStyle.largeCorner)
+                    .stroke(AppStyle.gold.opacity(0.65), lineWidth: 2)
             )
-            .shadow(color: Color(hex: 0xF5C451).opacity(0.25), radius: 14, y: 5)
+            .shadow(color: AppStyle.gold.opacity(0.25), radius: 14, y: 5)
         }
         .buttonStyle(.plain)
         .accessibilityLabel("Gacha, move and cosmetic draws")
@@ -290,7 +282,7 @@ struct HomeHubView: View {
         HStack(spacing: 8) {
             Image(systemName: "figure.boxing")
                 .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Color(hex: 0xF5C451))
+                .foregroundStyle(AppStyle.gold)
             if let equipped = game.equipped {
                 VStack(alignment: .leading, spacing: 1) {
                     Text("EQUIPPED MOVE")
@@ -309,7 +301,7 @@ struct HomeHubView: View {
             Spacer()
             Text("POWER \(Int(equippedAnalysis.power))")
                 .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundStyle(Color(hex: 0xF5C451))
+                .foregroundStyle(AppStyle.gold)
         }
         .padding(.horizontal, 12)
         .padding(.vertical, 10)
@@ -353,12 +345,12 @@ extension View {
             .padding(.horizontal, paddingX)
             .padding(.vertical, paddingY)
             .background(
-                RoundedRectangle(cornerRadius: 14)
+                RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
                     .fill(Color.black.opacity(0.55))
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 14)
-                    .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                    .stroke(AppStyle.hairline, lineWidth: 1)
             )
     }
 }
@@ -376,14 +368,14 @@ private struct MenuBubble: View {
             HStack(spacing: 8) {
                 Image(systemName: systemImage)
                     .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Color(hex: 0xF5C451))
+                    .foregroundStyle(AppStyle.gold)
                 Text(title)
                     .font(.system(size: 13, weight: .black, design: .rounded))
                     .foregroundStyle(.white)
                 if showAlertBadge {
                     Image(systemName: "exclamationmark.circle.fill")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xF5C451))
+                        .foregroundStyle(AppStyle.gold)
                 }
             }
             .bubbleChrome(paddingX: 16)
@@ -424,7 +416,7 @@ private struct CurrencyInfoCard: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.6)
+            AppStyle.scrim
                 .ignoresSafeArea()
                 .onTapGesture(perform: dismiss)
 
@@ -450,18 +442,13 @@ private struct CurrencyInfoCard: View {
                         .foregroundStyle(.black)
                         .frame(maxWidth: .infinity)
                         .padding(.vertical, 9)
-                        .background(Capsule().fill(Color(hex: 0xF5C451)))
+                        .background(Capsule().fill(AppStyle.gold))
                 }
                 .buttonStyle(.plain)
             }
             .padding(18)
             .frame(maxWidth: 300)
-            .background(RoundedRectangle(cornerRadius: 18).fill(Color(hex: 0x15161D)))
-            .overlay(
-                RoundedRectangle(cornerRadius: 18)
-                    .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1)
-            )
-            .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
+            .appModalCard(accent: AppStyle.gold)
         }
     }
 
@@ -471,7 +458,7 @@ private struct CurrencyInfoCard: View {
         case .coins:
             Image(systemName: "circlebadge.fill")
                 .font(.system(size: 15, weight: .bold))
-                .foregroundStyle(Color(hex: 0xF5C451))
+                .foregroundStyle(AppStyle.gold)
         case .pens:
             Image("DrawnToBattleGachaToken")
                 .resizable()

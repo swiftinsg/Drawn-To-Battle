@@ -13,6 +13,8 @@ struct FrameTimelineView: View {
     @State private var draggingIndex: Int?
     @State private var dropIndex: Int?
     @State private var dragOffset: CGFloat = 0
+    /// Drives only the decorative scroll rail; never affects frame editing.
+    @State private var scrollMetrics = ScrollMetrics()
 
     private let cellWidth: CGFloat = 82 // 76pt thumbnail + 6pt spacing
 
@@ -67,7 +69,7 @@ struct FrameTimelineView: View {
     }
 
     var body: some View {
-        HStack(spacing: 10) {
+        VStack(spacing: 0) {
             ScrollView(.horizontal, showsIndicators: true) {
                 HStack(spacing: 6) {
                     ForEach(Array(studio.project.frames.enumerated()), id: \.element.id) { index, frame in
@@ -110,21 +112,58 @@ struct FrameTimelineView: View {
                 }
                 .padding(.horizontal, 2)
             }
+            .onScrollGeometryChange(for: ScrollMetrics.self) { geometry in
+                let contentWidth = geometry.contentSize.width
+                let visibleWidth = geometry.bounds.width
+                let overflow = max(0, contentWidth - visibleWidth)
+                return ScrollMetrics(
+                    progress: overflow > 0 ? min(1, max(0, geometry.contentOffset.x / overflow)) : 0,
+                    thumbRatio: contentWidth > 0 ? min(1, visibleWidth / contentWidth) : 1
+                )
+            } action: { _, metrics in
+                scrollMetrics = metrics
+            }
 
+            scrollRail
         }
         .padding(.horizontal, 12)
         .padding(.top, 1)
-        .padding(.bottom, 3)
         .background(
-            RoundedRectangle(cornerRadius: 10)
-                .fill(Color(hex: 0x14161E))
+            RoundedRectangle(cornerRadius: AppStyle.smallCorner)
+                .fill(AppStyle.surface)
                 .overlay(
-                    RoundedRectangle(cornerRadius: 10)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: AppStyle.smallCorner)
+                        .stroke(AppStyle.hairline, lineWidth: 1)
                 )
         )
         .coachSpotlight(active: coachTarget == .some(.timeline))
     }
+
+    /// Always-visible scroll rail: dim track, gold thumb sized by the
+    /// viewport/content ratio and moved by scroll progress. Pure decoration —
+    /// it never handles touches, so frame reordering is untouched.
+    private var scrollRail: some View {
+        GeometryReader { rail in
+            let trackWidth = rail.size.width
+            let thumbWidth = max(24, min(trackWidth, trackWidth * scrollMetrics.thumbRatio))
+            let thumbX = (trackWidth - thumbWidth) * scrollMetrics.progress
+            ZStack(alignment: .leading) {
+                Capsule()
+                    .fill(AppStyle.hairline)
+                Capsule()
+                    .fill(AppStyle.gold.opacity(0.8))
+                    .frame(width: thumbWidth)
+                    .offset(x: thumbX)
+            }
+        }
+        .frame(height: 3)
+        .allowsHitTesting(false)
+    }
+}
+
+private struct ScrollMetrics: Equatable {
+    var progress: CGFloat = 0
+    var thumbRatio: CGFloat = 1
 }
 
 // MARK: - Triangle shape

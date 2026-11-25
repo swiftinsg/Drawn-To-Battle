@@ -11,12 +11,12 @@ struct PlayLockView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.8).ignoresSafeArea()
+            AppStyle.scrim.ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Text("MAKE YOUR OWN MOVES")
                     .font(DrawnToBattleTypography.display(28))
-                    .foregroundStyle(Color(hex: 0xF5C451))
+                    .foregroundStyle(AppStyle.gold)
 
                 Text("You currently don't have any attack animation.\nOpen the STUDIO and animate your fighter's attack first.")
                     .font(.system(size: 14, weight: .semibold, design: .rounded))
@@ -32,20 +32,12 @@ struct PlayLockView: View {
                         .foregroundStyle(.black)
                         .frame(maxWidth: 260)
                         .padding(.vertical, 14)
-                        .background(Capsule().fill(Color(hex: 0xF5C451)))
+                        .background(Capsule().fill(AppStyle.gold))
                 }
                 .buttonStyle(.plain)
             }
             .padding(30)
-            .background(
-                RoundedRectangle(cornerRadius: 20)
-                    .fill(Color(hex: 0x14161E))
-                    .overlay(
-                        RoundedRectangle(cornerRadius: 20)
-                            .stroke(Color.white.opacity(0.2), lineWidth: 1.5)
-                    )
-                    .shadow(color: .black.opacity(0.5), radius: 20, y: 10)
-            )
+            .appModalCard()
             .padding(40)
         }
     }

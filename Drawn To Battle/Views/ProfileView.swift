@@ -71,7 +71,7 @@ struct ProfileView: View {
                 Image("DrawnToBattleBackButton")
                     .resizable()
                     .scaledToFit()
-                    .frame(width: 30, height: 30)
+                    .frame(width: 32, height: 32)
             }
             .buttonStyle(.plain)
             .accessibilityLabel("Close profile")
@@ -79,12 +79,12 @@ struct ProfileView: View {
             Spacer()
 
             Text("PROFILE")
-                .font(DrawnToBattleTypography.display(22))
+                .font(DrawnToBattleTypography.display(20))
                 .foregroundStyle(.white)
 
             Spacer()
 
-            Color.clear.frame(width: 30, height: 30)
+            Color.clear.frame(width: 32, height: 32)
         }
     }
 
@@ -105,22 +105,22 @@ struct ProfileView: View {
         return VStack(spacing: 8) {
             ZStack {
                 Circle()
-                    .fill(Color(hex: 0xF5C451).opacity(0.12))
+                    .fill(AppStyle.gold.opacity(0.12))
                     .frame(width: 140, height: 140)
                     .blur(radius: 18)
 
                 ProfileAvatarView(data: game.profileImageData, size: 92)
                     .overlay(
                         Circle()
-                            .stroke(Color(hex: 0xF5C451).opacity(0.9), lineWidth: 3)
+                            .stroke(AppStyle.gold.opacity(0.9), lineWidth: 3)
                             .frame(width: 100, height: 100)
                     )
                     .overlay(alignment: .bottomTrailing) {
                         PhotosPicker(selection: $photoItem, matching: .images) {
                             Image(systemName: "pencil.circle.fill")
                                 .font(.system(size: 22, weight: .bold))
-                                .foregroundStyle(Color(hex: 0xF5C451))
-                                .background(Circle().fill(Color(hex: 0x0C0D12)))
+                                .foregroundStyle(AppStyle.gold)
+                                .background(Circle().fill(AppStyle.base))
                         }
                         .buttonStyle(.plain)
                         .offset(x: 4, y: 4)
@@ -134,14 +134,14 @@ struct ProfileView: View {
                 .foregroundStyle(.black)
                 .padding(.horizontal, 12)
                 .padding(.vertical, 4)
-                .background(Capsule().fill(Color(hex: 0xF5C451)))
+                .background(Capsule().fill(AppStyle.gold))
 
             VStack(spacing: 3) {
                 GeometryReader { geo in
                     ZStack(alignment: .leading) {
-                        Capsule().fill(Color.white.opacity(0.12))
+                        Capsule().fill(AppStyle.hairline)
                         Capsule()
-                            .fill(Color(hex: 0xF5C451))
+                            .fill(AppStyle.gold)
                             .frame(width: geo.size.width * fraction)
                     }
                 }
@@ -155,7 +155,7 @@ struct ProfileView: View {
                 Text(milestoneText)
                     .font(.system(size: 8, weight: .black, design: .rounded))
                     .tracking(0.5)
-                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.75))
+                    .foregroundStyle(AppStyle.gold.opacity(0.75))
             }
         }
         .padding(.top, 2)
@@ -169,16 +169,14 @@ struct ProfileView: View {
                 .lineLimit(1)
 
             Text("FIGHTER")
-                .font(.system(size: 9, weight: .heavy, design: .rounded))
-                .tracking(3)
-                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.85))
+                .appEyebrow(size: 9, tracking: 3)
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(RoundedRectangle(cornerRadius: 16).fill(Color.black.opacity(0.5)))
+        .background(RoundedRectangle(cornerRadius: AppStyle.largeCorner).fill(Color.black.opacity(0.5)))
         .overlay(
-            RoundedRectangle(cornerRadius: 16)
-                .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppStyle.largeCorner)
+                .stroke(AppStyle.gold.opacity(0.35), lineWidth: 1)
         )
     }
 
@@ -190,7 +188,7 @@ struct ProfileView: View {
                 icon: AnyView(
                     Image(systemName: "globe")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xF5C451))
+                        .foregroundStyle(AppStyle.gold)
                 )
             )
             statCard(
@@ -199,7 +197,7 @@ struct ProfileView: View {
                 icon: AnyView(
                     Image(systemName: "circlebadge.fill")
                         .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Color(hex: 0xF5C451))
+                        .foregroundStyle(AppStyle.gold)
                 )
             )
             statCard(
@@ -231,10 +229,10 @@ struct ProfileView: View {
                 }
                 .padding(.horizontal, 14)
                 .padding(.vertical, 11)
-                .background(RoundedRectangle(cornerRadius: 12).fill(Color.white.opacity(0.06)))
+                .background(RoundedRectangle(cornerRadius: AppStyle.mediumCorner).fill(Color.white.opacity(0.06)))
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color.white.opacity(0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                        .stroke(AppStyle.hairline, lineWidth: 1)
                 )
 
             Button { showRenameConfirm = true } label: {
@@ -248,17 +246,17 @@ struct ProfileView: View {
                     }
                 }
                 .font(.system(size: 12, weight: .black, design: .rounded))
-                .foregroundStyle(canRename ? Color(hex: 0xF5C451) : Color.white.opacity(0.35))
+                .foregroundStyle(canRename ? AppStyle.gold : Color.white.opacity(0.35))
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 12)
                 .padding(.horizontal, 10)
                 .background(
-                    RoundedRectangle(cornerRadius: 12)
-                        .fill(Color(hex: 0xF5C451).opacity(canRename ? 0.12 : 0.04))
+                    RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                        .fill(AppStyle.gold.opacity(canRename ? 0.12 : 0.04))
                 )
                 .overlay(
-                    RoundedRectangle(cornerRadius: 12)
-                        .stroke(Color(hex: 0xF5C451).opacity(canRename ? 0.4 : 0.12), lineWidth: 1)
+                    RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                        .stroke(AppStyle.gold.opacity(canRename ? 0.4 : 0.12), lineWidth: 1)
                 )
             }
             .buttonStyle(.plain)
@@ -268,12 +266,12 @@ struct ProfileView: View {
                 Text("USE AT LEAST \(GameSave.minNameLength) CHARACTERS")
                     .font(.system(size: 10, weight: .black, design: .rounded))
                     .tracking(1)
-                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+                    .foregroundStyle(AppStyle.gold.opacity(0.8))
             } else if game.coins < GameSave.nameChangeCost {
                 Text("\(coinsNeeded.formatted()) MORE COINS TO GO")
                     .font(.system(size: 10, weight: .black, design: .rounded))
                     .tracking(1)
-                    .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+                    .foregroundStyle(AppStyle.gold.opacity(0.8))
             }
 
             if let renameMessage {
@@ -310,10 +308,10 @@ struct ProfileView: View {
         }
         .frame(maxWidth: .infinity)
         .padding(.vertical, 12)
-        .background(RoundedRectangle(cornerRadius: 14).fill(Color.white.opacity(0.05)))
+        .background(RoundedRectangle(cornerRadius: AppStyle.mediumCorner).fill(AppStyle.softHairline))
         .overlay(
-            RoundedRectangle(cornerRadius: 14)
-                .stroke(Color.white.opacity(0.1), lineWidth: 1)
+            RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                .stroke(AppStyle.hairline, lineWidth: 1)
         )
     }
 

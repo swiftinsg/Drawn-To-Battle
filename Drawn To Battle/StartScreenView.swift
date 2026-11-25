@@ -76,9 +76,9 @@ private struct LoadingBar: View {
         GeometryReader { proxy in
             ZStack(alignment: .leading) {
                 Capsule()
-                    .fill(Color.white.opacity(0.14))
+                    .fill(AppStyle.hairline)
                 Capsule()
-                    .fill(Color(hex: 0xF5C451))
+                    .fill(AppStyle.gold)
                     .frame(width: proxy.size.width * progress)
             }
         }
@@ -121,16 +121,16 @@ struct StartScreenBackground: View {
     var body: some View {
         GeometryReader { proxy in
             ZStack {
-                Color(hex: 0x0C0D12)
+                AppStyle.base
 
                 Circle()
-                    .fill(Color(hex: 0xF5C451).opacity(0.14))
+                    .fill(AppStyle.gold.opacity(0.14))
                     .frame(width: proxy.size.width * 0.95)
                     .blur(radius: 70)
                     .offset(x: proxy.size.width * 0.25, y: -proxy.size.height * 0.3)
 
                 Circle()
-                    .stroke(Color.white.opacity(0.08), lineWidth: 1)
+                    .stroke(AppStyle.softHairline, lineWidth: 1)
                     .frame(width: proxy.size.width * 0.92)
                     .offset(y: -proxy.size.height * 0.1)
 
@@ -141,7 +141,7 @@ struct StartScreenBackground: View {
                     path.addLine(to: CGPoint(x: size.width, y: baseline - 22))
                     context.stroke(
                         path,
-                        with: .color(.white.opacity(0.08)),
+                        with: .color(AppStyle.softHairline),
                         style: StrokeStyle(lineWidth: 1, dash: [4, 8])
                     )
                 }

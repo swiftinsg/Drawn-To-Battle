@@ -49,7 +49,7 @@ struct AnimationStudioView: View {
                 bottomPanel
             }
         }
-        .background(Color(hex: 0x0C0D12).ignoresSafeArea())
+        .background(AppStyle.base.ignoresSafeArea())
         .overlay(alignment: .top) {
             if let index = coachStep, let step = currentCoachStep {
                 StudioCoachCard(
@@ -227,8 +227,8 @@ struct AnimationStudioView: View {
         .padding(.top, 6)
         .padding(.bottom, 6)
         .background(
-            RoundedTopCorners(radius: 18)
-                .fill(Color(hex: 0x14161E).opacity(0.97))
+            RoundedTopCorners(radius: AppStyle.largeCorner)
+                .fill(AppStyle.surface.opacity(0.97))
         )
     }
 
@@ -419,7 +419,7 @@ private struct PlaySpeedToggle: View {
                 .font(.system(size: 11, weight: .black, design: .rounded))
                 .foregroundStyle(studio.playbackSpeed == 1 ? Color.white.opacity(0.85) : Color(hex: 0xF5C451))
                 .frame(width: 34, height: 28)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.08)))
+                .background(RoundedRectangle(cornerRadius: AppStyle.smallCorner).fill(Color.white.opacity(0.08)))
         }
         .buttonStyle(.plain)
     }
@@ -513,7 +513,7 @@ private struct PoseControlsRow: View {
                 .font(.system(size: 11, weight: .black, design: .rounded))
                 .foregroundStyle(Color(hex: 0xF5C451))
                 .frame(width: 14, height: 28, alignment: .center)
-                .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.08)))
+                .background(RoundedRectangle(cornerRadius: AppStyle.smallCorner).fill(Color.white.opacity(0.08)))
         }
         .buttonStyle(.plain)
     }
@@ -592,8 +592,7 @@ private struct StudioCoachCard: View {
 
             VStack(alignment: .leading, spacing: 2) {
                 Text("GUIDED EDIT · \(index + 1) OF \(total)")
-                    .font(.system(size: 8, weight: .black, design: .rounded))
-                    .foregroundStyle(Color(hex: 0xF5C451))
+                    .appEyebrow(size: 8)
 
                 Text(step.title)
                     .font(.system(size: 12, weight: .black, design: .rounded))
@@ -621,12 +620,12 @@ private struct StudioCoachCard: View {
         .padding(.vertical, 7)
         .frame(width: 320)
         .background(
-            RoundedRectangle(cornerRadius: 13)
-                .fill(Color(hex: 0x14161E).opacity(0.97))
+            RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                .fill(AppStyle.surface.opacity(0.97))
         )
         .overlay(
-            RoundedRectangle(cornerRadius: 13)
-                .stroke(Color(hex: 0xF5C451).opacity(0.75), lineWidth: 1.5)
+            RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                .stroke(AppStyle.gold.opacity(0.75), lineWidth: 1.5)
         )
         .shadow(color: .black.opacity(0.5), radius: 10, y: 4)
     }
@@ -647,7 +646,7 @@ struct StudioIconButton: View {
                 .foregroundStyle(prominent ? AnyShapeStyle(.black) : AnyShapeStyle(tinted ?? Color.white.opacity(0.85)))
                 .frame(width: prominent ? 40 : 30, height: prominent ? 40 : 28)
                 .background(
-                    RoundedRectangle(cornerRadius: 9)
+                    RoundedRectangle(cornerRadius: AppStyle.smallCorner)
                         .fill(prominent ? Color(hex: 0xF5C451) : Color.white.opacity(0.08))
                 )
         }

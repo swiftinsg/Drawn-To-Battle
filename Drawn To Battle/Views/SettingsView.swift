@@ -17,7 +17,7 @@ struct SettingsView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: 0x0C0D12).ignoresSafeArea()
+            AppStyle.base.ignoresSafeArea()
 
             ScrollView(showsIndicators: false) {
                 VStack(alignment: .leading, spacing: 26) {
@@ -49,7 +49,7 @@ struct SettingsView: View {
                                     Spacer()
                                     Stepper("\(defaultFPS)", value: $defaultFPS, in: 1...30)
                                         .font(.system(size: 14, weight: .black, design: .rounded))
-                                        .foregroundStyle(Color(hex: 0xF5C451))
+                                        .foregroundStyle(AppStyle.gold)
                                         .fixedSize()
                                 }
                                 Text("Used for new projects. Saved moves keep their own speed.")
@@ -60,7 +60,7 @@ struct SettingsView: View {
                                 Toggle(isOn: $defaultOnionSkin) {
                                     settingLabel("GHOST FRAMES")
                                 }
-                                .tint(Color(hex: 0xF5C451))
+                                .tint(AppStyle.gold)
 
                                 Text("Shows neighboring frames faintly while you draw.")
                                     .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -82,16 +82,16 @@ struct SettingsView: View {
                                         .font(.system(size: 13, weight: .black, design: .rounded))
                                     Spacer()
                                 }
-                                .foregroundStyle(Color(hex: 0xE86A6A))
+                                .foregroundStyle(AppStyle.danger)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 12)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(hex: 0xE86A6A).opacity(0.1))
+                                    RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                                        .fill(AppStyle.danger.opacity(0.1))
                                 )
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(hex: 0xE86A6A).opacity(0.35), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                                        .stroke(AppStyle.danger.opacity(0.35), lineWidth: 1)
                                 )
                             }
                             .buttonStyle(.plain)
@@ -125,7 +125,7 @@ struct SettingsView: View {
                             )) {
                                 settingLabel("UNLOCK ALL BOSSES")
                             }
-                            .tint(Color(hex: 0xF5C451))
+                            .tint(AppStyle.gold)
 
                             Button {
                                 game.coins = 99_999
@@ -139,16 +139,16 @@ struct SettingsView: View {
                                         .font(.system(size: 13, weight: .black, design: .rounded))
                                     Spacer()
                                 }
-                                .foregroundStyle(Color(hex: 0xF5C451))
+                                .foregroundStyle(AppStyle.gold)
                                 .padding(.horizontal, 12)
                                 .padding(.vertical, 12)
                                 .background(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .fill(Color(hex: 0xF5C451).opacity(0.1))
+                                    RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                                        .fill(AppStyle.gold.opacity(0.1))
                                 )
                                 .overlay(
-                                    RoundedRectangle(cornerRadius: 12)
-                                        .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1)
+                                    RoundedRectangle(cornerRadius: AppStyle.mediumCorner)
+                                        .stroke(AppStyle.gold.opacity(0.35), lineWidth: 1)
                                 )
                             }
                             .buttonStyle(.plain)
@@ -196,9 +196,7 @@ struct SettingsView: View {
     private func section<Content: View>(_ title: String, @ViewBuilder content: () -> Content) -> some View {
         VStack(alignment: .leading, spacing: 10) {
             Text(title)
-                .font(.system(size: 11, weight: .heavy, design: .rounded))
-                .tracking(1.5)
-                .foregroundStyle(Color(hex: 0xF5C451))
+                .appEyebrow(size: 11, tracking: 1.5)
             content()
         }
     }

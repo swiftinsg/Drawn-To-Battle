@@ -52,7 +52,7 @@ struct BlueprintTutorialView: View {
 
     var body: some View {
         ZStack {
-            Color.black.opacity(0.85).ignoresSafeArea()
+            AppStyle.tutorialScrim.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Progress.

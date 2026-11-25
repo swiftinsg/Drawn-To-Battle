@@ -20,7 +20,7 @@ struct CollectionView: View {
 
     var body: some View {
         ZStack {
-            Color(hex: 0x0C0D12).ignoresSafeArea()
+            AppStyle.base.ignoresSafeArea()
 
             VStack(spacing: 0) {
                 // Top bar.
@@ -62,7 +62,7 @@ struct CollectionView: View {
 
                             Text("NEW MOVES: TAP LEARN TO ANIMATE")
                                 .font(.system(size: 9, weight: .black, design: .rounded))
-                                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.7))
+                                .foregroundStyle(AppStyle.gold.opacity(0.7))
 
                             // Blueprints by rarity.
                             ForEach(Rarity.allCases.reversed(), id: \.self) { rarity in
@@ -140,9 +140,9 @@ struct CollectionView: View {
                 .frame(maxWidth: .infinity)
                 .padding(.vertical, 8)
                 .background(
-                    RoundedRectangle(cornerRadius: 10)
+                    RoundedRectangle(cornerRadius: AppStyle.smallCorner)
                         .fill(self.tab == tab
-                              ? Color(hex: 0xF5C451)
+                              ? AppStyle.gold
                               : Color.white.opacity(0.07))
                 )
         }
@@ -164,7 +164,7 @@ struct CollectionView: View {
                         Spacer()
                         Text("POWER \(Int(analysis.power)) • \(analysis.powerLabel)")
                             .font(.system(size: 13, weight: .black, design: .rounded))
-                            .foregroundStyle(Color(hex: 0xF5C451))
+                            .foregroundStyle(AppStyle.gold)
                     }
                     HStack(spacing: 6) {
                         ForEach(analysis.techniques.sorted(by: { $0.rawValue < $1.rawValue }), id: \.self) { tech in
@@ -215,19 +215,19 @@ struct CollectionView: View {
                 } label: {
                     HStack {
                         Image(systemName: "film")
-                            .foregroundStyle(Color(hex: 0xF5C451))
+                            .foregroundStyle(AppStyle.gold)
                         Text(item.name)
                             .font(.system(size: 13, weight: .bold, design: .rounded))
                             .foregroundStyle(.white)
                         Spacer()
                         if case .studio(let name) = game.equipped?.source, name == item.name {
                             Image(systemName: "checkmark.circle.fill")
-                                .foregroundStyle(Color(hex: 0xF5C451))
+                                .foregroundStyle(AppStyle.gold)
                         }
                     }
                     .padding(.horizontal, 12)
                     .padding(.vertical, 9)
-                    .background(RoundedRectangle(cornerRadius: 10).fill(Color.white.opacity(0.05)))
+                    .background(RoundedRectangle(cornerRadius: AppStyle.smallCorner).fill(Color.white.opacity(0.05)))
                 }
                 .buttonStyle(.plain)
             }
@@ -273,11 +273,11 @@ private struct BlueprintCell: View {
                     if equipped {
                         Image(systemName: "checkmark.circle.fill")
                             .font(.system(size: 11))
-                            .foregroundStyle(Color(hex: 0xF5C451))
+                            .foregroundStyle(AppStyle.gold)
                     } else if owned && !learned {
                         Image(systemName: "lock.fill")
                             .font(.system(size: 9))
-                            .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+                            .foregroundStyle(AppStyle.gold.opacity(0.8))
                     }
                 }
                 Text(owned ? bp.name : "???")
@@ -303,12 +303,12 @@ private struct BlueprintCell: View {
                         Button(action: onEdit) {
                             Label(learned ? "EDIT" : "LEARN", systemImage: learned ? "pencil" : "graduationcap")
                                 .font(.system(size: 8, weight: .black, design: .rounded))
-                                .foregroundStyle(learned ? Color(hex: 0xF5C451) : Color(hex: 0x0C0D12))
+                                .foregroundStyle(learned ? AppStyle.gold : AppStyle.base)
                                 .padding(.horizontal, 7)
                                 .padding(.vertical, 3)
                                 .background(Capsule().fill(learned
-                                    ? Color(hex: 0xF5C451).opacity(0.16)
-                                    : Color(hex: 0xF5C451)))
+                                    ? AppStyle.gold.opacity(0.16)
+                                    : AppStyle.gold))
                         }
                         .buttonStyle(.plain)
                         if edited {
@@ -318,7 +318,7 @@ private struct BlueprintCell: View {
                                     .foregroundStyle(.white.opacity(0.65))
                                     .padding(.horizontal, 6)
                                     .padding(.vertical, 3)
-                                    .background(Capsule().fill(Color.white.opacity(0.08)))
+                                    .background(Capsule().fill(AppStyle.softHairline))
                             }
                             .buttonStyle(.plain)
                         }

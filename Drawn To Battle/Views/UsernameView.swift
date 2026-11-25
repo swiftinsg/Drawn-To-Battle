@@ -35,9 +35,7 @@ struct UsernameView: View {
                             .padding(.top, 8)
 
                         Text("Use at least \(GameSave.minNameLength) characters.")
-                            .font(.system(size: 10, weight: .black, design: .rounded))
-                            .tracking(1)
-                            .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
+                            .appEyebrow(size: 10, tracking: 1)
                             .padding(.top, 4)
 
                         TextField("FIGHTER NAME", text: $name)
@@ -61,7 +59,7 @@ struct UsernameView: View {
                             )
                             .overlay(
                                 RoundedRectangle(cornerRadius: 16)
-                                    .stroke(Color(hex: 0xF5C451).opacity(0.35), lineWidth: 1.5)
+                                    .stroke(AppStyle.gold.opacity(0.35), lineWidth: 1.5)
                             )
                             .padding(.horizontal, 34)
                             .padding(.top, 26)
@@ -75,7 +73,7 @@ struct UsernameView: View {
                                 .frame(maxWidth: 240)
                                 .padding(.vertical, 14)
                                 .background(
-                                    Capsule().fill(canConfirm ? Color(hex: 0xF5C451) : Color.white.opacity(0.15))
+                                    Capsule().fill(canConfirm ? AppStyle.gold : Color.white.opacity(0.15))
                                 )
                         }
                         .buttonStyle(.plain)
