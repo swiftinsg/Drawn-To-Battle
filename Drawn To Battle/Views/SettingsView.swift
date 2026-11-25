@@ -43,13 +43,18 @@ struct SettingsView: View {
                     // Studio defaults.
                     section("ANIMATION STUDIO") {
                         VStack(spacing: 14) {
-                            HStack {
-                                settingLabel("DEFAULT FPS")
-                                Spacer()
-                                Stepper("\(defaultFPS)", value: $defaultFPS, in: 1...30)
-                                    .font(.system(size: 14, weight: .black, design: .rounded))
-                                    .foregroundStyle(Color(hex: 0xF5C451))
-                                    .fixedSize()
+                            VStack(alignment: .leading, spacing: 4) {
+                                HStack {
+                                    settingLabel("DEFAULT FPS")
+                                    Spacer()
+                                    Stepper("\(defaultFPS)", value: $defaultFPS, in: 1...30)
+                                        .font(.system(size: 14, weight: .black, design: .rounded))
+                                        .foregroundStyle(Color(hex: 0xF5C451))
+                                        .fixedSize()
+                                }
+                                Text("Used for new projects. Saved moves keep their own speed.")
+                                    .font(.system(size: 10, weight: .semibold, design: .rounded))
+                                    .foregroundStyle(.white.opacity(0.4))
                             }
                             VStack(alignment: .leading, spacing: 4) {
                                 Toggle(isOn: $defaultOnionSkin) {
@@ -57,7 +62,7 @@ struct SettingsView: View {
                                 }
                                 .tint(Color(hex: 0xF5C451))
 
-                                Text("Shows the previous frame faintly while you draw.")
+                                Text("Shows neighboring frames faintly while you draw.")
                                     .font(.system(size: 10, weight: .semibold, design: .rounded))
                                     .foregroundStyle(.white.opacity(0.4))
                             }

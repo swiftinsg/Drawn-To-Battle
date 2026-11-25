@@ -21,7 +21,7 @@ struct StudioTutorialView: View {
          "Drag the selected bone around. Your changes update the frame live."),
 
         ("ADD A FRAME",
-         "Tap the film strip button to add another frame. Hold and drag a frame to reorder it."),
+         "Tap the film strip button to add another frame. Hold and drag a frame to reorder it. Press and hold trash for duplicate and multi-select."),
 
         ("PLAY IT",
          "Hit the play button to preview your move. Tap a frame in the timeline to check each pose."),

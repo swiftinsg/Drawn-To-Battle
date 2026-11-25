@@ -86,7 +86,7 @@ struct BlueprintLesson {
 enum StudioCoachTarget: Equatable {
     case pose(BlueprintFocus)
     case addFrame
-    case ghosts
+    case timeline
     case play
 }
 
@@ -111,9 +111,9 @@ extension BlueprintLesson {
                 body: "Tap the gold film-strip button to add a frame."
             ),
             StudioCoachStep(
-                target: .ghosts,
-                title: "COMPARE FRAMES",
-                body: "Tap the stacked-squares button to show ghost frames."
+                target: .timeline,
+                title: "CHECK EACH FRAME",
+                body: "Tap the big frame thumbnails to jump between poses."
             ),
             StudioCoachStep(
                 target: .play,

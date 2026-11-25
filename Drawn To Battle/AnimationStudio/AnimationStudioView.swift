@@ -217,10 +217,10 @@ struct AnimationStudioView: View {
                 selectedBone: $selectedBone,
                 coachTarget: currentCoachTarget
             )
-            .frame(width: 270)
+            .frame(width: 230)
 
             // Middle to right — the frames (timeline with gold playhead).
-            FrameTimelineView(studio: studio)
+            FrameTimelineView(studio: studio, coachTarget: currentCoachTarget)
                 .padding(.trailing, 8)
         }
         .padding(.horizontal, 12)
@@ -329,29 +329,40 @@ private struct StudioButtonsRow: View {
 
     var body: some View {
         VStack(alignment: .leading, spacing: 8) {
-            // One tidy row: playback, speed, ghosts, frame edits.
+            // One tidy row: playback, speed, add frame, delete.
             HStack(alignment: .center, spacing: 6) {
                 StudioIconButton(systemImage: "backward.end.fill") { studio.selectFrame(0) }
                 BigPlayButton(studio: studio, coachHighlighted: coachTarget == .some(.play))
                 PlaySpeedToggle(studio: studio)
-                OnionToggleButton(studio: studio, coachHighlighted: coachTarget == .some(.ghosts))
                 FilmChipButton(studio: studio, coachHighlighted: coachTarget == .some(.addFrame))
-                StudioIconButton(
-                    systemImage: studio.isMultiSelecting
-                        ? "checkmark.circle.fill"
-                        : "checkmark.circle"
-                ) {
-                    studio.setMultiSelecting(!studio.isMultiSelecting)
-                }
-                .accessibilityLabel("Select multiple frames")
-                StudioIconButton(systemImage: "doc.on.doc") {
-                    studio.duplicateFrame(at: studio.selectedIndex)
-                }
                 StudioIconButton(systemImage: "trash", tinted: Color(hex: 0xE86A6A)) {
                     if studio.isMultiSelecting, !studio.selectedFrameIDs.isEmpty {
                         studio.deleteSelectedFrames()
                     } else {
                         studio.deleteFrame(at: studio.selectedIndex)
+                    }
+                }
+                .accessibilityLabel("Delete frame. Press and hold for more frame actions.")
+                .contextMenu {
+                    Button {
+                        studio.setMultiSelecting(!studio.isMultiSelecting)
+                    } label: {
+                        Label(
+                            studio.isMultiSelecting ? "Done Selecting" : "Select Multiple Frames",
+                            systemImage: "checkmark.circle"
+                        )
+                    }
+                    Button {
+                        studio.duplicateFrame(at: studio.selectedIndex)
+                    } label: {
+                        Label("Duplicate Frame", systemImage: "doc.on.doc")
+                    }
+                    if studio.isMultiSelecting, !studio.selectedFrameIDs.isEmpty {
+                        Button(role: .destructive) {
+                            studio.deleteSelectedFrames()
+                        } label: {
+                            Label("Delete Checked Frames", systemImage: "trash")
+                        }
                     }
                 }
                 Spacer(minLength: 0)
@@ -411,32 +422,6 @@ private struct PlaySpeedToggle: View {
                 .background(RoundedRectangle(cornerRadius: 8).fill(Color.white.opacity(0.08)))
         }
         .buttonStyle(.plain)
-    }
-}
-
-/// Onion-skin toggle — red ghosts of previous frames.
-private struct OnionToggleButton: View {
-    @ObservedObject var studio: StudioState
-    var coachHighlighted = false
-
-    var body: some View {
-        Button { studio.onionSkin.toggle() } label: {
-            Image(systemName: "square.on.square")
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundStyle(studio.onionSkin ? AnyShapeStyle(.black) : AnyShapeStyle(Color.white.opacity(0.85)))
-                .frame(width: 30, height: 28)
-                .background(
-                    RoundedRectangle(cornerRadius: 9)
-                        .fill(studio.onionSkin ? Color(hex: 0xF5C451) : Color.white.opacity(0.08))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 9)
-                        .stroke(studio.onionSkin ? Color(hex: 0xF5C451).opacity(0.6) : Color.white.opacity(0.06), lineWidth: 1)
-                )
-                .accessibilityLabel(studio.onionSkin ? "Hide ghost frames" : "Show ghost frames")
-        }
-        .buttonStyle(.plain)
-        .coachSpotlight(active: coachHighlighted)
     }
 }
 
@@ -577,7 +562,7 @@ private struct StudioCoachSpotlight: ViewModifier {
     }
 }
 
-private extension View {
+extension View {
     func coachSpotlight(active: Bool) -> some View {
         modifier(StudioCoachSpotlight(active: active))
     }

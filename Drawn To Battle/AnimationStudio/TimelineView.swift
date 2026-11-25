@@ -8,12 +8,13 @@ import SwiftUI
 
 struct FrameTimelineView: View {
     @ObservedObject var studio: StudioState
+    var coachTarget: StudioCoachTarget?
 
     @State private var draggingIndex: Int?
     @State private var dropIndex: Int?
     @State private var dragOffset: CGFloat = 0
 
-    private let cellWidth: CGFloat = 48 // 42pt thumbnail + 6pt spacing
+    private let cellWidth: CGFloat = 82 // 76pt thumbnail + 6pt spacing
 
     var body: some View {
         HStack(spacing: 10) {
@@ -91,17 +92,6 @@ struct FrameTimelineView: View {
                 .padding(.horizontal, 2)
             }
 
-            Spacer()
-
-            // FPS stepper.
-            Stepper("FPS \(studio.project.fps)", value: Binding(
-                get: { studio.project.fps },
-                set: { studio.project.fps = $0; studio.markProjectChanged() }
-            ), in: 1...30)
-                .font(.system(size: 11, weight: .semibold))
-                .foregroundStyle(Color(hex: 0xF5C451).opacity(0.8))
-                .tint(Color(hex: 0xF5C451))
-                .fixedSize()
         }
         .padding(.horizontal, 12)
         .padding(.top, 1)
@@ -114,6 +104,7 @@ struct FrameTimelineView: View {
                         .stroke(Color.white.opacity(0.12), lineWidth: 1)
                 )
         )
+        .coachSpotlight(active: coachTarget == .some(.timeline))
     }
 }
 
@@ -138,29 +129,38 @@ private struct FrameThumbnail: View {
     var body: some View {
         ZStack {
             Canvas { context, size in
-                var scaled = pose
-                let thumbScale: CGFloat = 0.34
-                scaled.scale = pose.scale * thumbScale
-                scaled.thickness = max(2, pose.thickness * thumbScale * 1.6)
-                scaled.root = CGPoint(x: size.width / 2, y: size.height * 0.84)
-
+                let transform = PoseViewTransform(
+                    canvasSize: size,
+                    topMargin: 0,
+                    bottomMargin: 0,
+                    leftMargin: 0,
+                    rightMargin: 0
+                )
                 context.stroke(
-                    StickmanKinematics.skeletonPath(for: scaled),
-                    with: .color(scaled.color),
-                    style: StrokeStyle(lineWidth: scaled.thickness, lineCap: .round, lineJoin: .round)
+                    transform.transformedPath(StickmanKinematics.skeletonPath(for: pose)),
+                    with: .color(pose.color),
+                    style: StrokeStyle(
+                        lineWidth: max(2.5, pose.thickness * transform.scale),
+                        lineCap: .round,
+                        lineJoin: .round
+                    )
                 )
-                let head = StickmanKinematics.headCircle(for: scaled)
-                let headRect = CGRect(
-                    x: head.center.x - head.radius,
-                    y: head.center.y - head.radius,
-                    width: head.radius * 2,
-                    height: head.radius * 2
+                let head = StickmanKinematics.headCircle(for: pose)
+                let center = transform.toCanvas(head.center)
+                let radius = head.radius * transform.scale
+                context.fill(
+                    Path(ellipseIn: CGRect(
+                        x: center.x - radius,
+                        y: center.y - radius,
+                        width: radius * 2,
+                        height: radius * 2
+                    )),
+                    with: .color(pose.color)
                 )
-                context.fill(Path(ellipseIn: headRect), with: .color(scaled.color))
             }
-            .frame(width: 32, height: 34)
+            .frame(width: 76, height: 78)
             .background(
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: 12)
                     .fill(
                         isMultiSelected
                             ? Color(hex: 0x4C8DFF).opacity(0.3)
@@ -168,14 +168,14 @@ private struct FrameThumbnail: View {
                     )
             )
             .overlay(
-                RoundedRectangle(cornerRadius: 7)
+                RoundedRectangle(cornerRadius: 12)
                     .stroke(
                         isMultiSelected
                             ? Color(hex: 0x4C8DFF)
                             : (isSelected
                                 ? Color(hex: 0xF5C451).opacity(0.9)
                                 : Color.white.opacity(0.12)),
-                        lineWidth: (isMultiSelected || isSelected) ? 2.2 : 1
+                        lineWidth: (isMultiSelected || isSelected) ? 2.5 : 1
                     )
             )
         }

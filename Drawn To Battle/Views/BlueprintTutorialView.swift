@@ -43,7 +43,7 @@ struct BlueprintTutorialView: View {
                  body: "Tap the film-strip button to key each pose. Your three frames become a sequence that plays from one pose to the next."),
 
             Step(title: "PLAY & POLISH",
-                 body: "Hit play to preview \(blueprint.name). Use the ghost toggle to see the previous and next frames so the poses flow together. Bigger, cleaner motion means more POWER and more damage."),
+                 body: "Tap the big frame thumbnails to check each pose, then hit play to preview \(blueprint.name). Bigger, cleaner motion means more POWER and more damage."),
 
             Step(title: "SAVE YOUR MOVE",
                  body: "Your animation saves automatically as YOUR version of \(blueprint.name). Tap SHOW ME to follow the glowing pointers in the studio, then equip it from your Collection."),
