@@ -37,14 +37,6 @@ struct AnimationStudioView: View {
                 pose: studio.currentFrame?.pose ?? StickmanPose(),
                 selectedBone: $selectedBone,
                 onRotate: handleRotate,
-                onMove: { newRoot in
-                    studio.updateCurrentPose { pose in
-                        pose.root = CGPoint(
-                            x: min(390, max(10, newRoot.x)),
-                            y: min(505, max(30, newRoot.y))
-                        )
-                    }
-                },
                 editingHandles: !studio.isPlaying,
                 bottomInset: 0,
                 ghostPoses: onionSkinGhosts,

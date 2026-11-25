@@ -20,7 +20,7 @@ enum BlueprintFocus: String, Equatable {
         case .leftLeg: return "LEFT LEG"
         case .bothArms: return "BOTH ARMS"
         case .bothLegs: return "BOTH LEGS"
-        case .wholeBody: return "WHOLE FIGURE"
+        case .wholeBody: return "BODY POSE"
         }
     }
 
@@ -50,7 +50,7 @@ enum BlueprintFocus: String, Equatable {
         case .leftLeg: return [.leftThigh, .leftShin]
         case .bothArms: return [.leftUpperArm, .leftForearm, .rightUpperArm, .rightForearm]
         case .bothLegs: return [.leftThigh, .leftShin, .rightThigh, .rightShin]
-        case .wholeBody: return []
+        case .wholeBody: return [.torso]
         }
     }
 
@@ -68,7 +68,7 @@ enum BlueprintFocus: String, Equatable {
         case .leftLeg: return "Drag the glowing left-leg handles through knee, then foot."
         case .bothArms: return "Drag both glowing arm handles so the fists move together."
         case .bothLegs: return "Drag both glowing leg handles so the feet land together."
-        case .wholeBody: return "Drag away from a joint to shift the whole figure."
+        case .wholeBody: return "Pose the torso and limbs; the figure stays planted."
         }
     }
 }
@@ -156,7 +156,7 @@ enum BlueprintCoach {
                          "PUSH — drive forward, lead leg stretching out.",
                          "ARRIVE — straighten up in a wide stance."),
             focus: .wholeBody,
-            tip: "Drag the whole figure forward between frames — the root shift sells the lunge."),
+            tip: "Bend the lead leg and widen the stance so the lunge reads while the figure stays planted."),
 
         // --- Common ---
         "cross": BlueprintLesson(
@@ -179,10 +179,10 @@ enum BlueprintCoach {
             tip: "The power comes from the knee rising first; the shin straightens last."),
         "blink_rush": BlueprintLesson(
             poses: poses("LOAD — lean forward from the hips.",
-                         "BLUR — shoot the figure forward in one big jump.",
+                         "BLUR — lean hard and snap the limbs forward.",
                          "STOP — snap to a balanced stand."),
             focus: .wholeBody,
-            tip: "Use only a few frames and one big root jump so the rush looks instant."),
+            tip: "Use only a few frames and an extreme lean so the rush looks instant."),
 
         // --- Rare ---
         "comet_hook": BlueprintLesson(
@@ -205,10 +205,10 @@ enum BlueprintCoach {
             tip: "A smear lives in ONE frame — make the jump between poses huge."),
         "copter_spin": BlueprintLesson(
             poses: poses("WIND — coil the torso to one side.",
-                         "ROTATE — spin the whole body with arms out.",
+                         "ROTATE — turn the torso with arms out.",
                          "LAND — stop facing forward, arms still wide."),
             focus: .wholeBody,
-            tip: "Use body rotation, not just arm poses, for a full copter spin."),
+            tip: "Use torso rotation and arm poses, not sliding the figure, for a full copter spin."),
 
         // --- Epic ---
         "aftershock": BlueprintLesson(
@@ -231,18 +231,18 @@ enum BlueprintCoach {
             tip: "The leg must travel high before it drops — that height is the guillotine."),
         "phase_lance": BlueprintLesson(
             poses: poses("CROUCH — compress into a tight coil.",
-                         "PHASE — stretch the figure into a long line.",
+                         "PHASE — stretch the arms and legs into a long line.",
                          "ARRIVE — collapse the line into a sharp point."),
             focus: .wholeBody,
-            tip: "A big root jump with a thin, stretched pose makes the phase read instantly."),
+            tip: "A thin, stretched pose with sharp limb angles makes the phase read instantly."),
 
         // --- Mythic ---
         "tornado": BlueprintLesson(
             poses: poses("COIL — twist the torso low.",
-                         "WHIRL — rotate the body fast with arms wide.",
+                         "WHIRL — rotate the torso fast with arms wide.",
                          "SETTLE — stop in a grounded stance."),
             focus: .wholeBody,
-            tip: "More rotation steps make a longer tornado; keep the feet near the root."),
+            tip: "More torso steps make a longer tornado; keep the feet planted."),
         "orbital_heel": BlueprintLesson(
             poses: poses("SET — turn the hips sideways.",
                          "ORBIT — swing the right leg around in a wide arc.",
@@ -259,16 +259,16 @@ enum BlueprintCoach {
         // --- Legendary ---
         "supernova": BlueprintLesson(
             poses: poses("CHARGE — coil tight with arms in.",
-                         "BURST — spin fast with arms flung out.",
+                         "BURST — twist the torso hard with arms flung out.",
                          "LAND — return to a wide, blazing stance."),
             focus: .wholeBody,
-            tip: "Explode outward on the spin frame for the supernova feel."),
+            tip: "Explode outward with the torso and arms on the spin frame."),
         "warp": BlueprintLesson(
             poses: poses("FOCUS — crouch and lean in.",
-                         "WARP — teleport the root far forward in one frame.",
-                         "APPEAR — pop up on the far side."),
+                         "WARP — snap into a thin, stretched pose.",
+                         "APPEAR — pop into a tall, startled pose."),
             focus: .wholeBody,
-            tip: "Two poses with a giant root jump make it look like teleportation."),
+            tip: "Two contrasting poses make it look like teleportation while the figure stays planted."),
         "asteroid_drop": BlueprintLesson(
             poses: poses("CALL — reach both arms high.",
                          "FALL — hold at the peak.",
@@ -279,16 +279,16 @@ enum BlueprintCoach {
         // --- Elite / Transcendent / Omniscient ---
         "skybreak_edge": BlueprintLesson(
             poses: poses("EDGE — crouch with the lead foot forward.",
-                         "CUT — surge across in a long, low line.",
-                         "BREAK — snap upright at the far edge."),
+                         "CUT — lean into a long, low line.",
+                         "BREAK — snap upright in a wide stance."),
             focus: .wholeBody,
-            tip: "A sharp, straight root path gives the clean skybreak slice."),
+            tip: "A sharp torso lean and a long, low pose give the clean skybreak slice."),
         "starlit_pivot": BlueprintLesson(
             poses: poses("TURN — pivot on one foot.",
                          "PIVOT — rotate the torso through the arc.",
                          "FACE — finish facing forward, hands up."),
             focus: .torso,
-            tip: "Keep the root planted and rotate the torso — that's a true pivot."),
+            tip: "Keep the body planted and rotate the torso — that's a true pivot."),
         "smear_ghost": BlueprintLesson(
             poses: poses("GHOST ONE — right arm extended at one target.",
                          "GHOST TWO — arm in a second, impossible position.",
@@ -326,15 +326,15 @@ enum BlueprintCoach {
         case .spin:
             return BlueprintLesson(
                 poses: poses("WIND — coil to one side.",
-                             "TURN — rotate the whole body.",
+                             "TURN — rotate the torso.",
                              "LAND — stop facing forward."),
-                focus: .wholeBody, tip: "Use body rotation, not just arm poses.")
+                focus: .wholeBody, tip: "Use torso rotation and arm poses, not sliding the figure.")
         case .dash:
             return BlueprintLesson(
                 poses: poses("CROUCH — load the back leg.",
                              "PUSH — stretch forward.",
                              "ARRIVE — snap upright."),
-                focus: .wholeBody, tip: "Shift the root to sell the dash.")
+                focus: .wholeBody, tip: "Use strong leg and torso poses so the dash reads while the figure stays planted.")
         case .smear:
             return BlueprintLesson(
                 poses: poses("WIND — coil the arm back.",

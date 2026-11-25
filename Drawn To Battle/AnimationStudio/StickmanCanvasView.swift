@@ -9,8 +9,6 @@ struct StickmanCanvasView: View {
     @Binding var selectedBone: Bone?
     /// Called with (bone, new world angle in radians) while rotating.
     var onRotate: (Bone, CGFloat) -> Void
-    /// Called with the new root position while moving.
-    var onMove: (CGPoint) -> Void
     /// Show editing handles (false during playback).
     var editingHandles: Bool
     /// Height of the bottom overlay panel, so floor + figure sit above it.
@@ -129,7 +127,7 @@ struct StickmanCanvasView: View {
 
     // MARK: Gestures
 
-    /// Drag near a joint handle rotates that bone; drag elsewhere moves the whole figure.
+    /// Drag near a joint handle rotates that bone; drags elsewhere do nothing.
     private func editGesture(_ t: PoseViewTransform) -> some Gesture {
         DragGesture(minimumDistance: 0)
             .onChanged { value in
@@ -143,8 +141,7 @@ struct StickmanCanvasView: View {
                 }
 
                 guard let bone = dragBone else {
-                    // Move the whole figure (hip follows the finger).
-                    onMove(posePoint)
+                    // The figure stays planted — only joint drags edit the pose.
                     return
                 }
                 let angle = worldAngle(of: bone, dragPoint: posePoint)
@@ -269,7 +266,7 @@ struct StickmanCanvasView: View {
             return [canvas(.leftKnee), canvas(.rightKnee),
                     canvas(.leftFoot), canvas(.rightFoot)].compactMap { $0 }
         case .wholeBody:
-            return [transform.toCanvas(pose.root)]
+            return [canvas(.neck)].compactMap { $0 }
         }
     }
 }
