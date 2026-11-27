@@ -2,126 +2,101 @@ import SwiftUI
 
 // MARK: - Frame timeline
 //
-// Horizontal, scrollable strip of frame thumbnails. Swipe to browse frames;
-// hold a frame then drag left or right to reorder it. The gold marker sits on
-// the selected thumbnail itself, so it stays aligned while scrolling.
+// Horizontal, scrollable strip of frame thumbnails. Tap a thumbnail to edit
+// that frame; swipe the strip to browse frames. A long press picks a frame up
+// and tapping another frame moves it there, without stealing touches from
+// scrolling or selection.
 
 struct FrameTimelineView: View {
     @ObservedObject var studio: StudioState
     var coachTarget: StudioCoachTarget?
 
-    @State private var draggingIndex: Int?
-    @State private var dropIndex: Int?
-    @State private var dragOffset: CGFloat = 0
     /// Drives only the decorative scroll rail; never affects frame editing.
     @State private var scrollMetrics = ScrollMetrics()
-
-    private let cellWidth: CGFloat = 82 // 76pt thumbnail + 6pt spacing
-
-    private func beginReorder(at index: Int) {
-        guard !studio.isMultiSelecting else { return }
-        draggingIndex = index
-        dropIndex = index
-        Haptics.light()
-    }
-
-    private func updateReorder(at index: Int, translation: CGFloat) {
-        guard !studio.isMultiSelecting, draggingIndex == index else { return }
-        dragOffset = translation
-        let steps = Int((translation / cellWidth).rounded())
-        let lastIndex = studio.project.frames.count - 1
-        let target = max(0, min(lastIndex, index + steps))
-        if target != dropIndex {
-            dropIndex = target
-            Haptics.light()
-        }
-    }
-
-    private func finishReorder(at index: Int) {
-        guard draggingIndex == index else { return }
-        if let target = dropIndex, target != index {
-            studio.moveFrame(from: index, to: target)
-        }
-        withAnimation(.easeOut(duration: 0.15)) {
-            draggingIndex = nil
-            dropIndex = nil
-            dragOffset = 0
-        }
-    }
+    /// Set by a long press. The next tap becomes the drop destination.
+    @State private var reorderSourceIndex: Int?
 
     var body: some View {
         VStack(spacing: 0) {
-            ScrollView(.horizontal, showsIndicators: true) {
-                HStack(spacing: 6) {
-                    ForEach(Array(studio.project.frames.enumerated()), id: \.element.id) { index, frame in
-                        FrameThumbnail(
-                            pose: frame.pose,
-                            isSelected: index == studio.selectedIndex,
-                            isMultiSelected: studio.selectedFrameIDs.contains(frame.id)
-                        )
-                        .overlay(alignment: .top) {
-                            if !studio.isMultiSelecting && draggingIndex == nil && index == studio.selectedIndex {
-                                Triangle()
-                                    .fill(Color(hex: 0xF5C451))
-                                    .frame(width: 12, height: 8)
-                                    .offset(y: -1)
+            ScrollViewReader { proxy in
+                ScrollView(.horizontal, showsIndicators: true) {
+                    HStack(spacing: 6) {
+                        ForEach(Array(studio.project.frames.enumerated()), id: \.element.id) { index, frame in
+                            FrameThumbnail(
+                                pose: frame.pose,
+                                isSelected: index == studio.selectedIndex,
+                                isMultiSelected: studio.selectedFrameIDs.contains(frame.id)
+                            )
+                            .id(frame.id)
+                            .overlay(alignment: .top) {
+                                if !studio.isMultiSelecting,
+                                   reorderSourceIndex == nil,
+                                   index == studio.selectedIndex {
+                                    Triangle()
+                                        .fill(AppStyle.gold)
+                                        .frame(width: 12, height: 8)
+                                        .offset(y: -1)
+                                        .allowsHitTesting(false)
+                                }
+                            }
+                            .overlay(
+                                RoundedRectangle(cornerRadius: 12)
+                                    .stroke(
+                                        reorderSourceIndex == index
+                                            ? Color(hex: 0x4FC3F7)
+                                            : Color.clear,
+                                        lineWidth: 3
+                                    )
                                     .allowsHitTesting(false)
+                            )
+                            .onTapGesture {
+                                handleTap(at: index, frameID: frame.id)
                             }
+                            .simultaneousGesture(
+                                LongPressGesture(minimumDuration: 0.35)
+                                    .onEnded { _ in
+                                        guard !studio.isMultiSelecting else { return }
+                                        reorderSourceIndex = index
+                                        Haptics.light()
+                                    }
+                            )
+                            .accessibilityLabel(
+                                reorderSourceIndex == index
+                                    ? "Frame \(index + 1) picked up. Tap another frame to move it."
+                                    : "Frame \(index + 1). Tap to edit. Long press to move."
+                            )
                         }
-                        .overlay(
-                            RoundedRectangle(cornerRadius: 8)
-                                .stroke(Color(hex: 0xF5C451), lineWidth: 2)
-                                .opacity(dropIndex == index && draggingIndex != index ? 1 : 0)
-                                .allowsHitTesting(false)
-                        )
-                        .scaleEffect(draggingIndex == index ? 1.12 : 1)
-                        .offset(x: draggingIndex == index ? dragOffset : 0)
-                        .zIndex(draggingIndex == index ? 10 : 0)
-                        .onTapGesture {
-                            if studio.isMultiSelecting {
-                                studio.toggleFrameSelection(frame.id)
-                            } else if draggingIndex == nil {
-                                studio.selectFrame(index)
-                            }
-                        }
-                        // Separate simultaneous recognizers kept taps reliable
-                        // while still allowing a held frame to be reordered.
-                        .simultaneousGesture(
-                            LongPressGesture(minimumDuration: 0.35)
-                                .onEnded { _ in
-                                    guard !studio.isMultiSelecting else { return }
-                                    beginReorder(at: index)
-                                }
-                        )
-                        .simultaneousGesture(
-                            DragGesture(minimumDistance: 0)
-                                .onChanged { value in
-                                    guard !studio.isMultiSelecting, draggingIndex == index else { return }
-                                    updateReorder(at: index, translation: value.translation.width)
-                                }
-                                .onEnded { _ in
-                                    guard draggingIndex == index else { return }
-                                    finishReorder(at: index)
-                                }
-                        )
-                        .accessibilityLabel("Frame \(index + 1). Hold and drag to reorder.")
+                    }
+                    .padding(.horizontal, 2)
+                }
+                .onScrollGeometryChange(for: ScrollMetrics.self) { geometry in
+                    let contentWidth = geometry.contentSize.width
+                    let visibleWidth = geometry.bounds.width
+                    let overflow = max(0, contentWidth - visibleWidth)
+                    return ScrollMetrics(
+                        progress: overflow > 0 ? min(1, max(0, geometry.contentOffset.x / overflow)) : 0,
+                        thumbRatio: contentWidth > 0 ? min(1, visibleWidth / contentWidth) : 1
+                    )
+                } action: { _, metrics in
+                    scrollMetrics = metrics
+                }
+                .onChange(of: studio.selectedIndex) { _, newIndex in
+                    guard studio.project.frames.indices.contains(newIndex) else { return }
+                    withAnimation(.easeOut(duration: 0.18)) {
+                        proxy.scrollTo(studio.project.frames[newIndex].id, anchor: .center)
                     }
                 }
-                .padding(.horizontal, 2)
-            }
-            .onScrollGeometryChange(for: ScrollMetrics.self) { geometry in
-                let contentWidth = geometry.contentSize.width
-                let visibleWidth = geometry.bounds.width
-                let overflow = max(0, contentWidth - visibleWidth)
-                return ScrollMetrics(
-                    progress: overflow > 0 ? min(1, max(0, geometry.contentOffset.x / overflow)) : 0,
-                    thumbRatio: contentWidth > 0 ? min(1, visibleWidth / contentWidth) : 1
-                )
-            } action: { _, metrics in
-                scrollMetrics = metrics
             }
 
             scrollRail
+
+            if reorderSourceIndex != nil {
+                Text("TAP ANOTHER FRAME TO MOVE IT THERE")
+                    .font(.system(size: 8, weight: .black, design: .rounded))
+                    .tracking(0.6)
+                    .foregroundStyle(AppStyle.gold)
+                    .padding(.top, 3)
+            }
         }
         .padding(.horizontal, 12)
         .padding(.top, 1)
@@ -134,11 +109,31 @@ struct FrameTimelineView: View {
                 )
         )
         .coachSpotlight(active: coachTarget == .some(.timeline))
+        .onChange(of: studio.project.frames.count) { _, _ in
+            reorderSourceIndex = nil
+        }
+    }
+
+    private func handleTap(at index: Int, frameID: UUID) {
+        if let source = reorderSourceIndex {
+            if source != index {
+                studio.moveFrame(from: source, to: index)
+            }
+            reorderSourceIndex = nil
+            Haptics.light()
+            return
+        }
+
+        if studio.isMultiSelecting {
+            studio.toggleFrameSelection(frameID)
+        } else {
+            studio.selectFrame(index)
+        }
     }
 
     /// Always-visible scroll rail: dim track, gold thumb sized by the
-    /// viewport/content ratio and moved by scroll progress. Pure decoration —
-    /// it never handles touches, so frame reordering is untouched.
+    /// viewport/content ratio and moved by scroll progress. Pure decoration,
+    /// it never handles touches.
     private var scrollRail: some View {
         GeometryReader { rail in
             let trackWidth = rail.size.width
