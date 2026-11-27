@@ -454,7 +454,6 @@ private struct FilmChipButton: View {
 private struct PoseControlsRow: View {
     @ObservedObject var studio: StudioState
     @Binding var selectedBone: Bone?
-    @State private var colorPickerShown = false
 
     private var pose: StickmanPose { studio.currentFrame?.pose ?? StickmanPose() }
     private var bone: Bone { selectedBone ?? .torso }
@@ -487,23 +486,15 @@ private struct PoseControlsRow: View {
                 }
             }
 
-            // Color swatch + popover (no slider).
-            Button { colorPickerShown = true } label: {
-                Circle()
-                    .fill(pose.color)
-                    .frame(width: 24, height: 24)
-                    .overlay(Circle().stroke(Color.white.opacity(0.4), lineWidth: 1.5))
-                    .padding(3)
-                    .background(Circle().fill(Color.white.opacity(0.08)))
-            }
-            .buttonStyle(.plain)
-            .popover(isPresented: $colorPickerShown) {
-                ColorPicker("Stickman color", selection: Binding(
-                    get: { pose.color },
-                    set: { color in studio.updateCurrentPose { $0.colorARGB = rgbaToARGB(color) } }
-                ))
-                .padding()
-            }
+            // Native compact color picker: current color in the middle with
+            // the rainbow ring, no full-screen custom popup.
+            ColorPicker("Stickman color", selection: Binding(
+                get: { pose.color },
+                set: { color in studio.updateCurrentPose { $0.colorARGB = rgbaToARGB(color) } }
+            ))
+            .labelsHidden()
+            .frame(width: 28, height: 28)
+            .accessibilityLabel("Stickman color")
         }
     }
 

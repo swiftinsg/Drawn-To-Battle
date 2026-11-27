@@ -67,10 +67,7 @@ struct BattleView: View {
             }
 
             if showTips {
-                BattleTipsOverlay(technique: boss.requiredTechnique, onClose: {
-                    showTips = false
-                    UserDefaults.standard.set(true, forKey: "dtb.seenTips.v2")
-                })
+                BattleTipsOverlay(technique: boss.requiredTechnique, onClose: closeTips)
             }
 
             if let result = engine.result {
@@ -87,6 +84,7 @@ struct BattleView: View {
             if showPause {
                 BattlePauseOverlay(
                     onContinue: resumeBattle,
+                    onShowTutorial: replayTips,
                     onExit: exitBattle
                 )
                 .transition(.opacity)
@@ -97,9 +95,12 @@ struct BattleView: View {
             // the end screen is a new screen, never a stale result from a
             // previous run.
             engine.reset()
-            engine.startLoop()
+            // The first-battle walkthrough pauses the simulation until the
+            // player dismisses it, so the boss cannot attack while they read.
             if !UserDefaults.standard.bool(forKey: "dtb.seenTips.v2") {
                 showTips = true
+            } else {
+                engine.startLoop()
             }
         }
         .onDisappear { engine.stopLoop() }
@@ -134,6 +135,21 @@ struct BattleView: View {
     private func resumeBattle() {
         withAnimation(.easeInOut(duration: 0.18)) { showPause = false }
         engine.startLoop()
+    }
+
+    private func closeTips() {
+        UserDefaults.standard.set(true, forKey: "dtb.seenTips.v2")
+        withAnimation(.easeInOut(duration: 0.18)) { showTips = false }
+        engine.startLoop()
+    }
+
+    private func replayTips() {
+        engine.stopLoop()
+        engine.input = BattleInput()
+        withAnimation(.easeInOut(duration: 0.18)) {
+            showPause = false
+            showTips = true
+        }
     }
 
     private func exitBattle() {
@@ -762,6 +778,7 @@ private struct BattleTipsOverlay: View {
 
 private struct BattlePauseOverlay: View {
     let onContinue: () -> Void
+    let onShowTutorial: () -> Void
     let onExit: () -> Void
 
     var body: some View {
@@ -787,6 +804,18 @@ private struct BattlePauseOverlay: View {
                             .frame(maxWidth: 220)
                             .padding(.vertical, 12)
                             .background(Capsule().fill(Color(hex: 0xF5C451)))
+                    }
+                    .buttonStyle(.plain)
+
+                    Button {
+                        onShowTutorial()
+                    } label: {
+                        Text("HOW TO FIGHT")
+                            .font(.system(size: 15, weight: .black, design: .rounded))
+                            .foregroundStyle(.white)
+                            .frame(maxWidth: 220)
+                            .padding(.vertical, 12)
+                            .background(Capsule().fill(Color.white.opacity(0.12)))
                     }
                     .buttonStyle(.plain)
 
