@@ -235,6 +235,12 @@ struct ProfileView: View {
                         .stroke(AppStyle.hairline, lineWidth: 1)
                 )
 
+            Text("\(GameSave.minNameLength) TO \(GameSave.maxNameLength) CHARACTERS")
+                .font(.system(size: 10, weight: .black, design: .rounded))
+                .tracking(1)
+                .foregroundStyle(.white.opacity(0.4))
+                .frame(maxWidth: .infinity, alignment: .leading)
+
             Button { showRenameConfirm = true } label: {
                 HStack(spacing: 6) {
                     Image(systemName: "pencil")

@@ -34,7 +34,7 @@ struct UsernameView: View {
                             .foregroundStyle(.white.opacity(0.5))
                             .padding(.top, 8)
 
-                        Text("Use at least \(GameSave.minNameLength) characters.")
+                        Text("Use \(GameSave.minNameLength) to \(GameSave.maxNameLength) characters.")
                             .appEyebrow(size: 10, tracking: 1)
                             .padding(.top, 4)
 

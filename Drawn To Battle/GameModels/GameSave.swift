@@ -235,7 +235,7 @@ final class GameSave: ObservableObject {
     /// Coins charged by the settings screen for changing the fighter's name.
     static let nameChangeCost = 1000
     static let minNameLength = 3
-    static let maxNameLength = 14
+    static let maxNameLength = 16
 
     /// XP awarded for finding a new move or rerolling an owned one.
     private static let xpPerNewBlueprint = 25
