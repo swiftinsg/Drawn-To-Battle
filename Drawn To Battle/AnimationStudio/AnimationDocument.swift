@@ -204,6 +204,9 @@ final class StudioState: ObservableObject {
 
     func selectFrame(_ index: Int) {
         guard project.frames.indices.contains(index) else { return }
+        // Manual selection takes over from playback, so the chosen frame does
+        // not get overwritten by the next playback tick.
+        if isPlaying { stop() }
         selectedIndex = index
         if !isMultiSelecting { selectedFrameIDs.removeAll() }
     }

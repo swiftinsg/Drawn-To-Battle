@@ -15,14 +15,11 @@ struct FrameTimelineView: View {
     @State private var dragOffset: CGFloat = 0
     /// Drives only the decorative scroll rail; never affects frame editing.
     @State private var scrollMetrics = ScrollMetrics()
-    /// Prevents a long-press reorder from being treated as a frame tap.
-    @State private var suppressTapUntil = Date.distantPast
 
     private let cellWidth: CGFloat = 82 // 76pt thumbnail + 6pt spacing
 
     private func beginReorder(at index: Int) {
         guard !studio.isMultiSelecting else { return }
-        suppressTapUntil = .distantFuture
         draggingIndex = index
         dropIndex = index
         Haptics.light()
@@ -50,25 +47,6 @@ struct FrameTimelineView: View {
             dropIndex = nil
             dragOffset = 0
         }
-        suppressTapUntil = Date().addingTimeInterval(0.25)
-    }
-
-    private func reorderGesture(at index: Int) -> some Gesture {
-        LongPressGesture(minimumDuration: 0.35)
-            .sequenced(before: DragGesture(minimumDistance: 0))
-            .onChanged { value in
-                switch value {
-                case .first(true):
-                    beginReorder(at: index)
-                case .second(true, let drag?):
-                    updateReorder(at: index, translation: drag.translation.width)
-                default:
-                    break
-                }
-            }
-            .onEnded { _ in
-                finishReorder(at: index)
-            }
     }
 
     var body: some View {
@@ -99,18 +77,33 @@ struct FrameTimelineView: View {
                         .scaleEffect(draggingIndex == index ? 1.12 : 1)
                         .offset(x: draggingIndex == index ? dragOffset : 0)
                         .zIndex(draggingIndex == index ? 10 : 0)
-                        // Tap has priority so a tap always selects the frame.
-                        // A plain swipe makes the tap fail and belongs to the
-                        // ScrollView; only a held frame can be reordered.
                         .onTapGesture {
-                            guard Date() > suppressTapUntil else { return }
                             if studio.isMultiSelecting {
                                 studio.toggleFrameSelection(frame.id)
-                            } else {
+                            } else if draggingIndex == nil {
                                 studio.selectFrame(index)
                             }
                         }
-                        .simultaneousGesture(reorderGesture(at: index))
+                        // Separate simultaneous recognizers kept taps reliable
+                        // while still allowing a held frame to be reordered.
+                        .simultaneousGesture(
+                            LongPressGesture(minimumDuration: 0.35)
+                                .onEnded { _ in
+                                    guard !studio.isMultiSelecting else { return }
+                                    beginReorder(at: index)
+                                }
+                        )
+                        .simultaneousGesture(
+                            DragGesture(minimumDistance: 0)
+                                .onChanged { value in
+                                    guard !studio.isMultiSelecting, draggingIndex == index else { return }
+                                    updateReorder(at: index, translation: value.translation.width)
+                                }
+                                .onEnded { _ in
+                                    guard draggingIndex == index else { return }
+                                    finishReorder(at: index)
+                                }
+                        )
                         .accessibilityLabel("Frame \(index + 1). Hold and drag to reorder.")
                     }
                 }
