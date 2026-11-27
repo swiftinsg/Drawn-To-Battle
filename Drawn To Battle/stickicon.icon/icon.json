@@ -1,13 +1,20 @@
 {
   "fill" : {
-    "solid" : "srgb:0.00000,0.98343,1.00000,1.00000"
+    "automatic-gradient" : "extended-srgb:0.00000,0.53333,1.00000,1.00000"
   },
   "groups" : [
     {
       "layers" : [
         {
-          "image-name" : "icon(nobg).svg",
-          "name" : "icon(nobg)"
+          "image-name" : "stick dude bumas.svg",
+          "name" : "stick dude bumas",
+          "position" : {
+            "scale" : 1,
+            "translation-in-points" : [
+              91,
+              -19.5
+            ]
+          }
         }
       ],
       "shadow" : {
