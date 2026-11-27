@@ -357,6 +357,7 @@ private struct StudioButtonsRow: View {
                     } label: {
                         Label("Duplicate Frame", systemImage: "doc.on.doc")
                     }
+                    .disabled(studio.project.frames.count >= AnimationProject.maxFrames)
                     if studio.isMultiSelecting, !studio.selectedFrameIDs.isEmpty {
                         Button(role: .destructive) {
                             studio.deleteSelectedFrames()
@@ -446,6 +447,8 @@ private struct FilmChipButton: View {
                 .accessibilityLabel("Add frame")
         }
         .buttonStyle(SquashButtonStyle())
+        .disabled(studio.project.frames.count >= AnimationProject.maxFrames)
+        .opacity(studio.project.frames.count >= AnimationProject.maxFrames ? 0.35 : 1)
         .coachSpotlight(active: coachHighlighted)
     }
 }

@@ -28,7 +28,7 @@ struct BlueprintTutorialView: View {
         let name = blueprint.name.uppercased()
         return [
             Step(title: "YOU UNLOCKED \(name)",
-                 body: "\(blueprint.blurb)\n\nThis is a \(blueprint.technique.label) move. It's yours to animate — but you can't use it in battle until you've built it yourself."),
+                 body: "\(blueprint.blurb)\n\nThis is a \(blueprint.technique.label) move. It is yours to animate, but you cannot use it in battle until you build it yourself."),
 
             Step(title: "HOW \(name) WORKS",
                  body: "Build \(blueprint.name) from these three key frames:\n\n"
@@ -40,13 +40,13 @@ struct BlueprintTutorialView: View {
                  focus: move.focus),
 
             Step(title: "ADD FRAMES",
-                 body: "Tap the film-strip button to key each pose. Your three frames become a sequence that plays from one pose to the next."),
+                 body: "Tap the film strip button to save each pose as a frame. Your three frames become a sequence that plays from one pose to the next."),
 
             Step(title: "PLAY & POLISH",
-                 body: "Tap the big frame thumbnails to check each pose, then hit play to preview \(blueprint.name). Bigger, cleaner motion means more POWER and more damage."),
+                 body: "Tap the big frame thumbnails to check each pose, then tap play to preview \(blueprint.name). Cleaner, bigger motion means more power and more damage."),
 
             Step(title: "SAVE YOUR MOVE",
-                 body: "Your animation saves automatically as YOUR version of \(blueprint.name). Tap SHOW ME to follow the glowing pointers in the studio, then equip it from your Collection."),
+                 body: "Your animation saves as your version of \(blueprint.name). Tap SHOW ME to follow the glowing pointers in the studio, then equip it from your Collection."),
         ]
     }
 

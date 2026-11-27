@@ -12,22 +12,22 @@ struct StudioTutorialView: View {
 
     private let steps: [(title: String, body: String)] = [
         ("WELCOME TO THE STUDIO",
-         "This is where you bring your stickman to life. Every joint you move and every frame you add becomes your fighter's attack in battle."),
+         "This is where you bring your stickman to life. Move a joint or add a frame and your fighter's attack changes in battle."),
 
         ("PICK A JOINT",
-         "Choose a joint (arm, leg, torso, head, etc) to move it."),
+         "Choose a joint such as an arm, leg, torso or head to move it."),
 
         ("POSE IT",
-         "Drag the selected bone around. Your changes update the frame live."),
+         "Drag the glowing handle. The frame updates as you move it."),
 
         ("ADD A FRAME",
-         "Tap the film strip button to add another frame. Hold and drag a frame to reorder it. Press and hold trash for duplicate and multi-select."),
+         "Tap the film strip button to copy the pose into a new frame. You can use up to 25 frames. Long press a frame, then tap another frame to move it. Press and hold trash for duplicate and multiple selection."),
 
         ("PLAY IT",
-         "Hit the play button to preview your move. Tap a frame in the timeline to check each pose."),
+         "Tap play to preview your move. Tap a frame in the timeline to check each pose."),
 
         ("AUTOSAVE",
-         "Your work saves automatically. Equip your custom move to take into battle."),
+         "Your work saves by itself. Equip your move to take it into battle."),
     ]
 
     var body: some View {

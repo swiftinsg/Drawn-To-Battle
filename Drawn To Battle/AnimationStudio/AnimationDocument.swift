@@ -23,6 +23,16 @@ struct AnimationProject: Codable, Equatable {
     var frames: [AnimationFrame]
     var fps: Int
 
+    static let maxFrames = 25
+
+    mutating func capFrames() {
+        if frames.count > Self.maxFrames {
+            frames = Array(frames.prefix(Self.maxFrames))
+        }
+        if frames.isEmpty {
+            frames = [AnimationFrame(pose: StickmanPose())]
+        }
+    }
 
     static var defaultFPS: Int {
         UserDefaults.standard.object(forKey: "DrawnToBattle.defaultFPS") as? Int ?? 12
@@ -66,7 +76,9 @@ enum AnimationProjectStore {
 
     static func load(from url: URL) throws -> AnimationProject {
         let data = try Data(contentsOf: url)
-        return try JSONDecoder().decode(AnimationProject.self, from: data)
+        var project = try JSONDecoder().decode(AnimationProject.self, from: data)
+        project.capFrames()
+        return project
     }
 
     static func delete(at url: URL) {
@@ -116,7 +128,9 @@ final class StudioState: ObservableObject {
     private var autosaveWorkItem: DispatchWorkItem?
 
     init(project: AnimationProject = .blank()) {
-        self.project = project
+        var capped = project
+        capped.capFrames()
+        self.project = capped
         self.selectedIndex = 0
         self.onionSkin = UserDefaults.standard.bool(forKey: "DrawnToBattle.defaultOnionSkin")
     }
@@ -138,6 +152,7 @@ final class StudioState: ObservableObject {
 
 
     func addFrame() {
+        guard project.frames.count < AnimationProject.maxFrames else { return }
         let pose = currentFrame?.pose ?? StickmanPose()
         let insertAt = min(selectedIndex + 1, project.frames.count)
         project.frames.insert(AnimationFrame(pose: pose), at: insertAt)
@@ -146,7 +161,8 @@ final class StudioState: ObservableObject {
     }
 
     func duplicateFrame(at index: Int) {
-        guard project.frames.indices.contains(index) else { return }
+        guard project.frames.indices.contains(index),
+              project.frames.count < AnimationProject.maxFrames else { return }
         var copy = project.frames[index]
         copy.id = UUID()
         project.frames.insert(copy, at: index + 1)
